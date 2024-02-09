@@ -76,3 +76,17 @@ If blog site is in a subdomain `/blog/`, which would be like `https://hansimov.g
 ```sh
     base: "/blog/",
 ```
+
+### Deploy GitHub Pages
+
+See: https://vitepress.dev/guide/deploy#github-pages
+
+Create a file named `deploy.yml` inside `.github/workflows`, and put these lines.
+
+See: https://github.com/Hansimov/blog/tree/main/.github/workflows/deploy.yml
+
+In repo webpage, go to **Settings** > **Pages** > **Build and deployment** > **Source**, select `GitHub Actions`.
+
+Make sure the `base` option in VitePress is properly configured before deploying.
+
+Then push changes to main branch, and the site would be built and available at `https://hansimov.github.io/blog`.
