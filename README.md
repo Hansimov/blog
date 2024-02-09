@@ -85,8 +85,12 @@ Create a file named `deploy.yml` inside `.github/workflows`, and put these lines
 
 See: https://github.com/Hansimov/blog/tree/main/.github/workflows/deploy.yml
 
-In repo webpage, go to **Settings** > **Pages** > **Build and deployment** > **Source**, select `GitHub Actions`.
+- Make sure the `base` option in VitePress is properly configured before deploying.
 
-Make sure the `base` option in VitePress is properly configured before deploying.
+- Also, the node version config in .yml should be consistant with the local dev environment.
+
+- Do not git ignore `package-lock.json`, as it is required for the GitHub Actions to install the dependencies.
+
+In repo webpage, go to **Settings** > **Pages** > **Build and deployment** > **Source**, select `GitHub Actions`.
 
 Then push changes to main branch, and the site would be built and available at `https://hansimov.github.io/blog`.
