@@ -1,25 +1,26 @@
 ---
 # https://vitepress.dev/reference/default-theme-home-page
+# https://github.com/vuejs/vitepress/blob/main/docs/index.md?plain=1
 layout: home
 
 hero:
-  name: "Hansimov's Blog"
-  text: "A VitePress Site"
-  tagline: My great project tagline
-  actions:
-    - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
-    - theme: alt
-      text: API Examples
-      link: /api-examples
+  # name: "Hansimov"
+  # text: "Software and AI"
+  tagline: It's never too late. Just do it better.
+  # actions:
+  #   - theme: brand
+  #     text: Markdown Examples
+  #     link: /markdown-examples
+  #   - theme: alt
+  #     text: API Examples
+  #     link: /api-examples
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  - title: Software
+    details: Methodologies, Workflows, Techniques, Tricks
+  - title: AI
+    details: Algorithms, Applications
+  - title: Thoughts
+    details: Learning, Thinking, Sharing
 ---
 
