@@ -6,20 +6,25 @@ import { defineConfig, type DefaultTheme } from 'vitepress'
 export default defineConfig({
   title: "Hansimov's Blog",
   description: "Software and AI",
+  base: "/blog/",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: nav(),
     sidebar: {
       "/notes/": {
-        "base": "/notes/",
+        base: "/notes/",
         items: sidebarNotes()
       }
     },
+    outline: "deep",
     socialLinks: [
       { icon: 'github', link: 'https://github.com/Hansimov/blog' }
     ]
   },
-  base: "/blog/",
+  markdown: {
+    // lineNumbers: true,
+  },
+  lastUpdated: true,
 })
 
 
@@ -27,7 +32,7 @@ function nav(): DefaultTheme.NavItem[] {
   return [
     { text: 'Home', link: '/', activeMatch: "/", },
     {
-      text: "Notes", link: "/notes/multi-github-account", activeMatch: "/notes/"
+      text: "Notes", link: "/notes/vitepress-init", activeMatch: "/notes/"
     }
   ]
 }
@@ -39,6 +44,7 @@ function sidebarNotes(): DefaultTheme.SidebarItem[] {
       collapsed: false,
       items: [
         { text: 'Multiple Github accounts on same machine', link: '/multi-github-account' },
+        { text: 'VitePress initialization and setup', link: '/vitepress-init' },
       ]
     }
   ]
