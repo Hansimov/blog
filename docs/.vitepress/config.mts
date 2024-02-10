@@ -57,6 +57,16 @@ function sidebarNotes(): DefaultTheme.SidebarItem[] {
         { text: 'VitePress initialization and setup', link: '/vitepress-init' },
         { text: 'Multiple Github accounts on same machine', link: '/multi-github-account' },
       ]
+    },
+    {
+      text: "Configs",
+      collapsed: false,
+      items: [
+        {
+          text: "Tmux Configs",
+          link: "/tmux-configs"
+        }
+      ]
     }
   ]
 }
