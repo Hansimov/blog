@@ -65,6 +65,14 @@ function sidebarNotes(): DefaultTheme.SidebarItem[] {
         {
           text: "Tmux Configs",
           link: "/tmux-configs"
+        },
+        {
+          text: "Bash Aliases",
+          link: "/bash-aliases"
+        },
+        {
+          text: "Git aliases on Windows",
+          link: "/git-bash-aliases"
         }
       ]
     }
