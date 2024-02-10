@@ -75,15 +75,15 @@ function sidebarNotes(): DefaultTheme.SidebarItem[] {
       collapsed: false,
       items: [
         {
-          text: "Tmux Configs",
+          text: "(Linux) Tmux configs",
           link: "/tmux-configs"
         },
         {
-          text: "Bash Aliases",
+          text: "(Linux) Bash aliases",
           link: "/bash-aliases"
         },
         {
-          text: "Git aliases on Windows",
+          text: "(Windows) Git aliases",
           link: "/git-bash-aliases"
         }
       ]
