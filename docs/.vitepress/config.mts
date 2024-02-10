@@ -17,6 +17,17 @@ export default defineConfig({
       }
     },
     outline: "deep",
+    search: {
+      provider: "local",
+      options: {
+        miniSearch: {
+          searchOptions: {
+            fuzzy: false,
+            combineWith: "AND"
+          }
+        },
+      }
+    },
     socialLinks: [
       { icon: 'github', link: 'https://github.com/Hansimov/blog' }
     ]
