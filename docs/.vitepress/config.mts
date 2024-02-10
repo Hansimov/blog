@@ -1,4 +1,4 @@
-import { defineConfig, type DefaultTheme } from 'vitepress'
+import { defineConfig, type DefaultTheme } from "vitepress"
 
 // https://vitepress.dev/reference/site-config
 // https://github.com/vuejs/vitepress/blob/main/docs/.vitepress/config/en.ts
@@ -29,7 +29,7 @@ export default defineConfig({
       }
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/Hansimov/blog' }
+      { icon: "github", link: "https://github.com/Hansimov/blog" }
     ]
   },
   markdown: {
@@ -41,7 +41,9 @@ export default defineConfig({
 
 function nav(): DefaultTheme.NavItem[] {
   return [
-    { text: 'Home', link: '/', activeMatch: "/", },
+    {
+      text: "Home", link: "/", activeMatch: "/",
+    },
     {
       text: "Notes", link: "/notes/vitepress-init", activeMatch: "/notes/"
     }
@@ -51,11 +53,21 @@ function nav(): DefaultTheme.NavItem[] {
 function sidebarNotes(): DefaultTheme.SidebarItem[] {
   return [
     {
-      text: 'Workflows',
+      text: "Workflows",
       collapsed: false,
       items: [
-        { text: 'VitePress initialization and setup', link: '/vitepress-init' },
-        { text: 'Multiple Github accounts on same machine', link: '/multi-github-account' },
+        {
+          text: "VitePress initialization and setup",
+          link: "/vitepress-init"
+        },
+        {
+          text: "Multiple Github accounts on same machine",
+          link: "/multi-github-account"
+        },
+        {
+          text: "Use FRP proxy to forward network traffic",
+          link: "/frp-proxy"
+        }
       ]
     },
     {
