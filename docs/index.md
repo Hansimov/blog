@@ -7,13 +7,10 @@ hero:
   # name: "Hansimov"
   # text: "Software and AI"
   tagline: It's never too late. Just do it better.
-  # actions:
-  #   - theme: brand
-  #     text: Markdown Examples
-  #     link: /markdown-examples
-  #   - theme: alt
-  #     text: API Examples
-  #     link: /api-examples
+  actions:
+    - theme: brand
+      text: Notes
+      link: /notes/vitepress-init
 
 features:
   - title: Software

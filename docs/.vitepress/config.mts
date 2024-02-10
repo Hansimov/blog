@@ -43,8 +43,8 @@ function sidebarNotes(): DefaultTheme.SidebarItem[] {
       text: 'Workflows',
       collapsed: false,
       items: [
-        { text: 'Multiple Github accounts on same machine', link: '/multi-github-account' },
         { text: 'VitePress initialization and setup', link: '/vitepress-init' },
+        { text: 'Multiple Github accounts on same machine', link: '/multi-github-account' },
       ]
     }
   ]

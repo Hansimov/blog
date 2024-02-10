@@ -105,6 +105,6 @@ See: https://github.com/Hansimov/blog/tree/main/.github/workflows/deploy.yml
 
 - Do not git ignore `package-lock.json`, as it is required for the GitHub Actions to install the dependencies.
 
-In repo webpage, go to **Settings** > **Pages** > **Build and deployment** > **Source**, select `GitHub Actions`.
+In repo webpage, go to **Settings** > **Pages** > **Build and deployment** > **Source**, select __GitHub Actions__.
 
-Then push changes to main branch, and the site would be built and available at `https://hansimov.github.io/blog`.
+Then push changes to main branch, and the site would be built and available at https://hansimov.github.io/blog.
