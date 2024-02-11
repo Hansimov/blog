@@ -1,7 +1,12 @@
+import { h } from 'vue'
 import DefaultTheme from 'vitepress/theme'
-import LayoutWithComments from './LayoutWithComments.vue'
+import Comments from './components/Comments.vue'
 
 export default {
     extends: DefaultTheme,
-    Layout: LayoutWithComments
+    Layout() {
+        return h(DefaultTheme.Layout, null, {
+            'doc-after': () => h(Comments)
+        })
+    }
 }
