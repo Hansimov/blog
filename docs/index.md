@@ -7,17 +7,14 @@ hero:
   # name: "Hansimov"
   # text: "Software and AI"
   tagline: It's never too late. Just do it better.
-  actions:
-    - theme: brand
-      text: Notes
-      link: /notes/vitepress-init
+  # actions:
+  #   - theme: brand
+  #     text: Notes
+  #     link: /notes/vitepress-init
 
-features:
-  - title: Software
-    details: Methodologies, Workflows, Techniques, Tricks
-  - title: AI
-    details: Algorithms, Applications
-  - title: Thoughts
-    details: Learning, Thinking, Sharing
 ---
 
+
+<div align="center">
+  <img style="width:800px; max-width:95vw;" src="https://ghchart.rshah.org/Hansimov">
+</div>

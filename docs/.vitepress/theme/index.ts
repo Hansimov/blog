@@ -1,4 +1,5 @@
 import { h } from 'vue'
+import "./custom.css"
 import DefaultTheme from 'vitepress/theme'
 import Comments from './components/Comments.vue'
 
