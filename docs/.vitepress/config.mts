@@ -67,6 +67,10 @@ function sidebarNotes(): DefaultTheme.SidebarItem[] {
         {
           text: "Use FRP proxy to forward network traffic",
           link: "/frp-proxy"
+        },
+        {
+          text: "Run LLMs locally wtih llama-cpp",
+          link: "/llama-cpp"
         }
       ]
     },
