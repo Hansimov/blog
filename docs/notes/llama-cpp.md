@@ -94,13 +94,14 @@ This will launch a LLM server which supports requests in OpenAI API format.
 #   you might need to unset `http(s)_proxy` before running the serive
 # or set `no_proxy` as below:
 export no_proxy=localhost,127.0.0.1,127.0.0.0,127.0.1.1,local.home
+
+# If you have multiple GPUs, you can specify which one to use:
+#   by default, llama-cpp will use all GPUs and allocate the memory equally
+export CUDA_VISIBLE_DEVICES=0,1,2
 ```
 
 ```sh
 # [Recommend] qwen1.5-14b-chat (q5_k_m)
-# Benchmark on GTX 1080ti:
-#   - (q5_k_m, n_ctx=8192): [16GB VRAM, 23 t/s]
-#   - (q2_k,   n_ctx=1024): [ 8GB VRAM, 28 t/s]
 python -m llama_cpp.server --model "./models/qwen1_5-14b-chat-q5_k_m.gguf" --model_alias "qwen1.5-14b-chat" --host 0.0.0.0 --port 13333 --n_ctx 8192 --n_gpu_layers 41 --interrupt_requests True
 
 # qwen1.5-1b-chat (q2_k)
@@ -108,6 +109,15 @@ python -m llama_cpp.server --model "./models/qwen1_5-7b-chat-q5_k_m.gguf" --mode
 
 # dolphin-2.5-mixtral-8x7b (Q5_K_M)
 python -m llama_cpp.server --model "./models/dolphin-2.5-mixtral-8x7b.Q5_K_M.gguf" --model_alias "dolphin-2.5-mixtral-8x7b" --host 0.0.0.0 --port 13333 --n_ctx 16384 --n_gpu_layers 28 --interrupt_requests True
+```
+
+```sh
+# Inference on 3 * GTX 1080ti:
+#   - (q5_k_m, n_ctx=8192):  [16GB VRAM, ~ 23 t/s]
+#   - (q2_k,   n_ctx=1024):  [ 8GB VRAM, ~ 28 t/s]
+
+# Inference on RTX Ada 6000:
+#   - (q5_k_m, n_ctx=32768): [40GB VRAM, ~ 60 t/s]
 ```
 
 You can also go to API docs to test requests interactively: `http://127.0.0.1:13333/docs`.
