@@ -26,7 +26,7 @@ curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/relea
 sudo dpkg -i cloudflared.deb
 ```
 
-## Create tunnel
+## Setup tunnel
 
 ### Login
 
@@ -44,36 +44,24 @@ If you wish to copy your credentials to a server, they have been saved to:
 ~/.cloudflared/cert.pem
 ```
 
-::: tip Sometimes there would be timeout of the connection, you might need to switch to another proxy that is able to access cloudflare.
+::: warning Sometimes connection would be timeout, you might need to use a proxy that is able to access cloudflare.
 :::
 
 ### Create tunnel
 
-#### Method 1: CLI - [Recommended]
 
 ```sh
 # cloudflared tunnel create <tunnel-name>
 cloudflared tunnel create chat
 ```
 
-::: tip See: Create tunnel in remote (Dashboard):
-https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/create-remote-tunnel
-:::
-
-#### Method 2: Dashboard
-
-Go to CF index dash:
-
-**Sidebar** > **Zero Trust** > **Networks** > **Tunnels** > **Create a tunnel**
-
-- Select your connector: **Cloudflared**
-- Name your tunnel: **chat**
-- Save tunnel
-
 ::: tip See: Create tunnel locally (CLI):
 https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/create-local-tunnel
 :::
 
+::: warning You might encounter following issue:
+> failed to create tunnel: Create Tunnel API call failed: REST request failed: Post "https://api.cloudflare.com/client/v4/accounts/0eaac800b72d47966d3858a5a24965d0/cfd_tunnel": net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)
+:::
 
 ### Route tunnel to dns domain
 
@@ -97,3 +85,5 @@ Now you can visit **https://chat.olivaw.space** to access the local service runn
 * 使用Cloudflare Argo Tunnel快速免公网IP建站
   * https://blog.zapic.moe/archives/tutorial-176.html
 * `cloudflared tunnel --help`
+* Useful commands · Cloudflare Zero Trust docs
+  * https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/configure-tunnels/local-management/tunnel-useful-commands
