@@ -71,6 +71,10 @@ function sidebarNotes(): DefaultTheme.SidebarItem[] {
         {
           text: "Run LLMs locally wtih llama-cpp",
           link: "/llama-cpp"
+        },
+        {
+          text: "Port local service to public with Cloudflare Tunnel",
+          link: "/cf-tunnel"
         }
       ]
     },
