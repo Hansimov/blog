@@ -95,6 +95,16 @@ function sidebarNotes(): DefaultTheme.SidebarItem[] {
           link: "/git-bash-aliases"
         }
       ]
+    },
+    {
+      text: "Scripts",
+      collapsed: false,
+      items: [
+        {
+          text: "Logger template",
+          link: "/logger"
+        }
+      ]
     }
   ]
 }
