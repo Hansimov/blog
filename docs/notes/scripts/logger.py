@@ -212,29 +212,31 @@ def shell_cmd(cmd, getoutput=False, showcmd=True, env=None):
 
 
 class Runtimer:
+    def __init__(self, is_log=True):
+        self.is_log = is_log
+
     def __enter__(self):
-        self.t1, _ = self.start_time()
+        self.start_time()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.t2, _ = self.end_time()
-        self.elapsed_time(self.t2 - self.t1)
+        self.end_time()
+        self.elapsed_time()
 
     def start_time(self):
-        t1 = datetime.datetime.now()
-        self.logger_time("start", t1)
-        return t1, self.time2str(t1)
+        self.t1 = datetime.datetime.now()
+        self.logger_time("start", self.t1)
+        return self.t1
 
     def end_time(self):
-        t2 = datetime.datetime.now()
-        self.logger_time("end", t2)
-        return t2, self.time2str(t2)
+        self.t2 = datetime.datetime.now()
+        self.logger_time("end", self.t2)
+        return self.t2
 
-    def elapsed_time(self, dt=None):
-        if dt is None:
-            dt = self.t2 - self.t1
-        self.logger_time("elapsed", dt)
-        return dt, self.time2str(dt)
+    def elapsed_time(self):
+        self.dt = self.t2 - self.t1
+        self.logger_time("elapsed", self.dt)
+        return self.dt
 
     def logger_time(self, time_type, t):
         time_types = {
@@ -242,27 +244,32 @@ class Runtimer:
             "end": "End",
             "elapsed": "Elapsed",
         }
-        time_str = add_fillers(
-            colored(
-                f"{time_types[time_type]} time: [ {self.time2str(t)} ]",
-                "light_magenta",
-            ),
-            fill_side="both",
-        )
-        logger.line(time_str)
+        if self.is_log:
+            time_str = add_fillers(
+                colored(
+                    f"{time_types[time_type]} time: [ {self.time2str(t)} ]",
+                    "light_magenta",
+                ),
+                fill_side="both",
+            )
+            logger.line(time_str)
 
     # Convert time to string
-    def time2str(self, t):
+    def time2str(self, t, unit_sep=" "):
         datetime_str_format = "%Y-%m-%d %H:%M:%S"
         if isinstance(t, datetime.datetime):
             return t.strftime(datetime_str_format)
         elif isinstance(t, datetime.timedelta):
             hours = t.seconds // 3600
-            hour_str = f"{hours} hr" if hours > 0 else ""
+            hour_str = f"{hours}{unit_sep}hr" if hours > 0 else ""
             minutes = (t.seconds // 60) % 60
-            minute_str = f"{minutes:>2} min" if minutes > 0 else ""
+            minute_str = f"{minutes:>2}{unit_sep}min" if minutes > 0 else ""
             seconds = t.seconds % 60
-            second_str = f"{seconds:>2} s"
+            miliseconds = t.microseconds // 1000
+            precised_seconds = seconds + miliseconds / 1000
+            second_str = (
+                f"{precised_seconds:>.1f}{unit_sep}s" if precised_seconds > 0 else ""
+            )
             time_str = " ".join([hour_str, minute_str, second_str]).strip()
             return time_str
         else:
