@@ -53,7 +53,7 @@ function nav(): DefaultTheme.NavItem[] {
 function sidebarNotes(): DefaultTheme.SidebarItem[] {
   return [
     {
-      text: "Workflows",
+      text: "Networks",
       collapsed: false,
       items: [
         {
@@ -69,12 +69,22 @@ function sidebarNotes(): DefaultTheme.SidebarItem[] {
           link: "/frp-proxy"
         },
         {
-          text: "Run LLMs locally wtih llama-cpp",
+          text: "Port local service to public with Cloudflare Tunnel",
+          link: "/cf-tunnel"
+        }
+      ]
+    },
+    {
+      text: "LLMs",
+      collapsed: false,
+      items: [
+        {
+          text: "Run LLMs locally with llama-cpp",
           link: "/llama-cpp"
         },
         {
-          text: "Port local service to public with Cloudflare Tunnel",
-          link: "/cf-tunnel"
+          text: "Run LLMs locally with vllm",
+          link: "/vllm"
         }
       ]
     },

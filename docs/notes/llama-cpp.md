@@ -1,4 +1,4 @@
-# Run LLMs locally wtih llama-cpp
+# Run LLMs locally with llama-cpp
 
 Notes for running LLM in local machine with CPU and GPUs.
 
@@ -104,7 +104,7 @@ export CUDA_VISIBLE_DEVICES=0,1,2
 # [Recommend] qwen1.5-14b-chat (q5_k_m)
 python -m llama_cpp.server --model "./models/qwen1_5-14b-chat-q5_k_m.gguf" --model_alias "qwen1.5-14b-chat" --host 0.0.0.0 --port 13333 --n_ctx 8192 --n_gpu_layers 41 --interrupt_requests True
 
-# qwen1.5-1b-chat (q2_k)
+# qwen1.5-7b-chat (q2_k)
 python -m llama_cpp.server --model "./models/qwen1_5-7b-chat-q5_k_m.gguf" --model_alias "qwen-1.5-7b-chat" --host 0.0.0.0 --port 13333 --n_ctx 16384 --n_gpu_layers 33 --interrupt_requests True
 
 # dolphin-2.5-mixtral-8x7b (Q5_K_M)
@@ -144,4 +144,28 @@ python -m llama_cpp.server --help
 <<< @/notes/configs/llama-cpp-options.txt
 
 ::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/llama-cpp-options.txt
+:::
+
+## Common issues
+
+### Extreme low performance
+
+```sh{5}
+llama_print_timings:        load time =    3436.49 ms
+llama_print_timings:      sample time =      30.06 ms /    12 runs   (    2.51 ms per token,   399.16 tokens per second)
+llama_print_timings: prompt eval time =    3432.49 ms /  4472 tokens (    0.77 ms per token,  1302.84 tokens per second)
+llama_print_timings:        eval time =     240.56 ms /    11 runs   (   21.87 ms per token,    45.73 tokens per second)
+llama_print_timings:       total time =   57699.92 ms /  4483 tokens
+```
+
+::: tip See: Incredibly slow response time · Issue #49 · abetlen/llama-cpp-python
+* https://github.com/abetlen/llama-cpp-python/issues/49
+:::
+
+::: tip See: Performance issues with high level API · Issue #232 · abetlen/llama-cpp-python
+* https://github.com/abetlen/llama-cpp-python/issues/232
+:::
+
+::: tip See: llama-cpp-python not using GPU on m1 · Issue #756 · abetlen/llama-cpp-python
+* https://github.com/abetlen/llama-cpp-python/issues/756
 :::
