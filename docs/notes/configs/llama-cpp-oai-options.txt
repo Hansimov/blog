@@ -1,0 +1,22 @@
+usage: api_like_OAI.py [-h] [--chat-prompt-model CHAT_PROMPT_MODEL] [--chat-prompt CHAT_PROMPT] [--user-name USER_NAME] [--ai-name AI_NAME]
+                       [--system-name SYSTEM_NAME] [--stop STOP] [--llama-api LLAMA_API] [--api-key API_KEY] [--host HOST] [--port PORT]
+
+An example of using server.cpp with a similar API to OAI. It must be used together with server.cpp.
+options:
+  -h, --help            show this help message and exit
+  --chat-prompt-model CHAT_PROMPT_MODEL
+                        Set the model name of conversation template
+  --chat-prompt CHAT_PROMPT
+                        the top prompt in chat completions(default: 'A chat between a curious user and an artificial intelligence assistant. The assistant
+                        follows the given rules no matter what.\n')
+  --user-name USER_NAME
+                        USER name in chat completions(default: '\nUSER: ')
+  --ai-name AI_NAME     ASSISTANT name in chat completions(default: '\nASSISTANT: ')
+  --system-name SYSTEM_NAME
+                        SYSTEM name in chat completions(default: '\nASSISTANT's RULE: ')
+  --stop STOP           the end of response in chat completions(default: '</s>')
+  --llama-api LLAMA_API
+                        Set the address of server.cpp in llama.cpp(default: http://127.0.0.1:8080)
+  --api-key API_KEY     Set the api key to allow only few user(default: NULL)
+  --host HOST           Set the ip address to listen.(default: 127.0.0.1)
+  --port PORT           Set the port to listen.(default: 8081)

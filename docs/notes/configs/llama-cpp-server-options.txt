@@ -1,0 +1,70 @@
+usage: ./server [options]
+
+options:
+  -h, --help                show this help message and exit
+  -v, --verbose             verbose output (default: disabled)
+  -t N, --threads N         number of threads to use during computation (default: 48)
+  -tb N, --threads-batch N  number of threads to use during batch and prompt processing (default: same as --threads)
+  -c N, --ctx-size N        size of the prompt context (default: 512)
+  --rope-scaling {none,linear,yarn}
+                            RoPE frequency scaling method, defaults to linear unless specified by the model
+  --rope-freq-base N        RoPE base frequency (default: loaded from model)
+  --rope-freq-scale N       RoPE frequency scaling factor, expands context by a factor of 1/N
+  --yarn-ext-factor N       YaRN: extrapolation mix factor (default: 1.0, 0.0 = full interpolation)
+  --yarn-attn-factor N      YaRN: scale sqrt(t) or attention magnitude (default: 1.0)
+  --yarn-beta-slow N        YaRN: high correction dim or alpha (default: 1.0)
+  --yarn-beta-fast N        YaRN: low correction dim or beta (default: 32.0)
+  -b N, --batch-size N      batch size for prompt processing (default: 512)
+  --memory-f32              use f32 instead of f16 for memory key+value (default: disabled)
+                            not recommended: doubles context memory required and no measurable increase in quality
+  --mlock                   force system to keep model in RAM rather than swapping or compressing
+  --no-mmap                 do not memory-map model (slower load but may reduce pageouts if not using mlock)
+  --numa TYPE               attempt optimizations that help on some NUMA systems
+                              - distribute: spread execution evenly over all nodes
+                              - isolate: only spawn threads on CPUs on the node that execution started on
+                              - numactl: use the CPU map provided my numactl
+  -ngl N, --n-gpu-layers N
+                            number of layers to store in VRAM
+  -sm SPLIT_MODE, --split-mode SPLIT_MODE
+                            how to split the model across multiple GPUs, one of:
+                              - none: use one GPU only
+                              - layer (default): split layers and KV across GPUs
+                              - row: split rows across GPUs
+  -ts SPLIT --tensor-split SPLIT
+                            fraction of the model to offload to each GPU, comma-separated list of proportions, e.g. 3,1
+  -mg i, --main-gpu i       the GPU to use for the model (with split-mode = none),
+                            or for intermediate results and KV (with split-mode = row)
+  -m FNAME, --model FNAME
+                            model path (default: models/7B/ggml-model-f16.gguf)
+  -a ALIAS, --alias ALIAS
+                            set an alias for the model, will be added as `model` field in completion response
+  --lora FNAME              apply LoRA adapter (implies --no-mmap)
+  --lora-base FNAME         optional model to use as a base for the layers modified by the LoRA adapter
+  --host                    ip address to listen (default  (default: 127.0.0.1)
+  --port PORT               port to listen (default  (default: 8080)
+  --path PUBLIC_PATH        path from which to serve static files (default examples/server/public)
+  --api-key API_KEY         optional api key to enhance server security. If set, requests must include this key for access.
+  --api-key-file FNAME      path to file containing api keys delimited by new lines. If set, requests must include one of the keys for access.
+  -to N, --timeout N        server read/write timeout in seconds (default: 600)
+  --embedding               enable embedding vector output (default: disabled)
+  -np N, --parallel N       number of slots for process requests (default: 1)
+  -cb, --cont-batching      enable continuous batching (a.k.a dynamic batching) (default: disabled)
+  -spf FNAME, --system-prompt-file FNAME
+                            set a file to load a system prompt (initial prompt of all slots), this is useful for chat applications.
+  -ctk TYPE, --cache-type-k TYPE
+                            KV cache data type for K (default: f16)
+  -ctv TYPE, --cache-type-v TYPE
+                            KV cache data type for V (default: f16)
+  --mmproj MMPROJ_FILE      path to a multimodal projector file for LLaVA.
+  --log-format              log output format: json or text (default: json)
+  --log-disable             disables logging to a file.
+  --slots-endpoint-disable  disables slots monitoring endpoint.
+  --metrics                 enable prometheus compatible metrics endpoint (default: disabled).
+
+  -n, --n-predict           maximum tokens to predict (default: -1)
+  --override-kv KEY=TYPE:VALUE
+                            advanced option to override model metadata by key. may be specified multiple times.
+                            types: int, float, bool. example: --override-kv tokenizer.ggml.add_bos_token=bool:false
+  -gan N, --grp-attn-n N    set the group attention factor to extend context size through self-extend(default: 1=disabled), used together with group attention width `--grp-attn-w`  -gaw N, --grp-attn-w N    set the group attention width to extend context size through self-extend(default: 512), used together with group attention factor `--grp-attn-n`  --chat-template JINJA_TEMPLATE
+                            set custom jinja chat template (default: template taken from model's metadata)
+                            Note: only commonly used templates are accepted, since we don't have jinja parser
