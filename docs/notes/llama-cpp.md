@@ -30,8 +30,6 @@ conda install nvidia/label/cuda-11.7.0::cuda-toolkit
 
 ### Install llama-ccp
 
-#### llama-cpp
-
 ```sh
 git clone https://github.com/ggerganov/llama.cpp
 cd llama.cpp
@@ -53,7 +51,7 @@ cmake --build . --config Release
 - https://github.com/ggerganov/llama.cpp/issues/1420
 :::
 
-#### llama-cpp-python
+### Install llama-cpp-python - [optional]
 
 This package is Python Bindings for llama.cpp, which provides OpenAI format compatibility.
 
