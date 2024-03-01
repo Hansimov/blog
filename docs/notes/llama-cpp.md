@@ -30,7 +30,7 @@ conda install nvidia/label/cuda-11.7.0::cuda-toolkit
 
 ### Install llama-ccp
 
-#### Method 1: llama-cpp
+#### llama-cpp
 
 ```sh
 git clone https://github.com/ggerganov/llama.cpp
@@ -53,9 +53,9 @@ cmake --build . --config Release
 - https://github.com/ggerganov/llama.cpp/issues/1420
 :::
 
-#### Method 2: llama-cpp-python
+#### llama-cpp-python
 
-This package is Python Bindings for llama.cpp, which enables running LLM locally with both CPU and GPUs.
+This package is Python Bindings for llama.cpp, which provides OpenAI format compatibility.
 
 ```sh
 LLAMA_CUBLAS=1 CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install llama-cpp-python[server]
@@ -74,6 +74,9 @@ LLAMA_CUBLAS=1 CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install llama-cpp-python[serve
   - https://llama-cpp-python.readthedocs.io/en/latest/server/#installation
 :::
 
+
+## Download models
+
 ### Install huggingface_hub
 
 This is used to use `huggingface-cli` to download models.
@@ -86,8 +89,7 @@ pip install 'huggingface_hub[cli,torch]'
   - https://huggingface.co/docs/huggingface_hub/installation#install-optional-dependencies
 :::
 
-
-## Download models
+### Download from huggingface
 
 ```sh
 # For PRC users
@@ -213,7 +215,7 @@ You can also go to API docs to test requests interactively: `http://127.0.0.1:13
   - https://llama-cpp-python.readthedocs.io/en/latest/server/#running-the-server
 :::
 
-## Chat with `openai` package
+## Requests to server
 
 After the server is running, you can chat with api with following codes:
 
@@ -255,7 +257,7 @@ python api_like_OAI.py --help
 
 <<< @/notes/configs/llama-cpp-oai-options.txt
 
-::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/llama-oai-server-options.txt
+::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/llama-cpp-oai-options.txt
 :::
 
 ## Common issues
