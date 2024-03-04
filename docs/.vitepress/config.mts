@@ -2,6 +2,7 @@ import { defineConfig, type DefaultTheme } from "vitepress"
 
 // https://vitepress.dev/reference/site-config
 // https://github.com/vuejs/vitepress/blob/main/docs/.vitepress/config/en.ts
+// https://github.com/vuejs/vitepress/blob/main/template/.vitepress/config.js
 
 export default defineConfig({
   title: "Hansimov's Blog",
@@ -9,13 +10,8 @@ export default defineConfig({
   base: "/blog/",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
-    nav: nav(),
-    sidebar: {
-      "/notes/": {
-        base: "/notes/",
-        items: sidebarNotes()
-      }
-    },
+    nav: navItems(),
+    sidebar: sidebarItems(),
     outline: "deep",
     search: {
       provider: "local",
@@ -39,22 +35,23 @@ export default defineConfig({
 })
 
 
-function nav(): DefaultTheme.NavItem[] {
+function navItems(): DefaultTheme.NavItem[] {
   return [
     {
-      text: "Home", link: "/", activeMatch: "/",
+      text: "Home", link: "/"
     },
     {
-      text: "Notes", link: "/notes/vitepress-init", activeMatch: "/notes/"
+      text: "Notes", link: "/notes/vitepress-init"
     }
   ]
 }
 
-function sidebarNotes(): DefaultTheme.SidebarItem[] {
+function sidebarItems(): DefaultTheme.SidebarItem[] {
   return [
     {
       text: "Networks",
       collapsed: false,
+      base: "/notes",
       items: [
         {
           text: "VitePress initialization and setup",
@@ -77,6 +74,7 @@ function sidebarNotes(): DefaultTheme.SidebarItem[] {
     {
       text: "LLMs",
       collapsed: false,
+      base: "/notes",
       items: [
         {
           text: "Run LLMs locally with llama-cpp",
@@ -91,6 +89,7 @@ function sidebarNotes(): DefaultTheme.SidebarItem[] {
     {
       text: "Configs",
       collapsed: false,
+      base: "/notes",
       items: [
         {
           text: "(Linux) Tmux configs",
@@ -109,6 +108,7 @@ function sidebarNotes(): DefaultTheme.SidebarItem[] {
     {
       text: "Scripts",
       collapsed: false,
+      base: "/notes",
       items: [
         {
           text: "Logger template",
