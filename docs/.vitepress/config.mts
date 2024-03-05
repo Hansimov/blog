@@ -42,79 +42,97 @@ function navItems(): DefaultTheme.NavItem[] {
     },
     {
       text: "Notes", link: "/notes/vitepress-init"
+    },
+    {
+      text: "Researches", link: "/researches/vit"
     }
   ]
 }
 
 function sidebarItems(): DefaultTheme.SidebarItem[] {
-  return [
-    {
-      text: "Networks",
-      collapsed: false,
-      base: "/notes",
-      items: [
-        {
-          text: "VitePress initialization and setup",
-          link: "/vitepress-init"
-        },
-        {
-          text: "Multiple Github accounts on same machine",
-          link: "/multi-github-account"
-        },
-        {
-          text: "Use FRP proxy to forward network traffic",
-          link: "/frp-proxy"
-        },
-        {
-          text: "Port local service to public with Cloudflare Tunnel",
-          link: "/cf-tunnel"
-        }
-      ]
-    },
-    {
-      text: "LLMs",
-      collapsed: false,
-      base: "/notes",
-      items: [
-        {
-          text: "Run LLMs locally with llama-cpp",
-          link: "/llama-cpp"
-        },
-        {
-          text: "Run LLMs locally with vllm",
-          link: "/vllm"
-        }
-      ]
-    },
-    {
-      text: "Configs",
-      collapsed: false,
-      base: "/notes",
-      items: [
-        {
-          text: "(Linux) Tmux configs",
-          link: "/tmux-configs"
-        },
-        {
-          text: "(Linux) Bash aliases",
-          link: "/bash-aliases"
-        },
-        {
-          text: "(Windows) Git aliases",
-          link: "/git-bash-aliases"
-        }
-      ]
-    },
-    {
-      text: "Scripts",
-      collapsed: false,
-      base: "/notes",
-      items: [
-        {
-          text: "Logger template",
-          link: "/logger"
-        }
-      ]
-    }
-  ]
+  return {
+    "/notes/": [
+      {
+        text: "Networks",
+        base: "/notes",
+        collapsed: false,
+        items: [
+          {
+            text: "VitePress initialization and setup",
+            link: "/vitepress-init"
+          },
+          {
+            text: "Multiple Github accounts on same machine",
+            link: "/multi-github-account"
+          },
+          {
+            text: "Use FRP proxy to forward network traffic",
+            link: "/frp-proxy"
+          },
+          {
+            text: "Port local service to public with Cloudflare Tunnel",
+            link: "/cf-tunnel"
+          }
+        ]
+      },
+      {
+        text: "LLMs",
+        collapsed: false,
+        base: "/notes",
+        items: [
+          {
+            text: "Run LLMs locally with llama-cpp",
+            link: "/llama-cpp"
+          },
+          {
+            text: "Run LLMs locally with vllm",
+            link: "/vllm"
+          }
+        ]
+      },
+      {
+        text: "Configs",
+        collapsed: false,
+        base: "/notes",
+        items: [
+          {
+            text: "(Linux) Tmux configs",
+            link: "/tmux-configs"
+          },
+          {
+            text: "(Linux) Bash aliases",
+            link: "/bash-aliases"
+          },
+          {
+            text: "(Windows) Git aliases",
+            link: "/git-bash-aliases"
+          }
+        ]
+      },
+      {
+        text: "Scripts",
+        collapsed: false,
+        base: "/notes",
+        items: [
+          {
+            text: "Logger template",
+            link: "/logger"
+          }
+        ]
+      }
+    ],
+    "/researches/": [
+      {
+        text: "Transformers",
+        collapsed: false,
+        base: "/researches",
+        items: [
+          {
+            text: "Vision Transformers",
+            link: "/vit"
+          }
+        ]
+      }
+    ]
+  }
 }
