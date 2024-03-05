@@ -117,6 +117,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "Logger template",
             link: "/logger"
+          },
+          {
+            text: "VSCode snippets",
+            link: "/vscode-snippets"
           }
         ]
       }
