@@ -1,3 +1,20 @@
-.tagline{
+.tagline {
     text-align: center;
+}
+
+/* footnote */
+f {
+    font-size: small;
+    color: SteelBlue;
+}
+
+/* mark, emphasis */
+m {
+    /* font-weight: bold; */
+    color: HotPink;
+}
+
+/* link: no decoration */
+a {
+    text-decoration: none !important;
 }
