@@ -1,4 +1,5 @@
 import { defineConfig, type DefaultTheme } from "vitepress"
+import timeline from "vitepress-markdown-timeline"
 
 // https://vitepress.dev/reference/site-config
 // https://github.com/vuejs/vitepress/blob/main/docs/.vitepress/config/en.ts
@@ -30,6 +31,9 @@ export default defineConfig({
   },
   markdown: {
     // lineNumbers: true,
+    config: (md) => {
+      md.use(timeline);
+    }
   },
   lastUpdated: true,
 })
