@@ -44,7 +44,7 @@ function navItems(): DefaultTheme.NavItem[] {
       text: "Notes", link: "/notes/vitepress-init"
     },
     {
-      text: "Researches", link: "/researches/faq"
+      text: "Research", link: "/research/faq"
     }
   ]
 }
@@ -125,15 +125,16 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
         ]
       }
     ],
-    "/researches/": [
+    "/research/": [
       {
         text: "一些自问自答",
-        link: "/researches/faq"
+        link: "/research/faq"
+      },
       },
       {
         text: "Transformers",
         collapsed: false,
-        base: "/researches",
+        base: "/research",
         items: [
           {
             text: "Vision Transformers",
