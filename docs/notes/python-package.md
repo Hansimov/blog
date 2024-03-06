@@ -93,6 +93,12 @@ Then build the package:
 python -m build
 ```
 
+Successful output:
+
+```sh
+Successfully built exp-pkg-0.0.1.tar.gz and exp_pkg-0.0.1-py3-none-any.whl
+```
+
 This would create new folders and files <f>(highlighted)</f> like below:
 
 ```sh{2-4,6}
@@ -107,35 +113,36 @@ working_dir/
 └── ...
 ```
 
-## Upload to TestPyPI
+## Upload to PyPI
 
 ### Create account
 
-::: tip Goto: https://test.pypi.org/account/register/
-:::
+Register
+on [TestPyPi <f>(Test)</f>](https://test.pypi.org/account/register)
+or [PyPi <f>(Production)</f>](https://pypi.org):
+- Need to verify email, and setup 2FA with Authenticator.
+- Need to save the Recovery codes.
+- Generate new API token.
 
 ::: warning PRC users might need proxy to make reCaptcha display correctly.
 :::
 
-Following the steps to finish register.
-
-Notes:
-- Need to verify email, and setup 2FA with Authenticator.
-- Need to save the Recovery codes.
-- Generate new API token.
 
 ### Configure token for twine
 
 Create `.pypirc` under user home directory, and add following content:
 
-```sh
+```sh{5-7}
 [testpypi]
+  username = __token__
+  password = pypi-...
+
+[pypi]
   username = __token__
   password = pypi-...
 ```
 
 <f>The password here is the API token generated above.</f>
-
 
 ### Upload package with twine
 
@@ -143,16 +150,22 @@ Create `.pypirc` under user home directory, and add following content:
 pip install --upgrade twine
 ```
 
-```sh
+```sh{4}
+# TestPyPI
 twine upload --repository testpypi dist/*
+# PyPI
+twine upload dist/*
 ```
 
 ## Install and test the package
 
 Install from TestPyPI:
 
-```sh
+```sh{4}
+# TestPyPI
 pip install --index-url https://test.pypi.org/simple/ --no-deps exp-pkg
+# PyPI
+pip install --no-deps exp-pkg
 ```
 
 Test the package:
