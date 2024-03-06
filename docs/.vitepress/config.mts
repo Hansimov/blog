@@ -134,6 +134,9 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
         text: "一些自问自答",
         link: "/research/faq"
       },
+      {
+        text: "写作计划",
+        link: "/research/plan"
       },
       {
         text: "Transformers",

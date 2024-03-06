@@ -14,7 +14,7 @@ layout: home
 
 ---
 
-<div align="center" style="font-size:40px; font-weight:bold; line-height:180px; color:gray;">
+<div align="center" style="font-size:40px; font-weight:bold; padding:50px 0px 50px 0px; color:gray;">
 It's never too late. Just do it better.
 </div>
 
