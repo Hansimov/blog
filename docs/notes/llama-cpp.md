@@ -105,8 +105,8 @@ huggingface-cli download Qwen/Qwen1.5-7B-Chat-GGUF qwen1_5-7b-chat-q2_k.gguf --l
 # qwen1.5-72b-chat (q2_k)
 huggingface-cli download Qwen/Qwen1.5-72B-Chat-GGUF qwen1_5-72b-chat-q2_k.gguf --local-dir ./models/ --local-dir-use-symlinks False
 
-# dolphin-2.5-mixtral-8x7b (Q5_K_M)
-huggingface-cli download TheBloke/dolphin-2.5-mixtral-8x7b-GGUF dolphin-2.5-mixtral-8x7b.Q5_K_M.gguf --local-dir ./models/ --local-dir-use-symlinks False
+# mixtral-8x7b-instruct (Q5_K_M)
+huggingface-cli download TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF mixtral-8x7b-instruct-v0.1.Q5_K_M.gguf --local-dir ./models/ --local-dir-use-symlinks False
 ```
 
 ::: tip See more GGUF formats of Qwen models:
@@ -151,13 +151,19 @@ cd build/bin
 - https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md
 :::
 
-Suggest to use `api_like_OAI.py` for OpenAI format compatibility:
+
+#### api_like_OAI.py
+
+You can also use `api_like_OAI.py` for OpenAI format compatibility:
 
 ```sh
 # [./build/bin/]
 wget https://raw.githubusercontent.com/ggerganov/llama.cpp/ea73dace986f05b6b35c799880c7eaea7ee578f4/examples/server/api_like_OAI.py
 python api_like_OAI.py --host 0.0.0.0 --port 13333 --llama-api http://127.0.0.1:13332
 ```
+
+::: warning `./server` now supports OpenAI format requests, so this method is no longer suggested.
+:::
 
 ::: tip See: Short guide to hosting your own llama.cpp openAI compatible web-server
 - https://www.reddit.com/r/LocalLLaMA/comments/15ak5k4/short_guide_to_hosting_your_own_llamacpp_openai
@@ -194,8 +200,8 @@ python -m llama_cpp.server --model "./models/qwen1_5-7b-chat-q5_k_m.gguf" --mode
 # qwen1.5-72b-chat (q2_k)
 python -m llama_cpp.server --model "./models/qwen1_5-72b-chat-q2_k.gguf" --model_alias "qwen-1.5-72b-chat" --host 0.0.0.0 --port 13333 --n_ctx 16384 --n_gpu_layers 81 --interrupt_requests True
 
-# dolphin-2.5-mixtral-8x7b (Q5_K_M)
-python -m llama_cpp.server --model "./models/dolphin-2.5-mixtral-8x7b.Q5_K_M.gguf" --model_alias "dolphin-2.5-mixtral-8x7b" --host 0.0.0.0 --port 13333 --n_ctx 16384 --n_gpu_layers 28 --interrupt_requests True
+# mixtral-8x7b (Q5_K_M)
+python -m llama_cpp.server --model "./models/mixtral-8x7b-instruct-v0.1.Q5_K_M.gguf" --model_alias "mixtral-8x7b" --host 0.0.0.0 --port 13333 --n_ctx 16384 --n_gpu_layers 33 --interrupt_requests True
 ```
 
 ```sh
