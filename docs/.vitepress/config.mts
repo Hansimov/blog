@@ -80,16 +80,31 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
         ]
       },
       {
+        text: "Softwares",
+        base: "/notes",
+        collapsed: false,
+        items: [
+          {
+            text: "Create VSCode snippets",
+            link: "/vscode-snippets"
+          },
+          {
+            text: "Packaging Python Projects",
+            link: "/python-package"
+          },
+        ]
+      },
+      {
         text: "LLMs",
         collapsed: false,
         base: "/notes",
         items: [
           {
-            text: "Run LLMs locally with llama-cpp",
+            text: "Run local LLM with llama-cpp",
             link: "/llama-cpp"
           },
           {
-            text: "Run LLMs locally with vllm",
+            text: "Run local LLM with vllm",
             link: "/vllm"
           }
         ]
@@ -119,12 +134,8 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
         base: "/notes",
         items: [
           {
-            text: "Logger template",
+            text: "Python logger template",
             link: "/logger"
-          },
-          {
-            text: "VSCode snippets",
-            link: "/vscode-snippets"
           }
         ]
       }
