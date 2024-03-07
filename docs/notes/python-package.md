@@ -159,6 +159,7 @@ Create `.pypirc` under user home directory, and add following content:
 twine upload --repository testpypi dist/*
 # PyPI
 twine upload dist/*
+twine upload dist/* --skip-existing
 ```
 
 ## Develop and test pakcage
@@ -191,6 +192,6 @@ python
 ### One Line: rebuild and upload
 
 ```sh
-python -m build && twine upload dist/*
+python -m build && twine upload dist/* --skip-existing
 # pip install -e .
 ```
