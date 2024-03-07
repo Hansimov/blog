@@ -42,6 +42,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [ ]
 
 [project.urls]
 Homepage = "https://github.com/<author>/exp-pkg"
@@ -49,6 +50,11 @@ Issues = "https://github.com/<author>/exp-pkg/issues"
 ```
 
 <f>Modify the highlighted lines with the info of your own project.</f>
+
+
+::: tip See: Writing your pyproject.toml
+- https://packaging.python.org/en/latest/guides/writing-pyproject-toml
+:::
 
 ### LICENSE
 
@@ -78,16 +84,18 @@ SOFTWARE.
 
 <f>Modify the year and author with yours.</f>
 
-## Build package
+## Packaging
+### Install dependencies
 
-Install and upgrade `pip` and `build`:
+Install and upgrade `pip`, `build` and `twine`:
 
 ```sh
-pip install --upgrade pip
-pip install --upgrade build
+pip install --upgrade pip build twine
 ```
 
-Then build the package:
+### Build package
+
+Build the package:
 
 ```sh
 python -m build
@@ -146,10 +154,6 @@ Create `.pypirc` under user home directory, and add following content:
 
 ### Upload package with twine
 
-```sh
-pip install --upgrade twine
-```
-
 ```sh{4}
 # TestPyPI
 twine upload --repository testpypi dist/*
@@ -157,9 +161,17 @@ twine upload --repository testpypi dist/*
 twine upload dist/*
 ```
 
-## Install and test the package
+## Develop and test pakcage
+### Install package
 
-Install from TestPyPI:
+Install locally (in development):
+
+```sh{2}
+# run in exp-pkg root path
+pip install -e .
+```
+
+Install from PyPI:
 
 ```sh{4}
 # TestPyPI
@@ -168,10 +180,17 @@ pip install --index-url https://test.pypi.org/simple/ --no-deps exp-pkg
 pip install --no-deps exp-pkg
 ```
 
-Test the package:
+### Test pakcage
 
 ```sh
 python
 >>> from exp_pkg import example
 >>> example.hello()
+```
+
+### One Line: rebuild and upload
+
+```sh
+python -m build && twine upload dist/*
+# pip install -e .
 ```
