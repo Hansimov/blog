@@ -9,15 +9,16 @@
 
 ### Project structure
 
-Suppose the package names `exp_pkg`. The structure of this project should be like:
+Suppose the package names `expkg`. The structure of this project should be like:
 
 ```sh
 working_dir/
+├── CHANGELOG.md
 ├── LICENSE
-├── pyproject.toml
 ├── README.md
+├── pyproject.toml
 ├── src/
-│   └── exp_pkg/
+│   └── expkg/
 │       ├── __init__.py
 │       └── example.py
 └── tests/
@@ -29,7 +30,7 @@ The `pyproject.toml` should be like:
 
 ```toml{2,3,5,7,17,18}
 [project]
-name = "exp-pkg"
+name = "expkg"
 version = "0.0.1"
 authors = [
     { name="<author>" },
@@ -45,8 +46,9 @@ classifiers = [
 dependencies = [ ]
 
 [project.urls]
-Homepage = "https://github.com/<author>/exp-pkg"
-Issues = "https://github.com/<author>/exp-pkg/issues"
+Homepage = "https://github.com/<author>/expkg"
+Issues = "https://github.com/<author>/expkg/issues"
+Changelog = "https://github.com/<author>/expkg/blob/main/CHANGELOG.md"
 ```
 
 <f>Modify the highlighted lines with the info of your own project.</f>
@@ -54,6 +56,7 @@ Issues = "https://github.com/<author>/exp-pkg/issues"
 
 ::: tip See: Writing your pyproject.toml
 - https://packaging.python.org/en/latest/guides/writing-pyproject-toml
+- https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#a-full-example
 :::
 
 ### LICENSE
@@ -104,7 +107,7 @@ python -m build
 Successful output:
 
 ```sh
-Successfully built exp-pkg-0.0.1.tar.gz and exp_pkg-0.0.1-py3-none-any.whl
+Successfully built expkg-0.0.1.tar.gz and expkg-0.0.1-py3-none-any.whl
 ```
 
 This would create new folders and files <f>(highlighted)</f> like below:
@@ -112,11 +115,11 @@ This would create new folders and files <f>(highlighted)</f> like below:
 ```sh{2-4,6}
 working_dir/
 ├── dist/
-│   ├── exp_pkg-0.0.1-py3-none-any.whl
-│   └── exp_pkg-0.0.1.tar.gz
+│   ├── expkg-0.0.1-py3-none-any.whl
+│   └── expkg-0.0.1.tar.gz
 ├── src/
-│   ├── exp_pkg.egg-info/
-│   ├── exp_pkg/
+│   ├── expkg.egg-info/
+│   ├── expkg/
 │   └── ...
 └── ...
 ```
@@ -168,7 +171,7 @@ twine upload dist/* --skip-existing
 Install locally (in development):
 
 ```sh{2}
-# run in exp-pkg root path
+# run in expkg root path
 pip install -e .
 ```
 
@@ -176,16 +179,16 @@ Install from PyPI:
 
 ```sh{4}
 # TestPyPI
-pip install --index-url https://test.pypi.org/simple/ --no-deps exp-pkg
+pip install --index-url https://test.pypi.org/simple/ --no-deps expkg
 # PyPI
-pip install --no-deps exp-pkg
+pip install --no-deps expkg
 ```
 
 ### Test pakcage
 
 ```sh
 python
->>> from exp_pkg import example
+>>> from expkg import example
 >>> example.hello()
 ```
 
@@ -193,5 +196,9 @@ python
 
 ```sh
 python -m build && twine upload dist/* --skip-existing
+```
+
+```sh
 # pip install -e .
+pip install --upgrade expkg
 ```
