@@ -28,7 +28,11 @@ working_dir/
 
 The `pyproject.toml` should be like:
 
-```toml{2,3,5,7,17,18}
+```toml{6,7,9,11,22-24,27}
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "expkg"
 version = "0.0.1"
@@ -49,6 +53,9 @@ dependencies = [ ]
 Homepage = "https://github.com/<author>/expkg"
 Issues = "https://github.com/<author>/expkg/issues"
 Changelog = "https://github.com/<author>/expkg/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+exclude = [".github/", "src/expkg/data/"]
 ```
 
 <f>Modify the highlighted lines with the info of your own project.</f>
@@ -202,3 +209,12 @@ python -m build && twine upload dist/* --skip-existing
 # pip install -e .
 pip install --upgrade expkg
 ```
+
+## Auto publish with GitHub Actions
+
+Create `publish_pypi.yml` in `.github/workflows`:
+
+::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/scripts/publish_pypi.yml
+:::
+
+<<< @/notes/scripts/publish_pypi.yml
