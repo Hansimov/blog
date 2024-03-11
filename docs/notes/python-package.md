@@ -200,7 +200,7 @@ python -m build && twine upload dist/* --skip-existing
 
 ```sh
 # pip install -e .
-pip install --upgrade expkg
+pip install --upgrade expkg --no-cache-dir
 ```
 
 ## Auto publish with GitHub Actions
