@@ -96,6 +96,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "Common Git commands",
             link: "/git-cmds"
           },
+          {
+            text: "Sync GitHub to Huggingface",
+            link: "/sync-github-to-hf"
+          },
         ]
       },
       {
