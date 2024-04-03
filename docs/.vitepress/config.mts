@@ -92,6 +92,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "Packaging Python Projects",
             link: "/python-package"
           },
+          {
+            text: "Common Git commands",
+            link: "/git-cmds"
+          },
         ]
       },
       {
