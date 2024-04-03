@@ -100,6 +100,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "Sync GitHub to Huggingface",
             link: "/sync-github-to-hf"
           },
+          {
+            text: "Postgresql install",
+            link: "/postgresql"
+          },
         ]
       },
       {
