@@ -1,6 +1,8 @@
 # Postgresql installation and setup
 
-## Install postgresql
+## Ubuntu
+
+### Install postgresql
 
 (Optional) Preparation:
 
@@ -26,7 +28,7 @@ sudo apt-get -y install postgresql
 - https://ubuntu.com/server/docs/databases-postgresql
 :::
 
-## Install pgvector
+### Install pgvector
 
 ```sh
 sudo apt install postgresql-server-dev-16
@@ -42,8 +44,8 @@ sudo make install
 - https://github.com/pgvector/pgvector
 :::
 
-## Allow remote access to postgresql
 
+### Allow remote access to postgresql
 
 View running ports:
 
@@ -89,3 +91,61 @@ sudo systemctl restart postgresql
 - https://stackoverflow.com/questions/18580066/how-to-allow-remote-access-to-postgresql-database
 - https://www.bigbinary.com/blog/configure-postgresql-to-allow-remote-connection
 :::
+
+
+## Windows
+
+### Install postgresql
+
+Click, download and install:
+
+- https://sbp.enterprisedb.com/getfile.jsp?fileid=1258893
+
+Suppose the postgresql is installed in `D:\postgresql\16`.
+
+Then add `D:\postgresql\16\bin` to system `PATH`.
+
+::: tip See: PostgreSQL: Windows installers
+- https://www.postgresql.org/download/windows
+
+Download PostgreSQL: Open source PostgreSQL packages and installers from EDB
+- https://www.enterprisedb.com/downloads/postgres-postgresql-downloads
+:::
+
+### Common issue
+
+You might encounter following Warning message during installation:
+> Problem running post-install step. Installation may not complete correctly. The database cluster initialisation failed.
+
+This might because you select "Chinese" in language option during installation, which does not support "GBK" as the encoding of server.
+
+Then you could run following command to initialize the database manually:
+
+```sh
+initdb -D "E:\postgresql\16\data" -U postgres
+```
+
+::: tip See: postgres installation the database cluster initialization failed ( Postgresql Version 9.4.4 ) - Stack Overflow
+  * https://stackoverflow.com/questions/32453451/postgres-installation-the-database-cluster-initialization-failed-postgresql-ve
+:::
+
+
+### Start service
+
+After `initdb` in above step, you can then start database service with:
+
+```sh
+pg_ctl -D "E:\postgresql\16\data" -l logfile -o "-p 15432" start
+```
+
+See status:
+
+```sh
+pg_ctl -D "E:\postgresql\16\data" status
+```
+
+Login interactive interface as `postgres`:
+
+```sh
+psql --host=127.0.0.1 --port=15432 -U postgres
+```
