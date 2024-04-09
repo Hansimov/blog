@@ -9,7 +9,7 @@
 - https://cn.ubuntu.com/download/desktop
 - https://releases.ubuntu.com/22.04/ubuntu-22.04.4-desktop-amd64.iso
 
-::: See: Ubuntu 服务器版与桌面版有什么区别？
+::: tip See: Ubuntu 服务器版与桌面版有什么区别？
 * https://linux.cn/article-14146-1.html
 :::
 
@@ -18,12 +18,12 @@
 - https://rufus.ie/zh/
 - https://github.com/pbatard/rufus/releases/download/v4.4/rufus-4.4.exe
 
-### 制作启动盘
+### 制作 Rufus 启动盘
 
-插入 U 盘，启动 Rufus，选择“ubuntu-22.04.4-desktop-amd64.iso”。
+插入 U 盘，启动 Rufus，选择 "ubuntu-22.04.4-desktop-amd64.iso"。
 
-分区类型为 GPT，目标系统类型为 UEFI(非CSM)，文件系统为 FAT32(默认)，簇大小为 16K字节(默认)。点击“开始”。
-- 如果设置错误，可能会在后面 Ubuntu 分区操作后提示“Reserved BIOS boot area partition”
+分区类型为 <m>GPT</m>，目标系统类型为 <m>UEFI(非CSM)</m>，文件系统为 FAT32(默认)，簇大小为 16K字节(默认)。点击“开始”。
+- 如果设置错误，会在之后[手动系统分区](#手动分区)结束时提示 "Reserved BIOS boot area partition"
 
 ::: tip See: NTFS, FAT32和exFAT文件系统有什么区别？ - 知乎
 * https://zhuanlan.zhihu.com/p/32364955
@@ -68,10 +68,12 @@
 
 ## 安装 Ubuntu 22.04
 
-### （弃用）配置 BIOS
-::: warning 该部分不再需要
+### <del>配置 BIOS</del>
+
+::: warning 该部分不再需要，但仍保留以万一。推荐用 UEFI 代替 BIOS。
 :::
 
+<del>
 插上 U 盘，重启电脑，快速点按约定按键进入 BIOS（例如小新 Air 14 是 F2，不需要加 Fn）。
 
 1. 按 → 方向键切换到 Security，选择 Secure Boot，回车后设为 Disabled；
@@ -81,13 +83,15 @@
     - 加载默认设置之后，部分机型需要先按 F10 保存重启，再按 F2 进入 BIOS
 4. F10 保存设置
 
-::: tip See: 联想小新Air 14笔记本怎么用U盘重装系统win7
+::: tip See: 联想小新 Air 14 笔记本怎么用 U 盘重装系统
 * http://ywupe.com/jiaocheng/czwin7/37.html
 :::
 
+</del>
+
 ### 开始安装
 
-快速点按 F12（<m>注意此时是 F12 不是 F2</m>），进入 Boot Manager 界面；
+快速点按 F12（<m>注意是 F12 不是 F2</m>），进入 Boot Manager 界面；
 - 选择 U 盘启动：**Linpus lite: KingstonDataTraveler 3.0**）
 - 回车进入 Ubuntu 安装界面：**Try or Install Ubuntu**
 
@@ -117,13 +121,15 @@
 
 <m>如果此时弹出“Reserved BIOS boot area partition”的提示，请立刻 Revert，然后 Quit。</m>
 
-- 这个错误一般是前面启动盘的分区和目标系统类型错误设置成了 MBR+BIOS，正确的设置应该是 GPT+UEFI(非CSM)。
-- 或者参考下面的解决方案。
+- 这个错误一般是前面[制作启动盘时](#制作-rufus-启动盘)分区和目标系统类型错误设置成了 MBR+BIOS，正确的设置应该是 GPT+UEFI(非CSM)。
+- 推荐重新用正确的设置制作启动盘。或者参考下面的解决方案。
 
-::: warning See: Ubuntu installation error: Reserved BIOS boot area partition? What to do to continue installation?
+::: tip See: Ubuntu installation error: Reserved BIOS boot area partition? What to do to continue installation?
 - https://askubuntu.com/questions/928951/ubuntu-installation-error-reserved-bios-boot-area-partitionwhat-to-do-to-conti
 
 > In a dual-boot setup, though, a GPT disk means that Windows is installed in EFI mode, and the request that you create a BIOS Boot Partition means that the Ubuntu installer is booted in BIOS mode, and is trying to set up a BIOS-mode boot.
+>
+> What I recommend you do is: <m>Enter your firmware setup utility and disable the CSM</m> ...
 :::
 
 ### 继续安装
