@@ -104,6 +104,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "Postgresql install",
             link: "/postgresql"
           },
+          {
+            text: "Windows + Ubuntu 双系统",
+            "link": "/dual-boot"
+          }
         ]
       },
       {
