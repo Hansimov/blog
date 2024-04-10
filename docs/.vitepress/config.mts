@@ -116,6 +116,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "安装 hstr",
             "link": "/hstr"
           },
+          {
+            text: "安装 zsh",
+            "link": "/zsh"
+          },
         ]
       },
       {

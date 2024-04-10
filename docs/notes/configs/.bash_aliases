@@ -1,3 +1,4 @@
+# aliases
 alias gs="git status"
 alias gb="git rev-parse --abbrev-ref HEAD"
 alias gba="git -P branch"

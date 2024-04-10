@@ -16,3 +16,9 @@
 
 ::: timeline [Ubuntu GUI 设置](/notes/ubuntu-gui)
 :::
+
+::: timeline [安装 zsh](/notes/zsh)
+:::
+
+::: timeline [安装 tmux](/notes/tmux)
+:::
