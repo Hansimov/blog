@@ -104,10 +104,30 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "Postgresql install",
             link: "/postgresql"
           },
+
+          {
+            text: "Remote SSH Host in VSCode",
+            "link": "/remote-ssh"
+          }
+        ]
+      },
+      {
+        text: "Ubuntu",
+        base: "/notes",
+        collapsed: false,
+        items: [
           {
             text: "Windows + Ubuntu 双系统",
             "link": "/dual-boot"
-          }
+          },
+          {
+            text: "Ubuntu 换国内源",
+            "link": "/ubuntu-sources"
+          },
+          {
+            text: "Ubuntu 开启 SSH 服务",
+            "link": "/ubuntu-ssh"
+          },
         ]
       },
       {
