@@ -1,4 +1,4 @@
-# 配置 tmux
+# 安装 tmux
 
 ```sh
 sudo apt install tmux

@@ -105,13 +105,17 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/postgresql"
           },
           {
-            text: "配置 tmux",
+            text: "在 VSCode 使用 Remote SSH",
+            "link": "/remote-ssh"
+          },
+          {
+            text: "安装 tmux",
             link: "/tmux"
           },
           {
-            text: "在 VSCode 使用 Remote SSH",
-            "link": "/remote-ssh"
-          }
+            text: "安装 hstr",
+            "link": "/hstr"
+          },
         ]
       },
       {
