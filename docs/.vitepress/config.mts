@@ -106,7 +106,7 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           },
 
           {
-            text: "Remote SSH Host in VSCode",
+            text: "在 VSCode 使用 Remote SSH",
             "link": "/remote-ssh"
           }
         ]
@@ -117,8 +117,12 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
         collapsed: false,
         items: [
           {
+            text: "个人 Ubuntu 配置流程",
+            "link": "/ubuntu-config"
+          },
+          {
             text: "Windows + Ubuntu 双系统",
-            "link": "/dual-boot"
+            "link": "/ubuntu-dual-boot"
           },
           {
             text: "Ubuntu 换国内源",

@@ -1,4 +1,4 @@
-# 在 VSCode 中使用 Remote SSH Host
+# 在 VSCode 中使用 Remote SSH
 
 ## 配置 ssh 密钥
 
