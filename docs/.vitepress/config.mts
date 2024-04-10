@@ -132,6 +132,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "Ubuntu 开启 SSH 服务",
             "link": "/ubuntu-ssh"
           },
+          {
+            text: "Ubuntu GUI 设置",
+            "link": "/ubuntu-gui"
+          },
         ]
       },
       {

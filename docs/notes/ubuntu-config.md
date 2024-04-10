@@ -14,3 +14,5 @@
 ::: timeline [在 VSCode 中使用 Remote SSH](/notes/remote-ssh)
 :::
 
+::: timeline [Ubuntu GUI 设置](/notes/ubuntu-gui)
+:::
