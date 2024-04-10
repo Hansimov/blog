@@ -1,4 +1,9 @@
-# (Linux) Config: bash aliases
+# 配置 bash aliases
+
+```sh
+cd ~
+touch .bash_aliases
+```
 
 ::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/.bash_aliases
 :::

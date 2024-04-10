@@ -104,7 +104,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "Postgresql install",
             link: "/postgresql"
           },
-
+          {
+            text: "配置 tmux",
+            link: "/tmux"
+          },
           {
             text: "在 VSCode 使用 Remote SSH",
             "link": "/remote-ssh"
@@ -159,11 +162,7 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
         base: "/notes",
         items: [
           {
-            text: "(Linux) Tmux configs",
-            link: "/tmux-configs"
-          },
-          {
-            text: "(Linux) Bash aliases",
+            text: "配置 bash aliases",
             link: "/bash-aliases"
           },
           {

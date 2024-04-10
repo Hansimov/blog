@@ -24,4 +24,3 @@ alias ts="tmux select-pane -T"
 
 alias k9="kill -9"
 alias lt="ls -lt"
-alias hi="hostname -i"
