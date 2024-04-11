@@ -76,6 +76,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "Port local service to public with Cloudflare Tunnel",
             link: "/cf-tunnel"
+          },
+          {
+            text: "安装 v2ray",
+            link: "/v2ray"
           }
         ]
       },
