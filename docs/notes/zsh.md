@@ -105,7 +105,10 @@ See: ANSI escape code:
 - https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 :::
 
-## .zshrc
+## .zshrc 完整样例
 
-::: tip See: <a href="./configs/.zshrc" target="_blank">./configs/.zshrc</a>
+::: info See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/.zshrc
 :::
+
+<<< @/notes/configs/.zshrc
+
