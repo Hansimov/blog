@@ -97,10 +97,6 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/python-package"
           },
           {
-            text: "Common Git commands",
-            link: "/git-cmds"
-          },
-          {
             text: "Sync GitHub to Huggingface",
             link: "/sync-github-to-hf"
           },
@@ -131,6 +127,14 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "Python 依赖管理",
             "link": "/python-requirements"
+          },
+          {
+            text: "安装 Git",
+            link: "/git"
+          },
+          {
+            text: "常用 Git 命令",
+            link: "/git-cmds"
           },
         ]
       },

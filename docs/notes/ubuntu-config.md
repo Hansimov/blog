@@ -31,3 +31,6 @@
 
 ::: timeline [Python 依赖管理](/notes/python-requirements)
 :::
+
+::: timeline [安装 git](/notes/git)
+:::

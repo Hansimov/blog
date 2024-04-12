@@ -1,11 +1,5 @@
 # Common Git commands
 
-## 安装
-
-```sh
-sudo apt install git-all
-```
-
 ## Update local clone after remote branch name changes
 
 ```sh
