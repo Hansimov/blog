@@ -25,3 +25,6 @@
 
 ::: timeline [安装 v2ray](/notes/v2ray)
 :::
+
+::: timeline [安装 conda](/notes/conda)
+:::

@@ -105,6 +105,16 @@ See: ANSI escape code:
 - https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 :::
 
+## 设置 zsh 为默认 shell
+
+```sh
+chsh -s $(which zsh)
+```
+
+::: tip See: command line - How to make ZSH the default shell? - Ask Ubuntu
+- https://askubuntu.com/questions/131823/how-to-make-zsh-the-default-shell
+:::
+
 ## .zshrc 完整样例
 
 ::: info See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/.zshrc

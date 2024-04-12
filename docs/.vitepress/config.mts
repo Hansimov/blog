@@ -124,6 +124,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "安装 zsh",
             "link": "/zsh"
           },
+          {
+            text: "安装 conda",
+            "link": "/conda"
+          },
         ]
       },
       {
