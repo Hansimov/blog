@@ -128,6 +128,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "安装 conda",
             "link": "/conda"
           },
+          {
+            text: "Python 依赖管理",
+            "link": "/python-requirements"
+          },
         ]
       },
       {

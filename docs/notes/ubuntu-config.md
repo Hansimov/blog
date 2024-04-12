@@ -28,3 +28,6 @@
 
 ::: timeline [安装 conda](/notes/conda)
 :::
+
+::: timeline [Python 依赖管理](/notes/python-requirements)
+:::
