@@ -163,6 +163,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "Ubuntu GUI 设置",
             "link": "/ubuntu-gui"
           },
+          {
+            text: "Ubuntu 安装新磁盘",
+            "link": "/ubuntu-disk"
+          },
         ]
       },
       {

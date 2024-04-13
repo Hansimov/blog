@@ -34,3 +34,6 @@
 
 ::: timeline [安装 git](/notes/git)
 :::
+
+::: timeline [Ubuntu 安装新磁盘](/notes/ubuntu-disk)
+:::
