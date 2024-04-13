@@ -111,6 +111,13 @@ See: ANSI escape code:
 chsh -s $(which zsh)
 ```
 
+在 `.tmux.conf` 中添加：
+
+```sh
+# which zsh
+set-option -g default-shell /usr/bin/zsh
+```
+
 ::: tip See: command line - How to make ZSH the default shell? - Ask Ubuntu
 - https://askubuntu.com/questions/131823/how-to-make-zsh-the-default-shell
 :::
