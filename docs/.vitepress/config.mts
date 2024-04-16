@@ -101,10 +101,6 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/sync-github-to-hf"
           },
           {
-            text: "Postgresql install",
-            link: "/postgresql"
-          },
-          {
             text: "在 VSCode 使用 Remote SSH",
             "link": "/remote-ssh"
           },
@@ -136,6 +132,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "常用 Git 命令",
             link: "/git-cmds"
           },
+          {
+            text: "安装 Postgresql",
+            link: "/postgresql"
+          }
         ]
       },
       {
