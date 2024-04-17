@@ -116,14 +116,77 @@ sudo apt-get autoremove postgresql-14
 
 ## 指定数据目录
 
-<!-- ```sh
-# Create a new directory for the database cluster:
-sudo mkdir /var/lib/postgresql/16/main
-# Change the owner of the directory to the postgres user:
-sudo chown -R postgres:postgres /var/lib/postgresql/16/main
-# Initialize the database cluster:
-sudo -u postgres /usr/lib/postgresql/16/bin/initdb -D /var/lib/postgresql/16/main
-``` -->
+查看数据目录：
+
+```sh
+sudo -u postgres psql -c "SHOW data_directory;"
+```
+
+输出形如：
+
+```sh
+       data_directory
+-----------------------------
+ /var/lib/postgresql/16/main
+(1 row)
+```
+
+停止服务：
+
+```sh
+sudo systemctl stop postgresql
+```
+
+假如新的数据目录为 `/media/data1/postgresql/16/main`，那么首先创建目录：
+
+```sh
+sudo mkdir -p /media/data1/postgresql/16/main
+sudo chown -R postgres:postgres /media/data1/postgresql/16/main
+```
+
+如果 `chown` 遇到权限问题，并且 `sudo chattr -i file` 出现 `Operation not supported` 的问题，那么原因出在分区类型是 `ntfs` 或 `fat32`。推荐的解决方案是重新格式化分区为 `ext4`。
+
+::: warning See: permissions - Changing Ownership: "Operation not permitted" - even as root! - Ask Ubuntu
+* https://askubuntu.com/questions/675296/changing-ownership-operation-not-permitted-even-as-root
+
+permissions - How do I use 'chmod' on an NTFS (or FAT32) partition? - Ask Ubuntu
+* https://askubuntu.com/questions/11840/how-do-i-use-chmod-on-an-ntfs-or-fat32-partition/956072#956072
+:::
+
+将数据目录移动到新的位置：
+
+```sh
+# sudo mv /var/lib/postgresql/16/main /mnt/data/postgresql/16/main
+sudo rsync -av /var/lib/postgresql/16/main/ /media/data1/postgresql/16/main
+```
+
+注意 rsync 的语法 `rsync -a src/ dest`，`src` 后面的 `/` 不要漏掉，否则会在 `dest` 下重复创建一个 `src` 目录。
+
+::: tip See: How to rsync a directory to a new directory with different name? - Unix & Linux Stack Exchange
+* https://unix.stackexchange.com/questions/178078/how-to-rsync-a-directory-to-a-new-directory-with-different-name
+:::
+
+配置文件位于 `<data_directory>/postgresql.conf`：
+
+```sh
+sudo nano /etc/postgresql/16/main/postgresql.conf
+```
+
+注释下面这行，然后添加新的数据目录：
+
+```sh
+data_directory = '/var/lib/postgresql/16/main'		# use data in another directory
+```
+
+::: tip See: How To Move a PostgreSQL Data Directory to a New Location on Ubuntu 20.04 | DigitalOcean
+* https://www.digitalocean.com/community/tutorials/how-to-move-a-postgresql-data-directory-to-a-new-location-on-ubuntu-20-04
+
+How to change PostgreSQL’s data directory on Linux | fitodic’s blog
+* https://fitodic.github.io/how-to-change-postgresql-data-directory-on-linux
+
+permissions - Changing Ownership: "Operation not permitted" - even as root! - Ask Ubuntu
+* https://askubuntu.com/questions/675296/changing-ownership-operation-not-permitted-even-as-root
+:::
 
 ## 允许远程访问 postgresql
 
