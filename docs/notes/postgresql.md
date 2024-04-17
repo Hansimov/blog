@@ -147,7 +147,7 @@ sudo -u postgres psql -c "SHOW data_directory;"
 sudo systemctl stop postgresql
 ```
 
-### 创建新数据目录
+### 创建并复制新数据目录
 
 假设新的数据目录为 `/media/data1/postgresql/16/main`。
 
@@ -155,7 +155,7 @@ sudo systemctl stop postgresql
 
 ```sh
 sudo mkdir -p /media/data1/postgresql/16/main
-sudo chown -R postgres:postgres /media/data1
+sudo chown -R postgres:postgres /media/data1/postgresql/16/main
 # sudo chown -R postgres:postgres /media/data1/postgresql/16/main
 ```
 
@@ -168,7 +168,7 @@ permissions - How do I use 'chmod' on an NTFS (or FAT32) partition? - Ask Ubuntu
 * https://askubuntu.com/questions/11840/how-do-i-use-chmod-on-an-ntfs-or-fat32-partition/956072#956072
 :::
 
-### 复制数据目录
+复制数据目录：
 
 ```sh
 sudo rsync -av /var/lib/postgresql/16/main/ /media/data1/postgresql/16/main
@@ -180,15 +180,17 @@ sudo rsync -av /var/lib/postgresql/16/main/ /media/data1/postgresql/16/main
 * https://unix.stackexchange.com/questions/178078/how-to-rsync-a-directory-to-a-new-directory-with-different-name
 :::
 
-移动原数据目录，以避免冲突或误操作
+<del>
+移动原数据目录，以避免冲突或误操作：（可选）
 
 ```sh
 sudo mv /var/lib/postgresql/16/main /var/lib/postgresql/16/main.bak
 # # move back
 # sudo mv /var/lib/postgresql/16/main.bak /var/lib/postgresql/16/main
 ```
+</del>
 
-### 修改配置文件
+### 修改 postgresql 配置
 
 配置文件位于 `<data_directory>/postgresql.conf`：
 
@@ -203,6 +205,10 @@ sudo nano /etc/postgresql/16/main/postgresql.conf
 # data_directory = '/var/lib/postgresql/16/main'		# use data in another directory
 data_directory = '/media/data1/postgresql/16/main'		# use data in another directory
 ```
+
+<del>
+
+### 修改 systemd 配置
 
 修改 `/lib/systemd/system/postgresql.service`：
 
@@ -225,7 +231,9 @@ Environment=PGDATA=/media/data1/postgresql/16/main
 sudo systemctl daemon-reload
 ```
 
-重启服务以使更改生效：
+</del>
+
+### 重启服务
 
 ```sh
 sudo systemctl start postgresql
@@ -243,9 +251,20 @@ sudo systemctl status postgresql
 sudo -u postgres psql -c "SHOW data_directory;"
 ```
 
-* Can not connect to PostgreSQL listening on port 5432 - Ask Ubuntu
-  * https://askubuntu.com/questions/50621/can-not-connect-to-postgresql-listening-on-port-5432
+输出形如：
 
+```sh
+         data_directory
+---------------------------------
+ /media/data1/postgresql/16/main
+(1 row)
+```
+
+可能遇到无法正常启动的问题，一般是硬盘没有正确配置好，可以尝试重启系统，并重新格式化硬盘。
+
+::: warning See: Can not connect to PostgreSQL listening on port 5432 - Ask Ubuntu
+* https://askubuntu.com/questions/50621/can-not-connect-to-postgresql-listening-on-port-5432
+:::
 
 ## 允许远程访问 postgresql
 
@@ -258,7 +277,7 @@ netstat -nlt
 查看 postgresql 配置文件路径：
 
 ```sh
-psql -U postgres -c 'SHOW config_file'
+sudo -u postgres psql -c "SHOW config_file;"
 ```
 
 输出形如：
