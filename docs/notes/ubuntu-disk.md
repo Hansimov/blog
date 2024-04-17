@@ -72,15 +72,17 @@ sudo fdisk -l
 
 本文选择命令行工具<f>（parted）</f>格式化。fdisk 比较老了，主要缺点是只能创建 MBR 分区。
 
-### GPT vs MBR
+这里以 `/dev/sda` 为例。
 
-MBR<f>（Master Boot Record）</f>有两个主要限制：分区不能大于 2 TB，主分区不能超过 4 个。
+### 取消挂载（可选）
 
-GPT<f>（GUID Partition Table）</f>没有这两个限制，但需要内核支持 EFI，一般新的发行版都是支持的。
+如果硬盘已经挂载，需要先卸载掉：
+
+```sh
+sudo umount -l /media/data1
+```
 
 ### 使用 parted 进行分区
-
-这里以 `/dev/sda` 为例，进行分区：
 
 ```sh
 sudo parted /dev/sda
@@ -115,6 +117,12 @@ sudo parted /dev/sda
 mklabel gpt
 ```
 
+::: tip See: GPT vs MBR
+- MBR<f>（Master Boot Record）</f>有两个主要限制：分区不能大于 2 TB，主分区不能超过 4 个。
+- GPT<f>（GUID Partition Table）</f>没有这两个限制，但需要内核支持 EFI，一般新的发行版都是支持的。
+:::
+
+
 确认格式化：
 
 ```sh
@@ -122,29 +130,26 @@ mklabel gpt
 # Yes/No? Yes
 ```
 
-设置单位为 TB：
-
-```sh
-unit TB
-```
-
 创建一个占满空间的分区：
 - 这里 END 设为 2 是对于 2TB 的硬盘，如果是 4TB，那么 END 值就为 4
 - 或者用百分比更好
-- 文件系统 `ext4` 适合 Ubuntu，`fat32` 同时适合 Ubuntu 或 Windows，所以推荐用 `fat32` 
+- 文件系统 `ext4` 适合 Ubuntu，`fat32` 同时适合 Ubuntu 或 Windows
+- 推荐用 `ext4` 
 
 ```sh
 # mkpart PART-TYPE [FS-TYPE] START END
 
 # # ext4, 绝对大小, 2TB
+# unit TB
 # mkpart primary ext4 0 2
 # # ext4, 百分比
-# mkpart primary ext4 0% 100%
+mkpart primary ext4 0% 100%
 
 # # fat32, 绝对大小, 2TB
+# unit TB
 # mkpart primary fat32 0 2
-# fat32, 百分比
-mkpart primary fat32 0% 100%
+# # fat32, 百分比
+# mkpart primary fat32 0% 100%
 ```
 
 查看分区结果：
@@ -164,7 +169,7 @@ Disk Flags:
 
 # 如果是 ext4
 Number  Start   End     Size    File system  Name     Flags
- 1      0.00TB  2.00TB  2.00TB               primary
+ 1      1049kB  2000GB  2000GB  ext4         primary
 
 # 如果是 fat32
 Number  Start   End     Size    File system  Name     Flags
@@ -183,12 +188,10 @@ quit
 Information: You may need to update /etc/fstab.
 ```
 
-### 格式化文件系统
-
-查看分区后的设备名：
+### 查看分区后的设备
 
 ```sh
-`sudo fdisk -l`
+sudo fdisk -l
 ```
 
 输出形如：
@@ -202,19 +205,25 @@ I/O size (minimum/optimal): 512 bytes / 512 bytes
 Disklabel type: gpt
 Disk identifier: ********-****-****-****-************
 
+# ext4
+Device     Start        End    Sectors  Size Type
+/dev/sda1   2048 3907028991 3907026944  1.8T Linux filesystem
+
+# fat32
 Device     Start        End    Sectors  Size Type
 /dev/sda1   2048 3907028991 3907026944  1.8T Microsoft basic data
 ```
 
-格式化为对应文件系统：
+### 格式化文件系统
+
 - <m>注意，<code>fat32</code> 对应的是 <code>vfat</code>，不是 <code>fat32</code></m>
 - <m>注意，是 <code>/dev/sda1</code> 而不是 <code>/dev/sda</code></m>
 
 ```sh
-# # ext4
-# sudo mkfs -t ext4 /dev/sda1
-# fat32
-sudo mkfs -t vfat /dev/sda1
+# ext4
+sudo mkfs -t ext4 /dev/sda1
+# # fat32
+# sudo mkfs -t vfat /dev/sda1
 ```
 
 ::: tip See: ubuntu - mount: wrong fs type, bad option, bad superblock - Unix & Linux Stack Exchange
@@ -244,18 +253,27 @@ sudo mkdir /media/data1
 
 ```sh
 # # ext4
-# /dev/sda1   /media/data1   ext4   defaults   0   2
-# fat32
-/dev/sda1   /media/data1   vfat   defaults   0   2
+/dev/sda1   /media/data1   ext4   defaults   0   2
+# # fat32
+# /dev/sda1   /media/data1   vfat   defaults   0   2
 ```
 
 让更改生效：
 
 ```sh
-sudo mount -a
+sudo mount /dev/sda1 /media/data1
+# sudo mount -a
 ```
 
-查看硬盘容量：
+### 取消挂载硬盘
+
+```sh
+sudo umount /media/data1
+# # if busy
+# sudo umount -l /media/data1
+```
+
+### 查看硬盘容量
 
 ```sh
 df -h /media/data1

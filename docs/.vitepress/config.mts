@@ -164,7 +164,7 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             "link": "/ubuntu-gui"
           },
           {
-            text: "Ubuntu 安装新磁盘",
+            text: "Ubuntu 安装新硬盘",
             "link": "/ubuntu-disk"
           },
         ]
