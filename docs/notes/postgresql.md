@@ -116,7 +116,17 @@ sudo apt-get autoremove postgresql-14
 
 ## 指定数据目录
 
-查看数据目录：
+::: tip See: How To Move a PostgreSQL Data Directory to a New Location on Ubuntu 20.04 | DigitalOcean
+* https://www.digitalocean.com/community/tutorials/how-to-move-a-postgresql-data-directory-to-a-new-location-on-ubuntu-20-04
+
+How to change PostgreSQL’s data directory on Linux | fitodic’s blog
+* https://fitodic.github.io/how-to-change-postgresql-data-directory-on-linux
+
+permissions - Changing Ownership: "Operation not permitted" - even as root! - Ask Ubuntu
+* https://askubuntu.com/questions/675296/changing-ownership-operation-not-permitted-even-as-root
+:::
+
+### 查看数据目录
 
 ```sh
 sudo -u postgres psql -c "SHOW data_directory;"
@@ -131,17 +141,22 @@ sudo -u postgres psql -c "SHOW data_directory;"
 (1 row)
 ```
 
-停止服务：
+### 停止服务
 
 ```sh
 sudo systemctl stop postgresql
 ```
 
-假如新的数据目录为 `/media/data1/postgresql/16/main`，那么首先创建目录：
+### 创建新数据目录
+
+假设新的数据目录为 `/media/data1/postgresql/16/main`。
+
+那么创建目录，并赋予 `postgres` 用户权限：
 
 ```sh
 sudo mkdir -p /media/data1/postgresql/16/main
-sudo chown -R postgres:postgres /media/data1/postgresql/16/main
+sudo chown -R postgres:postgres /media/data1
+# sudo chown -R postgres:postgres /media/data1/postgresql/16/main
 ```
 
 如果 `chown` 遇到权限问题，并且 `sudo chattr -i file` 出现 `Operation not supported` 的问题，那么原因出在分区类型是 `ntfs` 或 `fat32`。推荐的解决方案是重新格式化分区为 `ext4`。
@@ -153,10 +168,9 @@ permissions - How do I use 'chmod' on an NTFS (or FAT32) partition? - Ask Ubuntu
 * https://askubuntu.com/questions/11840/how-do-i-use-chmod-on-an-ntfs-or-fat32-partition/956072#956072
 :::
 
-将数据目录移动到新的位置：
+### 复制数据目录
 
 ```sh
-# sudo mv /var/lib/postgresql/16/main /mnt/data/postgresql/16/main
 sudo rsync -av /var/lib/postgresql/16/main/ /media/data1/postgresql/16/main
 ```
 
@@ -166,27 +180,72 @@ sudo rsync -av /var/lib/postgresql/16/main/ /media/data1/postgresql/16/main
 * https://unix.stackexchange.com/questions/178078/how-to-rsync-a-directory-to-a-new-directory-with-different-name
 :::
 
+移动原数据目录，以避免冲突或误操作
+
+```sh
+sudo mv /var/lib/postgresql/16/main /var/lib/postgresql/16/main.bak
+# # move back
+# sudo mv /var/lib/postgresql/16/main.bak /var/lib/postgresql/16/main
+```
+
+### 修改配置文件
+
 配置文件位于 `<data_directory>/postgresql.conf`：
 
 ```sh
 sudo nano /etc/postgresql/16/main/postgresql.conf
+# code /etc/postgresql/16/main/postgresql.conf
 ```
 
-注释下面这行，然后添加新的数据目录：
+注释掉原来的数据目录，改成新的数据目录：
 
 ```sh
-data_directory = '/var/lib/postgresql/16/main'		# use data in another directory
+# data_directory = '/var/lib/postgresql/16/main'		# use data in another directory
+data_directory = '/media/data1/postgresql/16/main'		# use data in another directory
 ```
 
-::: tip See: How To Move a PostgreSQL Data Directory to a New Location on Ubuntu 20.04 | DigitalOcean
-* https://www.digitalocean.com/community/tutorials/how-to-move-a-postgresql-data-directory-to-a-new-location-on-ubuntu-20-04
+修改 `/lib/systemd/system/postgresql.service`：
 
-How to change PostgreSQL’s data directory on Linux | fitodic’s blog
-* https://fitodic.github.io/how-to-change-postgresql-data-directory-on-linux
+```sh
+sudo nano /lib/systemd/system/postgresql.service
+# code /lib/systemd/system/postgresql.service
+```
 
-permissions - Changing Ownership: "Operation not permitted" - even as root! - Ask Ubuntu
-* https://askubuntu.com/questions/675296/changing-ownership-operation-not-permitted-even-as-root
-:::
+添加内容：
+
+```sh
+[Service]
+...
+Environment=PGDATA=/media/data1/postgresql/16/main
+```
+
+重新加载 systemd 配置：
+
+```sh
+sudo systemctl daemon-reload
+```
+
+重启服务以使更改生效：
+
+```sh
+sudo systemctl start postgresql
+```
+
+查看服务状态：
+
+```sh
+sudo systemctl status postgresql
+```
+
+查看数据目录是否正确：
+
+```sh
+sudo -u postgres psql -c "SHOW data_directory;"
+```
+
+* Can not connect to PostgreSQL listening on port 5432 - Ask Ubuntu
+  * https://askubuntu.com/questions/50621/can-not-connect-to-postgresql-listening-on-port-5432
+
 
 ## 允许远程访问 postgresql
 

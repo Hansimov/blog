@@ -245,6 +245,13 @@ Ubuntu 默认使用 `/media` 作为挂载点。
 sudo mkdir /media/data1
 ```
 
+### 挂载硬盘（手动）
+
+```sh
+sudo mount /dev/sda1 /media/data1
+# sudo mount -a
+```
+
 ### 挂载硬盘（自动）
 
 在 `/etc/fstab` 末尾添加如下内容：
@@ -258,11 +265,10 @@ sudo mkdir /media/data1
 # /dev/sda1   /media/data1   vfat   defaults   0   2
 ```
 
-让更改生效：
+然后执行：
 
 ```sh
-sudo mount /dev/sda1 /media/data1
-# sudo mount -a
+sudo mount -a
 ```
 
 ### 取消挂载硬盘
