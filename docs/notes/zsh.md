@@ -28,6 +28,41 @@ PROMPT='%F{yellow}%~ # %f'
 :::
 <<< @/notes/configs/.bash_aliases
 
+## 绑定按键
+用下面的命令显示按键对应的字符：
+
+```sh
+showkey -a
+```
+
+`ctrl` + `D` 退出该界面。
+
+将下列内容添加到 `~/.zshrc` 中：
+
+```sh
+# bind keys
+bindkey "^[[1;5C" forward-word
+bindkey "^[[1;3C" forward-word
+bindkey "^[[1;5D" backward-word
+bindkey "^[[1;3D" backward-word
+bindkey "^[[1~"   beginning-of-line
+bindkey "^[[4~"   end-of-line
+bindkey "^[[3~"   delete-char
+bindkey "^[^[[3~" delete-word
+```
+
+重启 `zsh` 或者 `source ~/.zshrc` 使配置生效。
+
+::: tip See: zsh - Ctrl + left/right arrow keys issue - Unix & Linux Stack Exchange
+* https://unix.stackexchange.com/questions/58870/ctrl-left-right-arrow-keys-issue
+
+ubuntu - Fix key settings (Home/End/Insert/Delete) in .zshrc when running Zsh in Terminator Terminal Emulator - Stack Overflow
+* https://stackoverflow.com/questions/8638012/fix-key-settings-home-end-insert-delete-in-zshrc-when-running-zsh-in-terminat
+
+line editor - zsh kill Ctrl + Backspace, Ctrl + Delete - Unix & Linux Stack Exchange
+* https://unix.stackexchange.com/questions/12787/zsh-kill-ctrl-backspace-ctrl-delete
+:::
+
 ## 自动建议
 
 ```sh
@@ -105,6 +140,7 @@ See: ANSI escape code:
 - https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 :::
 
+
 ## 设置 zsh 为默认 shell
 
 ```sh
@@ -127,5 +163,5 @@ set-option -g default-shell /usr/bin/zsh
 ::: info See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/.zshrc
 :::
 
-<<< @/notes/configs/.zshrc
+<<< @/notes/configs/.zshrc{sh}
 

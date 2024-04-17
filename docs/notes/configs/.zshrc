@@ -66,6 +66,15 @@ alias k9="kill -9"
 alias lt="ls -lt"
 alias hi="hostname -i"
 
+# bind keys
+bindkey "^[[1;5C" forward-word
+bindkey "^[[1;3C" forward-word
+bindkey "^[[1;5D" backward-word
+bindkey "^[[1;3D" backward-word
+bindkey "^[[1~"   beginning-of-line
+bindkey "^[[4~"   end-of-line
+bindkey "^[[3~"   delete-char
+bindkey "^[^[[3~" delete-word
 
 # auto suggestions
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#ff00ff"
