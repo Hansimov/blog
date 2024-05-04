@@ -236,7 +236,7 @@ sudo systemctl daemon-reload
 ### 重启服务
 
 ```sh
-sudo systemctl start postgresql
+sudo systemctl restart postgresql
 ```
 
 查看服务状态：
@@ -260,7 +260,12 @@ sudo -u postgres psql -c "SHOW data_directory;"
 (1 row)
 ```
 
-可能遇到无法正常启动的问题，一般是硬盘没有正确配置好，可以尝试重启系统，并重新格式化硬盘。
+### 常见问题
+
+可能遇到无法正常启动的问题，一般可能是：
+1. `systemd` 的 `Environment` 没有配置好，建议重新配置和重启 `systemd`（[见上](#修改-systemd-配置)）。
+2. 重启 `postgresql` 服务时，没有正确停止服务，可以尝试 `sudo systemctl stop postgresql` 后再重启。
+3. 硬盘没有正确配置好，可以尝试重启系统，并重新格式化硬盘。
 
 ::: warning See: Can not connect to PostgreSQL listening on port 5432 - Ask Ubuntu
 * https://askubuntu.com/questions/50621/can-not-connect-to-postgresql-listening-on-port-5432
