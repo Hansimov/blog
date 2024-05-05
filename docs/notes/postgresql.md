@@ -300,6 +300,8 @@ sudo -u postgres psql -c "SHOW config_file;"
 listen_addresses = '*'
 ```
 
+注意这里是 `*` 而不是 `"*"`。
+
 并在 `/etc/postgresql/16/main/pg_hba.conf` 添加：
 
 ```sh

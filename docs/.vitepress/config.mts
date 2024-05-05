@@ -135,7 +135,11 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "安装 Postgresql",
             link: "/postgresql"
-          }
+          },
+          {
+            text: "常用 Postgresql 命令",
+            link: "/postgresql-cmds"
+          },
         ]
       },
       {
