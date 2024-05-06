@@ -18,3 +18,7 @@ m {
 a {
     text-decoration: none !important;
 }
+
+details {
+    border: 1px dashed #c0c0c0;
+}

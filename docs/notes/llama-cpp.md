@@ -38,7 +38,7 @@ cd llama.cpp
 ```sh
 mkdir build
 cd build
-cmake .. -DLLAMA_CUBLAS=ON
+cmake .. -DLLAMA_CUDA=ON
 cmake --build . --config Release
 ```
 
@@ -50,6 +50,8 @@ cmake --build . --config Release
 - Works with cmake or without -arch=native
 - https://github.com/ggerganov/llama.cpp/issues/1420
 :::
+
+<details> <summary><b>Install llama-cpp-python (Deprecated)</b></summary>
 
 ### Install llama-cpp-python - [optional]
 
@@ -72,6 +74,7 @@ LLAMA_CUBLAS=1 CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install llama-cpp-python[serve
   - https://llama-cpp-python.readthedocs.io/en/latest/server/#installation
 :::
 
+</details>
 
 ## Download models
 
@@ -81,6 +84,7 @@ This is used to use `huggingface-cli` to download models.
 
 ```sh
 pip install 'huggingface_hub[cli,torch]'
+pip install hf_transfer
 ```
 
 ::: tip See: Installation of huggingface_hub
@@ -151,6 +155,7 @@ cd build/bin
 - https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md
 :::
 
+<details> <summary><b>api_like_OAI.py (Deprecated)</b></summary>
 
 #### api_like_OAI.py
 
@@ -219,6 +224,8 @@ You can also go to API docs to test requests interactively: `http://127.0.0.1:13
   - https://llama-cpp-python.readthedocs.io/en/latest/server/#running-the-server
 :::
 
+</details>
+
 ## Requests to server
 
 After the server is running, you can chat with api with following codes:
@@ -229,6 +236,9 @@ After the server is running, you can chat with api with following codes:
 :::
 
 ## Command line options
+
+<details> <summary><b>llama-cpp-python (Deprecated)</b></summary>
+
 ### llama-cpp-python
 
 ```sh
@@ -239,6 +249,8 @@ python -m llama_cpp.server --help
 
 ::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/llama-cpp-python-options.txt
 :::
+
+</details>
 
 ### llama-cpp (server)
 
@@ -252,6 +264,9 @@ python -m llama_cpp.server --help
 ::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/llama-cpp-server-options.txt
 :::
 
+
+<details> <summary><b>llama-cpp api_like_OAI (Deprecated)</b></summary>
+
 ### llama-cpp api_like_OAI
 
 ```sh
@@ -264,7 +279,11 @@ python api_like_OAI.py --help
 ::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/llama-cpp-oai-options.txt
 :::
 
+</details>
+
 ## Common issues
+
+<details> <summary><b>Extreme low performance of llama-cpp-python</b></summary>
 
 ### Extreme low performance of llama-cpp-python
 
@@ -287,3 +306,5 @@ llama_print_timings:       total time =   57699.92 ms /  4483 tokens
 ::: warning See: llama-cpp-python not using GPU on m1 · Issue #756 · abetlen/llama-cpp-python
 * https://github.com/abetlen/llama-cpp-python/issues/756
 :::
+
+</details>
