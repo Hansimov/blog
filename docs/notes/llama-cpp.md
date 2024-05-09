@@ -37,9 +37,8 @@ cd llama.cpp
 
 ```sh
 mkdir build
-cd build
-cmake .. -DLLAMA_CUDA=ON
-cmake --build . --config Release
+cmake -B build -DLLAMA_CUDA=ON
+cmake --build build --config Release
 ```
 
 ::: tip See: Readme of llama.cpp
@@ -49,6 +48,25 @@ cmake --build . --config Release
 ::: warning See: CUBLAS compilation issue with make : "Unsupported gpu architecture 'compute_89'"
 - Works with cmake or without -arch=native
 - https://github.com/ggerganov/llama.cpp/issues/1420
+:::
+
+如果后面运行时出现下面的错误：
+
+```sh
+CUDA error: the provided PTX was compiled with an unsupported toolchain.
+```
+
+可能是 build 时没有识别正确的 `nvcc` 路径，请在当前环境下检查 `nvcc --version` 的输出。
+- 例如通过 conda 安装的 nvcc 可能不在当前的 env 下。
+
+可以用下面的命令指定 `nvcc` 路径：
+
+```sh
+cmake -B build -DLLAMA_CUDA=ON -DCMAKE_CUDA_COMPILER=/home/asimov/miniconda3/envs/ai/bin/nvcc
+```
+
+::: warning See: TheBloke/Llama-2-13B-chat-GGML · CUDA error - the provided PTX was compiled with an unsupported toolchain
+- https://huggingface.co/TheBloke/Llama-2-13B-chat-GGML/discussions/23
 :::
 
 <details> <summary><b>Install llama-cpp-python (Deprecated)</b></summary>
@@ -102,6 +120,9 @@ export HF_HUB_ENABLE_HF_TRANSFER=1
 ```sh
 # [Recommend] qwen1.5-14b-chat (q5_k_m)
 huggingface-cli download Qwen/Qwen1.5-14B-Chat-GGUF qwen1_5-14b-chat-q5_k_m.gguf --local-dir ./models/ --local-dir-use-symlinks False
+
+# qwen1.5-1.8b-chat (q5_k_m)
+huggingface-cli download Qwen/Qwen1.5-1.8B-Chat-GGUF qwen1_5-1_8b-chat-q8_0.gguf --local-dir ./models/ --local-dir-use-symlinks False
 
 # qwen1.5-7b-chat (q2_k)
 huggingface-cli download Qwen/Qwen1.5-7B-Chat-GGUF qwen1_5-7b-chat-q2_k.gguf --local-dir ./models/ --local-dir-use-symlinks False
