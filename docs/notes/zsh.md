@@ -158,6 +158,12 @@ set-option -g default-shell /usr/bin/zsh
 - https://askubuntu.com/questions/131823/how-to-make-zsh-the-default-shell
 :::
 
+## 一键配置
+
+```sh
+wget https://raw.githubusercontent.com/Hansimov/blog/main/docs/notes/scripts/zsh_setup.sh -O ~/zsh_setup.sh && chmod +x ~/zsh_setup.sh && ~/zsh_setup.sh
+```
+
 ## .zshrc 完整样例
 
 ::: info See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/.zshrc
