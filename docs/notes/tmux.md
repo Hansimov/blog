@@ -32,11 +32,7 @@ cp ~/.tmux.conf ~/.tmux.conf.bak
 ```
 
 ```sh
-wget https://raw.githubusercontent.com/Hansimov/blog/main/docs/notes/configs/.tmux.conf -O ~/.tmux.conf
-```
-
-```sh
-tmux source ~/.tmux.conf
+wget https://raw.githubusercontent.com/Hansimov/blog/main/docs/notes/configs/.tmux.conf -O ~/.tmux.conf && tmux source ~/.tmux.conf
 ```
 
 ## .tmux.conf 完整样例

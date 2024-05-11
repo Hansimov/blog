@@ -11,6 +11,7 @@ wget https://raw.githubusercontent.com/zsh-users/zsh-autosuggestions/master/zsh-
 # install zsh-autocomplete
 cd ~/.zsh
 git clone --depth 1 -- https://github.com/marlonrichert/zsh-autocomplete.git && cd ~
+cd ~
 touch ~/.zshenv
 echo "skip_global_compinit=1" > ~/.zshenv
 

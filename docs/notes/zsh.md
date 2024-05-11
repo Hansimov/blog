@@ -164,6 +164,11 @@ set-option -g default-shell /usr/bin/zsh
 wget https://raw.githubusercontent.com/Hansimov/blog/main/docs/notes/scripts/zsh_setup.sh -O ~/zsh_setup.sh && chmod +x ~/zsh_setup.sh && ~/zsh_setup.sh
 ```
 
+::: info 脚本: https://github.com/Hansimov/blog/blob/main/docs/notes/scripts/zsh_setup.sh
+:::
+
+<<< @/notes/scripts/zsh_setup.sh{sh}
+
 ## .zshrc 完整样例
 
 ::: info See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/.zshrc
