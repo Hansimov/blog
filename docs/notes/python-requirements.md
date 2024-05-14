@@ -5,8 +5,7 @@
 创建 `~/.pip/pip.conf`：
 
 ```sh
-mkdir -p ~/.pip
-touch ~/.pip/pip.conf
+mkdir -p ~/.pip && touch ~/.pip/pip.conf
 ```
 
 并添加：

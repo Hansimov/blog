@@ -185,6 +185,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "Run local LLM with vllm",
             link: "/vllm"
+          },
+          {
+            text: "本地运行 Qwen-VL-Chat-Int4",
+            link: "/qwen-vl"
           }
         ]
       },
