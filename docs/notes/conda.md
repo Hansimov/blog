@@ -48,7 +48,7 @@ conda --version
 一键下载覆盖：
 
 ```sh
-touch ~/.condarc && wget https://raw.staticdn.net/Hansimov/blog/main/docs/notes/configs/.condarc -O ~/.condarc
+wget https://raw.staticdn.net/Hansimov/blog/main/docs/notes/configs/.condarc -O ~/.condarc
 ```
 
 ::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/.condarc

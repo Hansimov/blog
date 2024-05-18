@@ -1,21 +1,17 @@
 # Python 依赖管理
 
-## 修改 pip 镜像源
+## pip 添加国内镜像源
 
-创建 `~/.pip/pip.conf`：
-
-```sh
-mkdir -p ~/.pip && touch ~/.pip/pip.conf
-```
-
-并添加：
+一键下载覆盖到 `~/.pip/pip.conf`：
 
 ```sh
-[global]
-index-url = https://pypi.tuna.tsinghua.edu.cn/simple
-[install]
-trusted-host = https://pypi.tuna.tsinghua.edu.cn
+mkdir -p ~/.pip && wget https://raw.staticdn.net/Hansimov/blog/main/docs/notes/configs/pip.conf -O ~/.pip/pip.conf
 ```
+
+::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/pip.conf
+:::
+
+<<< @/notes/configs/pip.conf{ini}
 
 查看 pip 配置：
 
