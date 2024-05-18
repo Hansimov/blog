@@ -133,6 +133,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/git-cmds"
           },
           {
+            text: "Git 国内镜像",
+            link: "/git-mirror"
+          },
+          {
             text: "安装 Postgresql",
             link: "/postgresql"
           },
