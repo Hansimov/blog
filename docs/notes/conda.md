@@ -43,11 +43,29 @@ unset __conda_setup
 conda --version
 ```
 
+## 添加国内源
+
+一键下载覆盖：
+
+```sh
+touch ~/.condarc && wget https://raw.staticdn.net/Hansimov/blog/main/docs/notes/configs/.condarc -O ~/.condarc
+```
+
+::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/.condarc
+:::
+
+<<< @/notes/configs/.condarc{yml}
+
+::: tip See: anaconda | 镜像站使用帮助 | 清华大学开源软件镜像站 | Tsinghua Open Source Mirror
+- https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/
+:::
+
 ## 创建 conda env
 
 ```sh
 # conda create --name ai python
-conda create --name ai -c conda-forge python=3.11
+# conda create --name ai -c conda-forge python=3.11
+conda create --name ai python=3.11
 conda activate ai
 conda deactivate
 ```
