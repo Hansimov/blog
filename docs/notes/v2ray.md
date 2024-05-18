@@ -3,12 +3,13 @@
 
 ## Ubuntu 安装 v2ray
 
-### （弃用）apt 安装
+<details> <summary>（弃用）apt 安装</summary>
+
+### apt 安装
 
 ::: warning Ubuntu 22.04 下安装的版本 4.34.0 有问题，例如用 `curl --proxy` 无法正常连接到代理端口
 :::
 
-<del>
 
 ```sh
 sudo apt install v2ray
@@ -20,8 +21,6 @@ sudo apt install v2ray
 - `/etc/v2ray/config.json`: Config file
 - `/usr/bin/v2ray/geoip.dat`: IP data file
 - `/usr/bin/v2ray/geosite.dat`: domain data file
-
-</del>
 
 ```sh
 # 如果已经这样装了，请卸载
@@ -37,15 +36,16 @@ sudo apt autoremove v2ray
 
 See: v2ray - Ubuntu PPA
 - https://packages.ubuntu.com/search?keywords=v2ray
-
 :::
 
-### （弃用）解压缩安装
+</details>
+
+<details> <summary>（弃用）解压缩安装</summary>
+
+### 解压缩安装
 
 ::: warning 根本无法启动
 :::
-
-<del>
 
 ```sh
 wget https://githubfast.com/v2ray/v2ray-core/releases/download/v4.28.2/v2ray-linux-64.zip -O v2ray-linux-64.zip
@@ -53,8 +53,6 @@ unzip v2ray-linux-64.zip -d /usr/bin/v2ray
 # add to path
 export PATH=$PATH:/usr/bin/v2ray
 ```
-
-</del>
 
 ::: tip See: v2fly/v2ray-core
 - https://github.com/v2fly/v2ray-core
@@ -66,10 +64,14 @@ See: Install on Linux - v2ray.com
 - https://www.v2ray.com/en/welcome/install.html#install-linux
 :::
 
+</details>
+
 ### 脚本安装
 
 ::: info 修改后的脚本附在文末： [v2ray 完整安装脚本](#v2ray-完整安装脚本)
 :::
+
+#### 简单修改
 
 直接拿下面这个脚本安装是不行的，因为 `github.com` 被墙了
 - https://github.com/v2fly/fhs-install-v2ray/blob/master/install-release.sh
@@ -137,13 +139,19 @@ See: Install on Linux - v2ray.com
       }
       ```
 
-
 ::: tip See: fhs-install-v2ray/install-release.sh
 * https://github.com/v2fly/fhs-install-v2ray/blob/master/install-release.sh
 :::
 
+#### 一键安装
 
-### 下载 geoip 和 geosite
+其实就是下载和运行上面修改后的脚本：
+
+```sh
+wget https://raw.staticdn.net/Hansimov/blog/main/docs/notes/scripts/v2ray-install-release.sh -O ./v2ray-install-release.sh && chmod +x ./v2ray-install-release.sh && sudo ./v2ray-install-release.sh
+```
+
+#### 下载 geoip 和 geosite
 
 类似上面的，也需要把 `github.com` 替换为 `githubfast.com`：
 
@@ -156,6 +164,7 @@ sudo wget https://githubfast.com/v2fly/domain-list-community/releases/latest/dow
 - https://github.com/v2fly/fhs-install-v2ray/blob/master/install-dat-release.sh#L19-L25
 - https://github.com/v2fly/fhs-install-v2ray/blob/master/install-dat-release.sh#L21-L22
 :::
+
 
 ## 配置 server 和 client
 
@@ -215,10 +224,10 @@ journalctl -u v2ray.service
 ## 附录
 ### v2ray 完整安装脚本
 
-::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/v2ray-install-release.sh
+::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/scripts/v2ray-install-release.sh
 :::
 
-<<< @/notes/configs/v2ray-install-release.sh
+<<< @/notes/scripts/v2ray-install-release.sh
 
 
 ### `config.json` 完整样例
