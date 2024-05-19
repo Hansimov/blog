@@ -153,3 +153,17 @@ nvcc --version
 ::: tip See: Different CUDA versions shown by nvcc and NVIDIA-smi - Stack Overflow
 * https://stackoverflow.com/questions/53422407/different-cuda-versions-shown-by-nvcc-and-nvidia-smi
 :::
+
+## 用 gpustat 查看 GPU 实时状态
+
+安装：
+
+```sh
+pip install gpustat
+```
+
+运行：
+
+```sh
+gpustat -cpu -i
+```

@@ -71,6 +71,8 @@ alias hi="hostname -i"
 alias cda="conda activate ai"
 alias cdd="conda deactivate"
 
+alias nu="gpustat -cpu -i"
+
 # bind keys
 bindkey "^[[1;5C" forward-word
 bindkey "^[[1;3C" forward-word
@@ -91,4 +93,4 @@ source ~/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh
 zstyle ':completion:*'  list-colors '=*=96'
 
 # Envs
-HF_ENDPOINT=https://hf-mirror.com
+export HF_ENDPOINT=https://hf-mirror.com
