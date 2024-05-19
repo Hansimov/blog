@@ -300,13 +300,19 @@ sudo -u postgres psql -c "SHOW config_file;"
 listen_addresses = '*'
 ```
 
-注意这里是 `*` 而不是 `"*"`。
+注意这里是 `'*'` 而不是 `"*"`。
 
-并在 `/etc/postgresql/16/main/pg_hba.conf` 添加：
+然后（这里需要 root 权限才能打开）：
 
 ```sh
-host    all             all              0.0.0.0/0                       md5
-host    all             all              ::/0                            md5
+sudo nano /etc/postgresql/16/main/pg_hba.conf`
+```
+
+添加：
+
+```sh
+host    all             all             0.0.0.0/0               md5
+host    all             all             ::/0                    md5
 ```
 
 重启服务:
@@ -326,7 +332,7 @@ sudo systemctl restart postgresql
 sudo apt install postgresql-server-dev-16
 export PG_CONFIG=/Library/PostgreSQL/16/bin/pg_config
 
-git clone --branch v0.6.2 https://github.com/pgvector/pgvector.git
+git clone --branch v0.6.2 https://githubfast.com/pgvector/pgvector.git
 cd pgvector
 sudo make
 sudo make install

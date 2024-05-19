@@ -92,5 +92,10 @@ source ~/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh
 # style of auto complete
 zstyle ':completion:*'  list-colors '=*=96'
 
-# Envs
+# Environment variables
+
+# huggingface mirror
 export HF_ENDPOINT=https://hf-mirror.com
+# postgres
+# export PATH=/usr/lib/postgresql/16/bin:$PATH
+# export PG_CONFIG=/Library/PostgreSQL/16/bin/pg_config
