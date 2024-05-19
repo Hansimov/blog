@@ -8,25 +8,7 @@ All these commands are run on `Ubuntu 22.04.2 LTS`.
 
 ### Install NVIDIA CUDA Toolkit
 
-This is to enable GPU acceleration.
-
-```sh
-# nvcc --version
-sudo apt install nvidia-cuda-toolkit
-```
-
-::: tip See: How to install CUDA & cuDNN on Ubuntu 22.04
- - https://gist.github.com/denguir/b21aa66ae7fb1089655dd9de8351a202
-:::
-
-If you would like to install cuda-toolkit without root permission (e.g. in conda environment), you can use:
-
-```sh
-conda install nvidia/label/cuda-11.7.0::cuda-toolkit
-```
-
-::: tip See: https://anaconda.org/nvidia/cuda-toolkit
-:::
+See: [Ubuntu 安装 NVIDIA 驱动和 CUDA (NVCC)](./nvidia-driver)
 
 ### Install llama-ccp
 

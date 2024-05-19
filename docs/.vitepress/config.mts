@@ -175,6 +175,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "Ubuntu 安装新硬盘",
             "link": "/ubuntu-disk"
           },
+          {
+            text: "Ubuntu 安装 NVIDIA 驱动和 CUDA (NVCC)",
+            "link": "/nvidia-driver"
+          },
         ]
       },
       {
