@@ -38,6 +38,8 @@ zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 
 # aliases
+alias ls="ls --color"
+
 alias gs="git status"
 alias gb="git rev-parse --abbrev-ref HEAD"
 alias gba="git -P branch"
@@ -58,13 +60,16 @@ alias gacp="git add -u && git commit --amend --no-edit && git push -f"
 
 alias ta="tmux a"
 alias td="tmux detach"
-alias tn="tmux new -s"
+alias tn="tmux new -s x"
 alias tl="tmux ls"
 alias ts="tmux select-pane -T"
 
 alias k9="kill -9"
 alias lt="ls -lt"
 alias hi="hostname -i"
+
+alias cda="conda activate ai"
+alias cdd="conda deactivate"
 
 # bind keys
 bindkey "^[[1;5C" forward-word
@@ -84,3 +89,6 @@ source ~/.zsh/zsh-autosuggestions.zsh
 source ~/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh
 # style of auto complete
 zstyle ':completion:*'  list-colors '=*=96'
+
+# Envs
+HF_ENDPOINT=https://hf-mirror.com
