@@ -144,6 +144,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "常用 Postgresql 命令",
             link: "/postgresql-cmds"
           },
+          {
+            text: "下载 Huggingface 文件",
+            link: "/hf-download"
+          },
         ]
       },
       {
