@@ -226,10 +226,6 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
         link: "/research/faq"
       },
       {
-        text: "写作计划",
-        link: "/research/plan"
-      },
-      {
         text: "Transformers",
         collapsed: false,
         base: "/research",
@@ -237,6 +233,17 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "Vision Transformers",
             link: "/vit"
+          }
+        ]
+      },
+      {
+        text: "搜索系统",
+        collapsed: false,
+        base: "/research",
+        items: [
+          {
+            text: "搜索系统文章选读",
+            link: "/search-system-papers"
           }
         ]
       }

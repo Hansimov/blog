@@ -22,3 +22,7 @@ a {
 details {
     border: 1px dashed #c0c0c0;
 }
+
+.timeline-dot-title > a {
+    font-size: 20px;
+}
