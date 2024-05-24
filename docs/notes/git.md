@@ -46,3 +46,13 @@ gh auth login
 * https://docs.github.com/en/get-started/getting-started-with-git/caching-your-github-credentials-in-git?platform=linux#github-cli
 :::
 
+## 配置代理
+
+```sh
+# git config --global http.proxy "http://[server]:[port]"
+git config --global http.proxy "http://127.0.0.1:11111"
+```
+
+::: tip See: Configure Git to use a proxy
+* https://gist.github.com/evantoli/f8c23a37eb3558ab8765
+:::
