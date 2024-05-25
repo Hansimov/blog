@@ -26,7 +26,6 @@ sudo -u postgres psql -c "[your_sql_command];"
 You are connected to database "postgres" as user "postgres" via socket in "/var/run/postgresql" at port "5433".
 ```
 
-
 ::: tip See: postgresql - Find the host name and port using PSQL commands - Stack Overflow
   * https://stackoverflow.com/questions/5598517/find-the-host-name-and-port-using-psql-commands
 :::
@@ -35,6 +34,20 @@ You are connected to database "postgres" as user "postgres" via socket in "/var/
 
 ```sh
 sudo netstat -plunt | grep postgres
+```
+
+## 显示
+
+### 切换行列显示
+
+```sh
+\x
+```
+
+### 切换表头显示
+
+```sh
+\t
 ```
 
 ## 用户
@@ -70,7 +83,7 @@ How can I change a PostgreSQL user password? - Stack Overflow
   * https://stackoverflow.com/questions/12720967/how-can-i-change-a-postgresql-user-password
 :::
 
-## 数据
+## 数据库
 
 ### 创建数据库
 
@@ -83,15 +96,69 @@ CREATE DATABASE [database];
 \c [database]
 ```
 
-### 查看 table
+### 重命名数据库
 
-```sh
+与目标数据库断开连接（连到默认的 postgres 数据库）：
+
+```sql
+\c postgres
+```
+
+关闭目标数据库的所有连接：
+
+```sql
+REVOKE CONNECT ON DATABASE [db_name] FROM public;
+```
+
+```sql
+SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '[db_name]';
+```
+
+重命名：
+
+```sql
+ALTER DATABASE [db_name] RENAME TO [new_db_name];
+```
+
+::: tip See: sql - PostgreSQL - Rename database - Stack Overflow
+* https://stackoverflow.com/questions/143756/postgresql-rename-database
+
+Postgresql - unable to drop database because of some auto connections to DB - Stack Overflow  
+* https://stackoverflow.com/questions/17449420/postgresql-unable-to-drop-database-because-of-some-auto-connections-to-db
+:::
+
+
+### 列出库中所有表
+
+切换到目标库：
+
+```sql
+\c [database]
+```
+
+列出表：
+
+```sql
+\dt
+```
+
+## 表
+
+### 查看表
+
+```sql
 SELECT * FROM [table] LIMIT 10;
 ```
 
-### 计数
+### 删除表
 
-```sh
+```sql
+DROP TABLE [table];
+```
+
+### 统计行数
+
+```sql
 SELECT COUNT(*) FROM [table];
 ```
 
