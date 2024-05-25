@@ -83,3 +83,21 @@ CREATE DATABASE [database];
 \c [database]
 ```
 
+### 查看 table
+
+```sh
+SELECT * FROM [table] LIMIT 10;
+```
+
+### 计数
+
+```sh
+SELECT COUNT(*) FROM [table];
+```
+
+::: tip See: How to show data in a table by using psql command line interface? - Stack Overflow
+* https://stackoverflow.com/questions/26040493/how-to-show-data-in-a-table-by-using-psql-command-line-interface
+
+postgresql - Alternate output format for psql showing one column per line with column name - Stack Overflow
+* https://stackoverflow.com/questions/9604723/alternate-output-format-for-psql-showing-one-column-per-line-with-column-name
+:::

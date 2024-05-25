@@ -37,3 +37,6 @@
 
 ::: timeline [Ubuntu 安装新磁盘](/notes/ubuntu-disk)
 :::
+
+::: timeline [Ubuntu 安装 NVIDIA 驱动和 CUDA (NVCC)](/notes/nvidia-driver)
+:::
