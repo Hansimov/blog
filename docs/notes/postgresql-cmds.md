@@ -142,6 +142,19 @@ Postgresql - unable to drop database because of some auto connections to DB - St
 \dt
 ```
 
+### 查看库中活动
+
+```sh
+select pg_blocking_pids(pid) as block_pid, pid, (now()-xact_start) as elapsed, wait_event, wait_event_type, substr(query,1,100) as query from pg_stat_activity where state <> 'idle' order by 3 desc;
+```
+
+::: tip See: 如何解决PostgreSQL执行语句长时间卡着不动不报错也不执行的问题_PostgreSQL_脚本之家
+* https://www.jb51.net/database/315035mbl.htm
+
+PostgreSQL: Documentation: 16: 28.2. The Cumulative Statistics System
+* https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-ACTIVITY-VIEW
+:::
+
 ## 表
 
 ### 查看表
@@ -168,3 +181,35 @@ SELECT COUNT(*) FROM [table];
 postgresql - Alternate output format for psql showing one column per line with column name - Stack Overflow
 * https://stackoverflow.com/questions/9604723/alternate-output-format-for-psql-showing-one-column-per-line-with-column-name
 :::
+
+## 实用场景
+
+### 添加主键
+
+假如想将 `bvid`（可能有重复）添加为 `videos` 表的主键。
+
+首先创建临时表，选出最早插入的 bvid：
+
+```sql
+CREATE TEMPORARY TABLE temp_table AS SELECT MIN(ctid) as min_ctid, bvid FROM videos GROUP BY bvid;
+```
+
+然后删除原表中不在临时表中的行：
+- 如果这一步耗时很长，大概率是语句写得不好，尽量使用 JOIN 思想
+
+```sql
+-- DELETE FROM videos where ctid not in (select min_ctid from temp_table); -- 这种写法非常慢
+DELETE FROM videos USING temp_table WHERE videos.ctid <> temp_table.min_ctid AND videos.bvid = temp_table.bvid;
+```
+
+最后将 `bvid` 设为主键：
+
+```sql
+ALTER TABLE videos ADD PRIMARY KEY (bvid);
+```
+
+最后删除临时表：
+
+```sql
+DROP TABLE temp_table;
+```
