@@ -163,6 +163,16 @@ PostgreSQL: Documentation: 16: 28.2. The Cumulative Statistics System
 SELECT * FROM [table] LIMIT 10;
 ```
 
+### 查看表结构
+  
+```sql
+SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '[table_name]';
+```
+
+::: tip See: sql - How to get a list column names and datatypes of a table in PostgreSQL? - Stack Overflow
+* https://stackoverflow.com/questions/20194806/how-to-get-a-list-column-names-and-datatypes-of-a-table-in-postgresql
+:::
+
 ### 删除表
 
 ```sql
@@ -212,4 +222,31 @@ ALTER TABLE videos ADD PRIMARY KEY (bvid);
 
 ```sql
 DROP TABLE temp_table;
+```
+
+### 插入或更新
+
+有如下表：
+
+```sql
+create table temp_table (bvid text primary key, title text);
+```
+
+插入或更新：
+
+```sql
+INSERT INTO temp_table (bvid, title) VALUES ('b1', 'title of b1'), ('b2', 'title of b2') ON CONFLICT (bvid) DO UPDATE SET title = EXCLUDED.title;
+```
+
+
+::: tip See: PostgreSQL UPSERT Statement
+* https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-upsert/
+:::
+
+### 取回数据显示行号
+
+例如，取出 `videos` 表中 `mid` 为 946974 的最新 30 条数据，并显示行号：
+
+```sql
+select ROW_NUMBER() OVER (ORDER BY pubdate DESC) as row_num, pubdate, title from (select pubdate, title from videos where mid = 946974 ORDER BY pubdate DESC LIMIT 30);
 ```
