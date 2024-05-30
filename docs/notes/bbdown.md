@@ -22,6 +22,39 @@ cp BBDown /usr/bin/BBDown
 ## 使用
 
 ### 查看视频信息
+
 ```sh
-BBDown -c "SESSDATA=..." [BVID] -info
+BBDown -c "SESSDATA=..." [bvid] -info
+```
+
+### 下载视频
+
+```sh
+BBDown -c "SESSDATA=..." [bvid] -ia -F [bvid] --save-archives-to-file
+```
+
+### 使用配置文件
+
+```sh
+BBDown -c [bvid] --config-file "BBDown.config"
+```
+
+`BBDown.config`:
+
+```conf
+--cookie
+"SESSDATA=..."
+
+--encoding-priority
+hevc
+
+--dfn-priority
+"720P 高清, 480P 清晰, 360P 流畅"
+
+--file-pattern
+<bvid>
+
+--audio-ascending
+
+# --save-archives-to-file
 ```
