@@ -36,7 +36,7 @@ BBDown -c "SESSDATA=..." [bvid] -ia -F [bvid] --save-archives-to-file
 ### 使用配置文件
 
 ```sh
-BBDown -c [bvid] --config-file "BBDown.config"
+BBDown [bvid] --config-file "BBDown.config"
 ```
 
 `BBDown.config`:
@@ -56,5 +56,5 @@ hevc
 
 --audio-ascending
 
-# --save-archives-to-file
+--download-danmaku
 ```

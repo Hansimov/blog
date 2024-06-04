@@ -250,3 +250,11 @@ INSERT INTO temp_table (bvid, title) VALUES ('b1', 'title of b1'), ('b2', 'title
 ```sql
 select ROW_NUMBER() OVER (ORDER BY pubdate DESC) as row_num, pubdate, title from (select pubdate, title from videos where mid = 946974 ORDER BY pubdate DESC LIMIT 30);
 ```
+
+### 选取某个组合的数据
+
+例如，取出 `videos` 表中 `mid` 为 `946974` 且 `tid` 的 `main_r_key` 为 `knowledge` 的数据：
+
+```sql
+SELECT pubdate, title, tname, insert_at FROM videos v JOIN regions r ON v.tid = r.r_tid WHERE v.mid = '946974' AND r.main_r_key = 'knowledge' ORDER BY pubdate DESC;
+```
