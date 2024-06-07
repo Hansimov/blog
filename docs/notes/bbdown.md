@@ -54,6 +54,9 @@ hevc
 --file-pattern
 <bvid>
 
+--multi-file-pattern
+<bvid>_p<pageNumberWithZero>
+
 --audio-ascending
 
 --download-danmaku

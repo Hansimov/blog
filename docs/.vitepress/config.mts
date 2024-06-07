@@ -203,6 +203,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/vllm"
           },
           {
+            text: "Ollama 运行本地 LLM",
+            link: "/ollama"
+          },
+          {
             text: "本地运行 Qwen-VL-Chat-Int4",
             link: "/qwen-vl"
           }
