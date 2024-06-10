@@ -271,7 +271,7 @@ sudo -u postgres psql -c "SHOW data_directory;"
 * https://askubuntu.com/questions/50621/can-not-connect-to-postgresql-listening-on-port-5432
 :::
 
-## 允许远程访问 postgresql
+## 查看监听端口和配置文件
 
 查看正在监听的端口：
 
@@ -279,7 +279,7 @@ sudo -u postgres psql -c "SHOW data_directory;"
 netstat -nlt
 ```
 
-查看 postgresql 配置文件路径：
+查看配置文件路径：
 
 ```sh
 sudo -u postgres psql -c "SHOW config_file;"
@@ -294,7 +294,10 @@ sudo -u postgres psql -c "SHOW config_file;"
 (1 row)
 ```
 
-修改 `/etc/postgresql/16/main/postgresql.conf`:
+
+## 允许远程访问 postgresql
+
+修改配置文件 `/etc/postgresql/16/main/postgresql.conf`:
 
 ```sh
 listen_addresses = '*'

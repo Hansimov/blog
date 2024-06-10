@@ -36,6 +36,19 @@ You are connected to database "postgres" as user "postgres" via socket in "/var/
 sudo netstat -plunt | grep postgres
 ```
 
+### 查看配置
+
+```sh
+\dconfig
+```
+
+查看某项具体配置：
+
+```sh
+\dconfig shared_buffers
+```
+
+
 ## 显示
 
 ### 切换行列显示
@@ -257,4 +270,63 @@ select ROW_NUMBER() OVER (ORDER BY pubdate DESC) as row_num, pubdate, title from
 
 ```sql
 SELECT pubdate, title, tname, insert_at FROM videos v JOIN regions r ON v.tid = r.r_tid WHERE v.mid = '946974' AND r.main_r_key = 'knowledge' ORDER BY pubdate DESC;
+```
+
+## 性能分析和优化
+
+::: tip Tuning Your PostgreSQL Server - PostgreSQL wiki
+* https://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server
+:::
+
+### 使用 postgresqltuner
+
+::: tip jfcoz/postgresqltuner: Simple script to analyse your PostgreSQL database configuration, and give tuning advice
+  * https://github.com/jfcoz/postgresqltuner
+:::
+
+安装：
+
+```sh
+sudo apt install libdbd-pg-perl libdbi-perl perl-modules
+curl -o postgresqltuner.pl -L https://raw.staticdn.net/jfcoz/postgresqltuner/master/postgresqltuner.pl
+chmod +x postgresqltuner.pl
+```
+
+运行：
+
+```sh
+./postgresqltuner.pl --host=<hostname> --database=<dbname> --user=<username> --password=<password>
+```
+
+### 修改 shared_buffers 和 effective_cache_size
+
+查看 postgresql 配置文件路径：
+
+```sh
+sudo -u postgres psql -c "SHOW config_file;"
+```
+
+编辑 postgresql 配置文件：
+
+```sh
+sudo nano /etc/postgresql/16/main/postgresql.conf
+```
+
+修改如下行：（假设内存为 128GB）
+
+```sh
+# typically 25% of total memory
+shared_buffers = 32GB                   # min 128kB, default 128MB
+                                        # (change requires restart)
+
+work_mem = 1GB                          # min 64kB, default 4MB
+
+# typically 50% of total memory
+effective_cache_size = 64GB             # default 4GB
+```
+
+重启服务：
+
+```sh
+sudo systemctl restart postgresql
 ```
