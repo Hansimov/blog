@@ -276,6 +276,15 @@ SELECT pubdate, title, tname, insert_at FROM videos v JOIN regions r ON v.tid = 
 
 ::: tip Tuning Your PostgreSQL Server - PostgreSQL wiki
 * https://wiki.postgresql.org/wiki/Tuning_Your_PostgreSQL_Server
+
+Slow Query Questions - PostgreSQL wiki
+  * https://wiki.postgresql.org/wiki/Slow_Query_Questions
+
+Using EXPLAIN - PostgreSQL wiki
+* https://wiki.postgresql.org/wiki/Using_EXPLAIN
+
+PostgreSQL: Documentation: 16: Chapter 14. Performance Tips
+* https://www.postgresql.org/docs/current/performance-tips.html
 :::
 
 ### 使用 postgresqltuner
@@ -330,3 +339,16 @@ effective_cache_size = 64GB             # default 4GB
 ```sh
 sudo systemctl restart postgresql
 ```
+
+### 使用 VACUUM
+
+```sh
+VACUUM (ANALYZE, VERBOSE, FULL) [table_name];
+```
+
+::: tip sql - Postgresql select count query takes long time - Stack Overflow
+* https://stackoverflow.com/questions/55018986/postgresql-select-count-query-takes-long-time
+
+PostgreSQL: Documentation: 16: VACUUM
+* https://www.postgresql.org/docs/current/sql-vacuum.html
+:::
