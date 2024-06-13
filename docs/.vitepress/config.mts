@@ -151,6 +151,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "安装 BBDown",
             link: "/bbdown"
+          },
+          {
+            text: "安装 nethogs",
+            link: "/nethogs"
           }
         ]
       },
