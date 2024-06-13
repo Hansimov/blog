@@ -198,11 +198,26 @@ DROP TABLE [table];
 SELECT COUNT(*) FROM [table];
 ```
 
+快速预估：
+
+```sql
+select reltuples::bigint from pg_catalog.pg_class where relname = 'videos';
+```
+
 ::: tip See: How to show data in a table by using psql command line interface? - Stack Overflow
 * https://stackoverflow.com/questions/26040493/how-to-show-data-in-a-table-by-using-psql-command-line-interface
 
 postgresql - Alternate output format for psql showing one column per line with column name - Stack Overflow
 * https://stackoverflow.com/questions/9604723/alternate-output-format-for-psql-showing-one-column-per-line-with-column-name
+
+PostgreSQL count(*) made fast | CYBERTEC
+* https://www.cybertec-postgresql.com/en/postgresql-count-made-fast/
+
+Count estimate - PostgreSQL wiki
+* https://wiki.postgresql.org/wiki/Count_estimate
+
+PostgreSQL: Documentation: 16: 20.10. Automatic Vacuuming
+* https://www.postgresql.org/docs/current/runtime-config-autovacuum.html
 :::
 
 ## 实用场景
