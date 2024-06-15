@@ -159,6 +159,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "安装使用 whisper",
             link: "/whisper"
+          },
+          {
+            text: "ffmpeg 常用命令",
+            link: "/ffmpeg-cmds"
           }
         ]
       },
