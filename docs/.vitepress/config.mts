@@ -155,6 +155,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "安装 nethogs",
             link: "/nethogs"
+          },
+          {
+            text: "安装使用 whisper",
+            link: "/whisper"
           }
         ]
       },
