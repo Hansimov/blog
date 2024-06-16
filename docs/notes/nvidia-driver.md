@@ -167,3 +167,29 @@ pip install gpustat
 ```sh
 gpustat -cpu -i
 ```
+
+## 常见问题
+
+### NVIDIA-SMI Shows ERR! on both Fan and Power Usage
+
+> IOT instruction (core dumped)
+
+原因是温度过高。可以尝试把显卡放到更凉快的位置，或者设置功耗限制和风扇速度。
+
+> This issue is due to the higher temperature.
+> 
+> First, you should reseat the question card to the coolest location of your workstation.
+> 
+> Second, set the power limitation [1] and fan speed [2] to ensure the peak temperature does not exceed 75C.
+> 
+> [1] Change them to 150W-to-200W
+> sudo nvidia-smi -pm 1
+> sudo nvidia-smi -pl 150(200)
+> 
+> [2] https://github.com/boris-dimitrov/set_gpu_fans_public 402
+> 
+> Using these methods, I have restored two 1080ti cards which have the same issues.
+
+::: warning NVIDIA-SMI Shows ERR! on both Fan and Power Usage - Graphics / Linux / Linux - NVIDIA Developer Forums
+* https://forums.developer.nvidia.com/t/nvidia-smi-shows-err-on-both-fan-and-power-usage/68293/14
+:::

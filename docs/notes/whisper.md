@@ -43,6 +43,9 @@ openai/whisper: Robust Speech Recognition via Large-Scale Weak Supervision
 
 Simplified Chinese rather than traditional? · openai/whisper · Discussion #277
 * https://github.com/openai/whisper/discussions/277
+
+More efficient batch inference resulting in large-v2 with *60-70x REAL TIME speed (now in custom v3 branch, see comment for details) · Issue #159 · m-bain/whisperX
+  * https://github.com/m-bain/whisperX/issues/159
 :::
 
 
