@@ -129,7 +129,7 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/git"
           },
           {
-            text: "常用 Git 命令",
+            text: "Git 常用命令",
             link: "/git-cmds"
           },
           {
@@ -141,7 +141,7 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/postgresql"
           },
           {
-            text: "常用 Postgresql 命令",
+            text: "Postgresql 常用命令",
             link: "/postgresql-cmds"
           },
           {

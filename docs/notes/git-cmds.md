@@ -1,4 +1,4 @@
-# Common Git commands
+# Git 常用命令
 
 ## Update local clone after remote branch name changes
 

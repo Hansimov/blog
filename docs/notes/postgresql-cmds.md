@@ -1,4 +1,4 @@
-# 常用 postgresql 操作
+# Postgresql 常用命令
 
 ## 界面
 
