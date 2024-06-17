@@ -20,12 +20,13 @@ It's never too late. Just do it better.
 
 <div align="center" style="font-size:25px; line-height:35px;">
 
-<b>Repos</b>
+<b>GitHub Repos</b>
 
-<a href="https://github.com/Hansimov/csapp" title="个人整理的《深入理解计算机系统》中文电子版（原书第 3 版）与实验材料：https://hansimov.gitbook.io/csapp"><u>csapp</u></a>
+<a href="https://github.com/Hansimov/blog" title="Hansimov's blog site"><u>blog</u></a>
+ · <a href="https://github.com/Hansimov/csapp" title="个人整理的《深入理解计算机系统》中文电子版（原书第 3 版）与实验材料：https://hansimov.gitbook.io/csapp"><u>csapp</u></a>
  · <a href="https://github.com/Hansimov/hf-llm-api" title="Huggingface LLM Inference API in OpenAI message format"><u>hf-llm-api</u></a>
- · <a href="https://github.com/Hansimov/bing-chat-api" title="Chat with New Bing via API"><u>bing-chat-api</u></a>
- · <a href="https://github.com/Hansimov/llm-mixer" title="Simple LLM Chat UI for experiments"><u>llm-mixer</u></a>
+ · <a href="https://github.com/Hansimov/ai-read" title="An AI-assisted reading script in browsers."><u>ai-read</u></a>
+ · <a href="https://github.com/Hansimov/bili-search" title="Search videos, danmakus and replies in Bilibili."><u>bili-search</u></a>
 
 </div>
 
@@ -33,12 +34,15 @@ It's never too late. Just do it better.
 
 <div align="center" style="font-size:25px; line-height:35px;">
 
-<b>Notes</b>
+<b>Tech Notes</b>
 
-<a href="./notes/llama-cpp" title="Run LLMs locally with llama-cpp"><u>llama-cpp</u></a>
- · <a href="./notes/frp-proxy" title="Use FRP proxy to forward network traffic"><u>frp-proxy</u></a>
- · <a href="./notes/cf-tunnel" title="Use Cloudflare Tunnel to expose local server to public network"><u>cf-tunnel</u></a>
- · <a href="./notes/tmux-configs" title="Linux Tmux configs"><u>tmux-configs</u></a>
+<a href="./notes/frp-proxy"><u>Networks</u></a>
+ · <a href="./notes/remote-ssh"><u>Tools</u></a>
+ · <a href="./notes/conda"><u>Softwares</u></a>
+ · <a href="./notes/vitepress-init"><u>Workflows</u></a>
+ · <a href="./notes/ubuntu-config"><u>Ubuntu</u></a>
+ · <a href="./notes/llama-cpp"><u>LLMs</u></a>
+ · <a href="./notes/bash-aliases"><u>Configs</u></a> 
 </div>
 
 <br><hr><br>
