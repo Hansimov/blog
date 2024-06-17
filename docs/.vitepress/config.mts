@@ -159,6 +159,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "安装 Elastic Search",
             link: "/elastic-search"
+          },
+          {
+            text: "安装 Elastic Kibana",
+            link: "/elastic-kibana"
           }
         ]
       },

@@ -141,3 +141,26 @@ elasticsearch --enrollment-token <enrollment-token>
 ```
 
 Elasticsearch 会自动在 `config/certs` 目录下生成证书和密钥。
+
+
+命令行选项：
+
+```sh
+elasticsearch-create-enrollment-token --help
+```
+
+```sh
+Creates enrollment tokens for elasticsearch nodes and kibana instances
+
+Option (* = required)  Description
+---------------------  -----------
+-E <KeyValuePair>      Configure a setting
+-f, --force            Use this option to force execution of the command
+                         against a cluster that is currently unhealthy.
+-h, --help             Show help
+* -s, --scope          The scope of this enrollment token, can be either "node"
+                         or "kibana"
+--url                  the URL where the elasticsearch node listens for
+                         connections.
+-v, --verbose          Show verbose output
+```
