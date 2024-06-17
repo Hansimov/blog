@@ -155,6 +155,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "ffmpeg 常用命令",
             link: "/ffmpeg-cmds"
+          },
+          {
+            text: "安装 Elastic Search",
+            link: "/elastic-search"
           }
         ]
       },
