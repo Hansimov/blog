@@ -14,9 +14,15 @@ layout: home
 
 ---
 
-<div align="center" style="font-size:40px; font-weight:bold; padding:50px 0px 50px 0px; color:gray;">
+<div align="center" style="font-size:40px; font-weight:bold; line-height:40px; padding:50px 0px 50px 0px; color:gray;">
 It's never too late. Just do it better.
 </div>
+
+<div align="center">
+  <img style="width:800px; max-width:95vw;" src="https://ghchart.rshah.org/Hansimov">
+</div>
+
+<hr>
 
 <div align="center" style="font-size:25px; line-height:35px;">
 
@@ -45,8 +51,4 @@ It's never too late. Just do it better.
  · <a href="./notes/bash-aliases"><u>Configs</u></a> 
 </div>
 
-<br><hr><br>
 
-<div align="center">
-  <img style="width:800px; max-width:95vw;" src="https://ghchart.rshah.org/Hansimov">
-</div>
