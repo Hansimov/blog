@@ -45,7 +45,15 @@ function navItems(): DefaultTheme.NavItem[] {
       text: "Home", link: "/"
     },
     {
-      text: "Notes", link: "/notes/vitepress-init"
+      text: "Notes", items: [
+        { text: "Networks", link: "/notes/frp-proxy" },
+        { text: "Tools", link: "/notes/remote-ssh" },
+        { text: "Softwares", link: "/notes/conda" },
+        { text: "Workflows", link: "/notes/vitepress-init" },
+        { text: "Ubuntu", link: "/notes/ubuntu-config" },
+        { text: "LLMs", link: "/notes/llama-cpp" },
+        { text: "Configs", link: "/notes/bash-aliases" }
+      ]
     },
     {
       text: "Research", link: "/research/faq"
@@ -54,6 +62,7 @@ function navItems(): DefaultTheme.NavItem[] {
 }
 
 function sidebarItems(): DefaultTheme.SidebarItem[] {
+  // https://vitepress.dev/reference/default-theme-nav#navigation-links
   return {
     "/notes/": [
       {
@@ -61,14 +70,6 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
         base: "/notes",
         collapsed: false,
         items: [
-          {
-            text: "VitePress initialization and setup",
-            link: "/vitepress-init"
-          },
-          {
-            text: "Multiple Github accounts on same machine",
-            link: "/multi-github-account"
-          },
           {
             text: "Use FRP proxy to forward network traffic",
             link: "/frp-proxy"
@@ -84,25 +85,17 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
         ]
       },
       {
-        text: "Softwares",
+        text: "Tools",
         base: "/notes",
-        collapsed: false,
+        collapsed: true,
         items: [
-          {
-            text: "Create VSCode snippets",
-            link: "/vscode-snippets"
-          },
-          {
-            text: "Packaging Python Projects",
-            link: "/python-package"
-          },
-          {
-            text: "Sync GitHub to Huggingface",
-            link: "/sync-github-to-hf"
-          },
           {
             text: "在 VSCode 使用 Remote SSH",
             "link": "/remote-ssh"
+          },
+          {
+            text: "Create VSCode snippets",
+            link: "/vscode-snippets"
           },
           {
             text: "安装 tmux",
@@ -117,12 +110,19 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             "link": "/zsh"
           },
           {
+            text: "安装 nethogs",
+            link: "/nethogs"
+          },
+        ]
+      },
+      {
+        text: "Softwares",
+        base: "/notes",
+        collapsed: false,
+        items: [
+          {
             text: "安装 conda",
             "link": "/conda"
-          },
-          {
-            text: "Python 依赖管理",
-            "link": "/python-requirements"
           },
           {
             text: "安装 Git",
@@ -145,24 +145,47 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/postgresql-cmds"
           },
           {
-            text: "下载 Huggingface 文件",
-            link: "/hf-download"
-          },
-          {
             text: "安装 BBDown",
             link: "/bbdown"
           },
           {
-            text: "安装 nethogs",
-            link: "/nethogs"
-          },
-          {
-            text: "安装使用 whisper",
+            text: "安装 whisper",
             link: "/whisper"
           },
           {
             text: "ffmpeg 常用命令",
             link: "/ffmpeg-cmds"
+          }
+        ]
+      },
+      {
+        text: "Workflows",
+        base: "/notes",
+        collapsed: true,
+        items: [
+          {
+            text: "VitePress initialization and setup",
+            link: "/vitepress-init"
+          },
+          {
+            text: "Multiple Github accounts on same machine",
+            link: "/multi-github-account"
+          },
+          {
+            text: "Packaging Python Projects",
+            link: "/python-package"
+          },
+          {
+            text: "Python 依赖管理",
+            "link": "/python-requirements"
+          },
+          {
+            text: "Sync GitHub to Huggingface",
+            link: "/sync-github-to-hf"
+          },
+          {
+            text: "下载 Huggingface 文件",
+            link: "/hf-download"
           }
         ]
       },
@@ -221,12 +244,16 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "本地运行 Qwen-VL-Chat-Int4",
             link: "/qwen-vl"
+          },
+          {
+            text: "使用 LLaMA-Factory 微调 LLM",
+            link: "/llama-factory"
           }
         ]
       },
       {
         text: "Configs",
-        collapsed: false,
+        collapsed: true,
         base: "/notes",
         items: [
           {
