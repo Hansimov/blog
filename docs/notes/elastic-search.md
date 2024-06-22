@@ -164,3 +164,68 @@ Option (* = required)  Description
                          connections.
 -v, --verbose          Show verbose output
 ```
+
+## 安装 Python client
+
+```sh
+pip install elasticsearch
+```
+
+::: tip Python Client Examples
+* https://www.elastic.co/guide/en/elasticsearch/client/python-api/current/examples.html
+
+Python Client Helpers
+* https://www.elastic.co/guide/en/elasticsearch/client/python-api/current/client-helpers.html
+:::
+
+## 安装插件
+
+### 安装 Smart Chinese analysis 插件
+
+```sh
+elasticsearch-plugin install analysis-smartcn
+```
+
+::: tip Smart Chinese analysis plugin | Elasticsearch Plugins and Integrations [8.14] | Elastic
+* https://www.elastic.co/guide/en/elasticsearch/plugins/current/analysis-smartcn.html
+:::
+
+### 安装 IK 分词插件
+
+```sh
+elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-ik/8.14.1
+```
+
+注意：`analysis-ik` 插件需要与 Elasticsearch 版本匹配。
+
+::: tip infinilabs/analysis-ik: 🚌 The IK Analysis plugin integrates Lucene IK analyzer into Elasticsearch and OpenSearch, support customized dictionary.
+* https://github.com/infinilabs/analysis-ik
+
+Elasticsearch 中文分词器-阿里云开发者社区
+* https://developer.aliyun.com/article/848626
+:::
+
+
+### 安装 pinyin 插件
+
+```sh
+elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-pinyin/8.14.1
+```
+
+注意：`analysis-pinyin` 插件需要与 Elasticsearch 版本匹配。
+
+::: tip infinilabs/analysis-pinyin: 🛵 This Pinyin Analysis plugin is used to do conversion between Chinese characters and Pinyin.
+* https://github.com/infinilabs/analysis-pinyin
+:::
+
+### 重启 Elasticsearch 以使插件生效
+
+```sh
+elasticsearch
+```
+
+### 查看已安装插件
+
+```sh
+elasticsearch-plugin list
+```

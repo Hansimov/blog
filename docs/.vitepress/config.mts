@@ -68,7 +68,7 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
       {
         text: "Networks",
         base: "/notes",
-        collapsed: false,
+        collapsed: true,
         items: [
           {
             text: "Use FRP proxy to forward network traffic",
@@ -200,7 +200,7 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
       {
         text: "Ubuntu",
         base: "/notes",
-        collapsed: false,
+        collapsed: true,
         items: [
           {
             text: "个人 Ubuntu 配置流程",
