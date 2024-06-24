@@ -137,6 +137,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/git-mirror"
           },
           {
+            text: "安装 node.js 和 npm",
+            "link": "/nodejs"
+          },
+          {
             text: "安装 Postgresql",
             link: "/postgresql"
           },

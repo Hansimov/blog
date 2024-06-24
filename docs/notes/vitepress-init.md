@@ -1,29 +1,8 @@
 # VitePress initialization and setup
 
-## Install Node.js and npm
-```bash
-sudo apt update
-sudo apt install nodejs
-# node -v
-sudo apt install npm
-# npm -v
-```
+## 前置要求
 
-
-### Upgrade node.js to 18 with nvm
-
-VitePress requires Node.js 18 or above, but the default version in Ubuntu 22.04 is 12.
-
-```sh
-wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-nvm install 18.16.0
-```
-
-::: tip NOTE
-`which nvm` would output nothing, but `nvm` is indeed available in the current shell.
-
-`nvm -v` would work.
-:::
+参考：[安装 node.js 和 npm](/notes/nodejs.md)
 
 ## Setup vitepress
 ::: tip See: https://vitepress.dev/guide/getting-started
