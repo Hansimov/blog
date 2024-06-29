@@ -49,10 +49,42 @@ gh auth login
 ## 配置代理
 
 ```sh
-# git config --global http.proxy "http://[server]:[port]"
 git config --global http.proxy "http://127.0.0.1:11111"
+git config --global https.proxy "http://127.0.0.1:11111"
 ```
 
 ::: tip See: Configure Git to use a proxy
 * https://gist.github.com/evantoli/f8c23a37eb3558ab8765
 :::
+
+## 安装 Git LFS
+
+::: tip Installing Git Large File Storage - GitHub Docs
+* https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage
+
+* git-lfs/git-lfs: Git extension for versioning large files
+  * https://github.com/git-lfs/git-lfs#getting-started
+
+* git-lfs/INSTALLING.md at main · git-lfs/git-lfs
+  * https://github.com/git-lfs/git-lfs/blob/main/INSTALLING.md
+:::
+
+### Ubuntu
+
+配置包管理器：
+
+```sh
+curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+```
+
+安装 git-lfs：
+
+```sh
+sudo apt-get install git-lfs
+```
+
+查看版本：
+
+```sh
+git lfs -v
+```
