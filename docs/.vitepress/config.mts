@@ -198,7 +198,11 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "下载 Huggingface 文件",
             link: "/hf-download"
-          }
+          },
+          {
+            text: "管理 Huggingface 库",
+            link: "/hf-repo"
+          },
         ]
       },
       {
