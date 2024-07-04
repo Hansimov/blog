@@ -8,7 +8,7 @@
 
 添加 Docker 官方 GPG key：
 
-```sh
+```sh{4}
 sudo apt-get update
 sudo apt-get install ca-certificates curl gnupg
 sudo install -m 0755 -d /etc/apt/keyrings
@@ -16,12 +16,17 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o 
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
 ```
 
+- 第 4 行`curl` 命令可能需要添加代理 `--proxy http://127.0.0.1:11111`
+- 或者将 `download.docker.com` 替换为中科大的镜像源 `mirrors.ustc.edu.cn/docker-ce`
+
 将 Docker 库添加到 APT 源：
 
 ```sh
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://mirrors.ustc.edu.cn/docker-ce/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
 ```
+
+- 注意：国内环境需要将 `download.docker.com` 替换为中科大的镜像源 `mirrors.ustc.edu.cn/docker-ce`
 
 安装包：
 
@@ -35,13 +40,84 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 sudo docker run hello-world
 ```
 
-如果该命令未能成功运行，可能是代理问题，参见[配置代理](#配置代理)。
+如果该命令未能成功运行，大概率是网络问题，参见 [添加镜像](#添加镜像) 或 [配置代理](#配置代理)。
+
+若运行成功，输出应形如：
+
+```sh
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+c1ec31eb5944: Pull complete
+Digest: sha256:94323f3e5e09a8b9515d74337010375a456c909543e1ff1538f5116d38ab3989
+Status: Downloaded newer image for hello-world:latest
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+```
+
+## 添加镜像
+
+创建 `/etc/docker/daemon.json`，并添加镜像：
+
+```json
+{
+    "registry-mirrors": [
+      "https://docker.m.daocloud.io", 
+      "https://docker.jianmuhub.com",
+      "https://huecker.io",
+      "https://dockerhub.timeweb.cloud",
+      "https://dockerhub1.beget.com",
+      "https://noohub.ru"
+  ]
+}
+```
+
+命令行如下：
+
+```sh
+sudo mkdir -p /etc/docker
+sudo touch /etc/docker/daemon.json
+sudo bash -c "echo '{
+    \"registry-mirrors\": [
+      \"https://docker.m.daocloud.io\", 
+      \"https://docker.jianmuhub.com\",
+      \"https://huecker.io\",
+      \"https://dockerhub.timeweb.cloud\",
+      \"https://dockerhub1.beget.com\",
+      \"https://noohub.ru\"
+  ]
+}' > /etc/docker/daemon.json"
+```
+
+重启 Docker 服务：
+
+```sh
+sudo systemctl daemon-reload && sudo systemctl restart docker
+```
+
+::: tip 总结国内还能用的 [Docker.io🐳 & Podman mirrors]镜像 6.13更新：国内源+1 & 国外源+1 - 配置调优 - LINUX DO
+* https://linux.do/t/topic/108170
+:::
 
 ## 配置代理
-
-::: tip Docker的三种网络代理配置 · 零壹軒·笔记
-- https://note.qidong.name/2020/05/docker-proxy/
-:::
 
 在 `/etc/systemd/system/docker.service.d/proxy.conf` 中添加：
 
@@ -52,19 +128,36 @@ Environment="HTTPS_PROXY=http://127.0.0.1:11111"
 Environment="NO_PROXY=localhost,127.0.0.1"
 ```
 
-然后重启 Docker 服务。
+重启 Docker 服务：
+
+```sh
+sudo systemctl daemon-reload && sudo systemctl restart docker
+```
+
+::: tip Docker的三种网络代理配置 · 零壹軒·笔记
+- https://note.qidong.name/2020/05/docker-proxy/
+:::
 
 ## 重启 Docker 服务
 
 ```sh
-sudo systemctl daemon-reload
-sudo systemctl restart docker
+sudo systemctl daemon-reload && sudo systemctl restart docker
 ```
+
+## 为普通用户添加 Docker 权限
+
+```sh
+sudo usermod -aG docker $USER && newgrp docker
+```
+
+::: tip linux - docker.sock permission denied - Stack Overflow
+* https://stackoverflow.com/questions/48568172/docker-sock-permission-denied
+:::
 
 ## 一键安装
 
 ```
-wget https://raw.githubusercontent.com/Hansimov/blog/main/docs/notes/scripts/docker_install.sh -O ~/docker_install.sh && chmod +x ~/docker_install.sh && ~/docker_install.sh
+wget https://raw.staticdn.net/Hansimov/blog/main/docs/notes/scripts/docker_install.sh -O ~/docker_install.sh && chmod +x ~/docker_install.sh && ~/docker_install.sh
 ```
 
 ::: info 脚本: https://github.com/Hansimov/blog/blob/main/docs/notes/scripts/docker_install.sh
