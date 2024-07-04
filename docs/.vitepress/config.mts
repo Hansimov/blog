@@ -137,6 +137,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/git-mirror"
           },
           {
+            text: "安装 Docker",
+            link: "/docker"
+          },
+          {
             text: "安装 node.js 和 npm",
             "link": "/nodejs"
           },
