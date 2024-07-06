@@ -31,11 +31,15 @@ sudo chmod +x /usr/bin/ollama
 ollama serve
 ```
 
-指定 GPU：
+指定 GPU，并修复 qwen2 的 BUG：
 
 ```sh
-CUDA_VISIBLE_DEVICES=0,1 ollama serve
+OLLAMA_FLASH_ATTENTION=True CUDA_VISIBLE_DEVICES=0,1 ollama serve
 ```
+
+::: warning ollama运行qwen2：7b一直输出大写字母G · Issue #485 · QwenLM/Qwen2
+  * https://github.com/QwenLM/Qwen2/issues/485
+:::
 
 ## 下载模型
 

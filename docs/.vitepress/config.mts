@@ -94,6 +94,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             "link": "/remote-ssh"
           },
           {
+            text: "VSCode 的一些坑",
+            "link": "/vscode"
+          },
+          {
             text: "Create VSCode snippets",
             link: "/vscode-snippets"
           },
