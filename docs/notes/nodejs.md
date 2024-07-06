@@ -1,42 +1,21 @@
 # 安装 node.js 和 npm
 
-## 安装 node.js
+## (推荐) 通过 nodesource 安装 node.js 和 npm
+
+::: tip nodesource/distributions: NodeSource Node.js Binary Distributions
+* https://github.com/nodesource/distributions
+:::
 
 ```sh
-sudo apt update
-sudo apt install nodejs
-# node -v
+curl -fsSL https://deb.nodesource.com/setup_18.x -o ~/nodesource_setup.sh
+bash ~/nodesource_setup.sh
+sudo apt-get install -y nodejs
+node -v && npm -v
 ```
 
-## 安装 npm
+## (不推荐) 通过 nvm 安装 node.js
 
-```sh
-sudo apt install npm
-# npm -v
-```
-
-## npm 换国内源
-
-查看默认源：
-
-```sh
-npm config ls -l | grep registry
-```
-
-更换为淘宝源：
-
-```sh
-npm config set registry https://registry.npmmirror.com
-```
-
-打印配置文件：
-
-```sh
-cat ~/.npmrc
-```
-
-
-## 安装 nvm
+### 安装 nvm
 
 ```sh
 wget -qO- https://raw.staticdn.net/nvm-sh/nvm/v0.39.7/install.sh | bash
@@ -62,11 +41,12 @@ nvm 默认安装在 `$HOME/.nvm`。需要重启终端（`bash` 或 `zsh`）以�
 查看版本：
 
 ```sh
-# zsh
+# source ~/.zshrc
+# source ~/.bashrc
 nvm -v
 ```
 
-## 通过 nvm 升级 node.js 到 18.16.0
+### 通过 nvm 升级 node.js 到 18.16.0
 
 一些框架（如 VitePress）要求 node.js 的版本为 18.x 或更高，而 Ubuntu 22.04 通过 apt 安装的 node.js 版本默认为 12.x。
 
@@ -78,3 +58,30 @@ nvm use 18.16.0
 # node -v
 ```
 
+### 安装 npm
+
+```sh
+sudo apt update
+sudo apt install npm
+# npm -v
+```
+
+## npm 换国内源
+
+查看默认源：
+
+```sh
+npm config ls -l | grep registry
+```
+
+更换为淘宝源：
+
+```sh
+npm config set registry https://registry.npmmirror.com
+```
+
+打印配置文件：
+
+```sh
+cat ~/.npmrc
+```
