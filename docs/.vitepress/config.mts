@@ -75,6 +75,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/frp-proxy"
           },
           {
+            text: "使用 FRP 反向代理",
+            link: "/frp-reverse-proxy"
+          },
+          {
             text: "Port local service to public with Cloudflare Tunnel",
             link: "/cf-tunnel"
           },
