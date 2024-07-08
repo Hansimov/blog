@@ -85,7 +85,11 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "安装 v2ray",
             link: "/v2ray"
-          }
+          },
+          {
+            text: "搭建网站和域名解析",
+            link: "/website-dns"
+          },
         ]
       },
       {
