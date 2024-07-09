@@ -87,9 +87,13 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/v2ray"
           },
           {
-            text: "搭建网站和域名解析",
+            text: "网站搭建和域名解析",
             link: "/website-dns"
           },
+          {
+            text: "使用 certbot 为阿里云域名生成证书",
+            link: "/certbot-aliyun"
+          }
         ]
       },
       {
