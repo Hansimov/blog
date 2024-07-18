@@ -218,6 +218,18 @@ elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-pin
 * https://github.com/infinilabs/analysis-pinyin
 :::
 
+### 安装 stconvert 插件
+
+```sh
+elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-stconvert/8.14.1
+```
+
+注意：`analysis-stconvert` 插件需要与 Elasticsearch 版本匹配。
+
+::: tip infinilabs/analysis-stconvert: 中文简繁體互相转换.
+* https://github.com/infinilabs/analysis-stconvert
+:::
+
 ### 重启 Elasticsearch 以使插件生效
 
 ```sh
