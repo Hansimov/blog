@@ -169,6 +169,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/postgresql-cmds"
           },
           {
+            text: "安装 MongoDB",
+            link: "/mongodb"
+          },
+          {
             text: "安装 BBDown",
             link: "/bbdown"
           },
