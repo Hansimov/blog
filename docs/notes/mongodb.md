@@ -146,7 +146,7 @@ sudo systemctl restart mongod
 
 * https://www.mongodb.com/try/download/compass
 
-- 界面比较简陋，尤其是没有夜间模式
+- 界面比较简陋，不过可以在设置里改成暗色模式
 
 注意要下载完整版（区别于只读版和隔离版） ：
 - 1.43.4 (Stable)
@@ -158,7 +158,7 @@ sudo systemctl restart mongod
 * https://studio3t.com/download/
 
 - 启动略慢
-- 颜值比 Compass 高很多，尤其是有夜间模式
+- 颜值比 Compass 高很多
 - 需要注册账号，填写手机号，才能试用 30 天（免费版无法 SQL 查询）
 
 ### 连接到远程 MongoDB

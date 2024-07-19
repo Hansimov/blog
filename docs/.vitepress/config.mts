@@ -173,6 +173,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/mongodb"
           },
           {
+            text: "MongoDB 常用命令",
+            link: "/mongodb-cmds"
+          },
+          {
             text: "安装 BBDown",
             link: "/bbdown"
           },
