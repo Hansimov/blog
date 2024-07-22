@@ -41,3 +41,21 @@ db.[collection].deleteMany({})
 ```sh
 db.[collection].countDocuments()
 ```
+
+## 创建用户
+
+```sh
+db.createUser({ user: "[user]", pwd: "[password]", roles: [{ role: "readWrite", db: "[database]" }]})
+```
+
+## 查看用户
+
+```sh
+show users
+```
+
+## 删除用户
+
+```sh
+db.dropUser("[user]")
+```
