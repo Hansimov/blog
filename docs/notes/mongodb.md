@@ -166,3 +166,138 @@ sudo systemctl restart mongod
 ```sh
 mongodb://<hostname>:27017
 ```
+
+## 部署副本集
+
+::: tip 将独立运行的 mongod 转换为副本集 - MongoDB 手册 v7.0
+  * https://www.mongodb.com/zh-cn/docs/manual/tutorial/convert-standalone-to-replica-set/#convert-a-standalone-mongod-to-a-replica-set
+:::
+
+### 使用配置文件部署副本集
+
+#### 关闭实例服务
+
+```sh
+sudo systemctl stop mongod
+```
+
+#### 配置副本集
+
+```sh
+nano /etc/mongod.conf
+```
+
+添加如下内容：
+
+```sh
+replication:
+  replSetName: "rs0"
+  # oplogSizeMB: <int>
+  # enableMajorityReadConcern: <boolean>
+```
+
+- `replSetName`: 副本集名称
+- `oplogSizeMB`: oplog 大小，默认为磁盘空间的 5%
+- `enableMajorityReadConcern`: 从 v5.0 开始不可更改，始终为 `true`，
+
+::: tip 配置文件选项: `replication.replSetName`
+* https://www.mongodb.com/zh-cn/docs/manual/reference/configuration-options/#mongodb-setting-replication.replSetName
+* https://www.mongodb.com/zh-cn/docs/manual/reference/configuration-options/#replication-options
+:::
+
+#### 启动服务
+```sh
+sudo systemctl start mongod
+```
+
+#### 初始化副本集
+
+进入命令行：
+
+```sh
+mongosh
+```
+
+初始化副本集：
+
+```sh
+rs.initiate()
+```
+
+输出形如：
+
+```sh
+{
+  info2: 'no configuration specified. Using a default configuration for the set',
+  me: '<hostname>:27017',
+  ok: 1
+}
+```
+
+查看副本集配置：
+
+```sh
+rs.conf()
+```
+
+输出形如：
+
+```sh
+{
+  _id: 'rs0',
+  version: 1,
+  term: 1,
+  members: [
+    {
+      _id: 0,
+      host: '<hostname>:27017',
+      arbiterOnly: false,
+      buildIndexes: true,
+      hidden: false,
+      priority: 1,
+      tags: {},
+      secondaryDelaySecs: Long('0'),
+      votes: 1
+    }
+  ],
+  ...
+}
+```
+
+查看副本集状态：
+
+```sh
+rs.status()
+```
+
+### 使用命令行部署副本集
+
+#### 关闭实例
+
+```sh
+mongosh
+```
+
+```sh
+use admin
+db.adminCommand( { shutdown: 1, comment: "Convert to cluster" } )
+```
+
+#### 启动实例
+
+样例：
+
+```sh
+mongod --replSet rs0 --port 27017 --dbpath /path/to/mongodb/dbpath --authenticationDatabase "admin" --username "adminUser" --password
+```
+
+参数说明：
+
+- `--replSet`: 副本集名称 
+- `--port`: 进程端口
+- `--dbpath`: 数据库路径
+- `--authenticationDatabase`, `--username`, `--password`: 身份验证
+
+#### 初始化副本集
+
+[同上](#初始化副本集)。
