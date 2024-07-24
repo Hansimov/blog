@@ -137,6 +137,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
         collapsed: false,
         items: [
           {
+            text: "Linux 常用命令",
+            link: "/linux-cmds"
+          },
+          {
             text: "安装 conda",
             "link": "/conda"
           },
