@@ -136,6 +136,30 @@ net:
 sudo systemctl restart mongod
 ```
 
+## 设置内存占用上限
+
+::: tip Is there any option to limit mongodb memory usage? - Stack Overflow
+* https://stackoverflow.com/questions/6861184/is-there-any-option-to-limit-mongodb-memory-usage
+
+storage.wiredTiger.engineConfig.cacheSizeGB
+* https://www.mongodb.com/zh-cn/docs/manual/reference/configuration-options/#mongodb-setting-storage.wiredTiger.engineConfig.cacheSizeGB
+:::
+
+修改配置文件 `/etc/mongod.conf`，例如，将缓存上限设为 32GB：
+
+```sh{4}
+storage:
+  wiredTiger:
+    engineConfig:
+      cacheSizeGB: 32
+```
+
+重启服务：
+
+```sh
+sudo systemctl restart mongod
+```
+
 ## 安装 GUI 工具
 
 ::: tip 13个Mongodb GUI可视化管理工具，总有一款适合你-阿里云开发者社区
