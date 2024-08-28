@@ -34,6 +34,14 @@ python -m pip install pipreqs
 
 ## 生成 requirements.txt
 
+不指定版本：
+
 ```sh
 pipreqs . --force --mode no-pin --encoding=utf-8
+```
+
+兼容版本：
+
+```sh
+pipreqs . --force --mode compat --encoding=utf-8
 ```
