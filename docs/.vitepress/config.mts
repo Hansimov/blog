@@ -93,6 +93,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "使用 certbot 为阿里云域名生成证书",
             link: "/certbot-aliyun"
+          },
+          {
+            text: "使用 ddns-go 将公网动态 IP 解析到域名",
+            link: "/ddns-go"
           }
         ]
       },
