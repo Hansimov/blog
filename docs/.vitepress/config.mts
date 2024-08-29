@@ -97,6 +97,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "使用 ddns-go 将公网动态 IP 解析到域名",
             link: "/ddns-go"
+          },
+          {
+            text: "使用 ZeroTier 组网",
+            link: "/zerotier"
           }
         ]
       },
