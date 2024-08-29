@@ -207,6 +207,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "安装 Elastic Kibana",
             link: "/elastic-kibana"
+          },
+          {
+            text: "Win 10 关闭自动更新",
+            link: "/windows-updates"
           }
         ]
       },
