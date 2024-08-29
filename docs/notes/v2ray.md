@@ -165,6 +165,23 @@ sudo wget https://githubfast.com/v2fly/domain-list-community/releases/latest/dow
 - https://github.com/v2fly/fhs-install-v2ray/blob/master/install-dat-release.sh#L21-L22
 :::
 
+## Windows 安装 v2ray
+
+下载 release：
+- https://github.com/v2ray/v2ray-core/releases
+- https://github.com/v2fly/v2ray-core/releases/download/v4.31.0/v2ray-windows-64.zip
+
+解压，参考[下面的样例](#config-json-完整样例)修改 `config.json`，然后运行 `v2ray.exe`。
+
+或者创建 `launch_v2ray.bat` 文件，内容如下。双击启动：
+
+```sh
+v2ray.exe run config.json
+```
+
+若要开机自启，创建快捷方式，发送到下面路径即可：
+- `C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp`
+- 又名：`C:\ProgramData\Microsoft\Windows\[开始]菜单\程序\启动`
 
 ## 配置 server 和 client
 

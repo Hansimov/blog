@@ -116,4 +116,4 @@ Usage of ./ddns-go:
   - `sudo ufw allow 9876`
 
 - 查看阿里云域名解析记录：
-  - https://dns.console.aliyun.com/#/dns/setting/<root.domain>
+  - `https://dns.console.aliyun.com/#/dns/setting/<root.domain>`
