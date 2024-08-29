@@ -75,18 +75,7 @@ sudo systemctl stop zerotier-one
 安装好后，右下角会出现一个 ZeroTier 的图标。
 其中 `My Address` 是当前设备的 ZeroTier 地址，形如 `5e******34`。
 
-
-## 创建私有根服务器（moon）
-
-::: tip Private Root Servers - ZeroTier Documentation
-* https://docs.zerotier.com/roots
-
-简单搭建 Zerotier Moon 为虚拟网络加速 | tvtv.fun
-* https://tvtv.fun/vps/001.html
-
-ZeroTier实现内网穿透、异地组网-腾讯云开发者社区-腾讯云
-* https://cloud.tencent.com/developer/article/2161650
-:::
+## 加入网络
 
 ### Ubuntu 加入网络
 
@@ -105,6 +94,39 @@ zerotier 的默认工作目录为 `/var/lib/zerotier-one`。
 ### Windows 加入网络
 
 点击 ZeroTier 图标，选择 `Join New Network`，在 `Network ID` 中输入 `6a************ff`，点击 `Join`。
+
+### 授权 Nodes
+
+默认加入网络的 Nodes 是未授权的，此时彼此之间还不能通过局域网 IP 直接通信。
+
+访问：
+- https://my.zerotier.com/network
+- 找到对应网络，点击 `Members`
+- 全选节点，点击 `Authorize`
+
+这时即可看到每个节点分配的 `Managed IP`，形如：
+
+```sh{2,3,4}
+Auth  Address     Name/Desc  Managed IPs      Last Seen  Version  Physical IP
+√     49??????8b             192.168.19?.???  1 minute   1.14.0   ???.???.???.??? 
+√     5e??????34             192.168.19?.???  1 minute   1.14.0   ???.???.???.??? 
+√     74??????63             192.168.19?.???  1 minute   1.14.0   ???.???.???.???
+```
+
+此时，planet 之间即可互相通过 `Managed IP` 进行通信。
+可以用 ping 测试连接和延迟。
+
+## 创建私有根服务器（moon）
+
+::: tip Private Root Servers - ZeroTier Documentation
+* https://docs.zerotier.com/roots
+
+简单搭建 Zerotier Moon 为虚拟网络加速 | tvtv.fun
+* https://tvtv.fun/vps/001.html
+
+ZeroTier实现内网穿透、异地组网-腾讯云开发者社区-腾讯云
+* https://cloud.tencent.com/developer/article/2161650
+:::
 
 ### 生成私有根服务器的配置文件
 
@@ -163,7 +185,9 @@ mkdir -p /var/lib/zerotier-one/moons.d
 cp ~/*.moon /var/lib/zerotier-one/moons.d
 ```
 
-### 重启 zerotier 服务以使配置生效
+### 重启服务
+
+需要重启 zerotier 服务以使配置生效。
 
 ```sh
 sudo systemctl restart zerotier-one
@@ -182,9 +206,10 @@ sudo systemctl restart zerotier-one
 - 授权对象：`源:所有IPv4(0.0.0.0/0)`
 - 描述：`zerotier`
 
-### 查看 planet 的 peers
+## 配置 moon
+### 查看节点的 peers
 
-首先确保新 planet 已经加入了 zerotier 网络。
+首先确保新节点已经加入了 zerotier 网络。
 
 查看同一网络中的节点信息：
 
@@ -197,7 +222,7 @@ sudo zerotier-cli peers
 ```sh{3,4}
 200 peers
 <ztaddr>   <ver>  <role> <lat> <link>   <lastTX> <lastRX> <path>
-6a??????7a 1.14.0 LEAF     248 DIRECT   4668     4451     ???.???.???.???/21008
+5e??????34 1.14.0 LEAF      86 DIRECT   9726     161066   ???.???.???.???/19386
 74??????63 1.14.0 LEAF       5 DIRECT   4668     4662     ???.???.???.???/9993
 77??????90 -      PLANET   239 DIRECT   14680    154590   ???.???.???.???/9993
 ca??????a9 -      PLANET   260 DIRECT   14680    154569   ???.???.???.???/9993
@@ -205,21 +230,31 @@ ca??????a7 -      PLANET   211 DIRECT   14680    149611   ???.???.???.???/9993
 ca??????b9 -      PLANET   192 DIRECT   14680    154637   ???.???.???.???/9993
 ```
 
-可以看到，当前节点（`6a??????7a`）和想要围绕的 moon (`74??????63`) 的 role 目前都是 `LEAF`。
+可以看到，想要变成 moon 的节点 (`74??????63`) 的 role 目前还是 `LEAF`。
 
 在 ZeroTier 管理界面的 `Members` 信息栏中也可看到节点信息：
 
 - `https://my.zerotier.com/network/6a************ff`
 
-### 让 planet 围绕 moon
+### 让节点围绕 moon
+
+Ubuntu 中：
 
 ```sh
 sudo zerotier-cli orbit 74xxxxxx63 74xxxxxx63
 ```
 
+Windows 中，以管理员身份打开 cmd：
+
+```sh
+zerotier-cli orbit 74xxxxxx63 74xxxxxx63
+```
+
 这里的两个 `74xxxxxx63` 相同：
 - 第一个表示 moon 的 world id
 - 第二个表示该 moon 的任何根服务器的地址，这可以使其联系根服务器以获得整个 world 的信息
+
+略微等待一段时间以使 moon 的改动生效。
 
 再次查看同一网络中的节点信息：
 
@@ -231,64 +266,47 @@ sudo zero-tier-cli peers
 
 ```sh{3}
 <ztaddr>   <ver>  <role> <lat> <link>   <lastTX> <lastRX> <path>
-6a??????7a 1.14.0 LEAF     248 DIRECT   4782     4564     ???.???.???.???/21008
-74??????63 1.14.0 MOON      -1 RELAY
+5e??????34 1.14.0 LEAF      33 DIRECT   9726     161066   ???.???.???.???/19386
+74??????63 1.14.0 MOON       5 DIRECT   4463     4456     ???.???.???.???/9993
 77??????90 -      PLANET   240 DIRECT   24806    89635    ???.???.???.???/9993
 ca??????a9 -      PLANET   260 DIRECT   24806    89614    ???.???.???.???/9993
 ca??????a7 -      PLANET   211 DIRECT   24806    84658    ???.???.???.???/9993
 ca??????b9 -      PLANET   192 DIRECT   4782     34438    ???.???.???.???/9993
 ```
 
-可以看到这里 `74??????63` 的 role 已经变为 `MOON`。
+可以看到这里 `74??????63` 的 role 已经变为 `MOON`。并且连接到同一 moon 的其他节点（LEAF）的延迟 `<lat>` 理应有所下降。
 
-`DIRECT` 表示直连，`RELAY` 表示通过中继服务器连接。
+如果有 peer 的 `<link>` 是 `RELAY` 而非 `DIRECT`，则说明走的是全球的中继服务器。
+这会导致较高的延迟，建议排查前面的步骤。
 
+## 离开 moon 或网络
 如果要离开 moon，可以运行：
 
 ```sh
 sudo zerotier-cli deorbit 74xxxxxx63
 ```
 
-## 授权 Nodes
-
-默认加入网络的 Nodes 是未授权的，此时彼此之间还不能通过局域网 IP 直接通信。
-
-访问：
-- https://my.zerotier.com/network
-- 找到对应网络，点击 `Members`
-- 全选节点，点击 `Authorize`
-
-这时即可看到每个节点分配的 `Managed IP`，形如：
-
-```sh{2,3,4}
-Auth  Address     Name/Desc  Managed IPs      Last Seen  Version  Physical IP
-√     49??????8b             192.168.19?.???  1 minute   1.14.0   ???.???.???.??? 
-√     5e??????34             192.168.19?.???  1 minute   1.14.0   ???.???.???.??? 
-√     74??????63             192.168.19?.???  1 minute   1.14.0   ???.???.???.???
-```
-
-此时，在网络中任一 planet 上查看 peers：
+如果要离开网络，可以运行：
 
 ```sh
-sudo zerotier-cli peers
+sudo zerotier-cli leave 6a************ff
 ```
 
-则会显示出全部加入的节点，且 `<path>` 已经被更新为 `Managed IP`：
+## 重启服务
 
-```sh{3,4,5}
-200 peers
-<ztaddr>   <ver>  <role> <lat> <link>   <lastTX> <lastRX> <path>
-5e??????34 1.14.0 LEAF       3 DIRECT   18928    18926    192.168.???.???/24937
-6a??????7a 1.14.0 LEAF     213 DIRECT   11333    18778    ???.???.???.???/21008
-74??????63 1.14.0 MOON      -1 RELAY
-77??????90 -      PLANET   237 DIRECT   11333    86100    ???.???.???.???/9993
-ca??????a9 -      PLANET   263 DIRECT   11333    86076    ???.???.???.???/9993
-ca??????a7 -      PLANET    65 DIRECT   1332     1268     ???.???.???.???/9993
-ca??????b9 -      PLANET   195 DIRECT   11333    86142    ???.???.???.???/9993
+有时需要重启 zerotier 服务以使配置生效，尤其是配置 moon 的时候。
+
+Ubuntu 中：
+
+```sh
+sudo systemctl restart zerotier-one
 ```
 
-此时，planet 之间即可互相通过 `Managed IP` 进行通信。
-可以用 ping 测试连接和延迟。
+Windows 中：
+
+`win` + `r`，输入 `services.msc`，找到 `ZeroTier One`，右键 `重新启动`。
+
+同时右下角的 ZeroTier UI，点击 `Disconnect`，等待一会，再点击 `Reconnect`，并确认网络权限提示。
 
 ## 命令行参数
 
