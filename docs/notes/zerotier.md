@@ -306,7 +306,160 @@ Windows 中：
 
 `win` + `r`，输入 `services.msc`，找到 `ZeroTier One`，右键 `重新启动`。
 
-同时右下角的 ZeroTier UI，点击 `Disconnect`，等待一会，再点击 `Reconnect`，并确认网络权限提示。
+~~同时右下角的 ZeroTier UI，点击 `Disconnect`，等待一会，再点击 `Reconnect`，并确认网络权限提示。~~
+
+## 常见问题
+
+### 节点 Physical IP 显示为 IPv6
+
+::: tip ZeroTierOne/service at dev · zerotier/ZeroTierOne
+* https://github.com/zerotier/ZeroTierOne/blob/dev/service/README.md
+:::
+
+有时候在 ZeroTier Networks 的页面中看到的 Physical IP 是 IPv6，可以通过修改 `local.conf` 将其改为 IPv4。
+
+这里以 Windows 为例。
+
+首先查看 ZeroTier 的配置文件：
+
+```sh
+zerotier-cli info -j
+```
+
+输出形如：
+
+```json
+{
+ "address": "5e??????34",
+ "clock": 1724986903808,
+ "config": {
+  "settings": {
+   "allowTcpFallbackRelay": true,
+   "forceTcpRelay": false,
+   "homeDir": "C:\\ProgramData\\ZeroTier\\One",
+   "listeningOn": [
+    "192.168.???.???/9993",
+    "192.168.???.???/9993",
+    "10.???.???.???/9993",
+    "192.168.???.???/54691",
+    "192.168.???.???/54691",
+    "10.???.???.???/54691",
+    "192.168.???.???/38094",
+    "192.168.???.???/38094",
+    "10.???.???.???/38094",
+    "240?:????:????:??:????:????:???:??dc/9993",
+    "240?:????:????:??:????:????:???:??dc/54691",
+    "240?:????:????:??:????:????:???:??dc/38094"
+   ],
+   "portMappingEnabled": true,
+   "primaryPort": 9993,
+   "secondaryPort": 38094,
+   "softwareUpdate": "apply",
+   "softwareUpdateChannel": "release",
+   "surfaceAddresses": [
+    "240?:????:????:??:????:????:???:??dc/38094",
+    "240?:????:????:??:????:????:???:??dc/9993",
+    "58.???.??.??/23050",
+    "240?:????:????:??:????:????:???:??dc/54691",
+    "58.???.??.??/43124",
+    "58.???.??.??/23055",
+    "58.???.??.??/32298"
+   ],
+   "tertiaryPort": 54691
+  }
+ },
+ "online": true,
+ ...
+}
+```
+
+可以看到 `listeningOn` 和 `surfaceAddresses` 中有 IPv4 和 IPv6 的地址。
+
+并且 `homeDir` 为 ZeroTier 的安装目录，也即 `C:\ProgramData\ZeroTier\One`。
+
+默认情况下，没有 `local.conf`，所以需要手动创建。以<m>管理员身份</m>打开命令行，运行：
+
+```sh
+cd C:\ProgramData\ZeroTier\One
+type nul > local.conf
+```
+
+修改 `local.conf`：
+
+```json
+{
+    "settings": {
+        "bind": ["0.0.0.0"]
+    }
+}
+```
+
+再次查看 ZeroTier 的配置：
+
+```sh
+zerotier-cli info -j
+```
+
+输出形如：
+
+```json
+{
+ "config": {
+  "settings": {
+   ...
+   "bind": [
+    "0.0.0.0"
+   ],
+   ...
+   "listeningOn": [
+    "0.0.0.0/9993",
+    "0.0.0.0/41287",
+    "0.0.0.0/32706"
+   ],
+   ...
+   "surfaceAddresses": [
+    "58.???.??.??/61788",
+    "58.???.??.??/61793",
+    "58.???.??.??/61795",
+    "58.???.??.??/61804",
+    "58.???.??.??/61798"
+   ],
+   ...
+  }
+ },
+...
+}
+```
+
+可以看到 `listeningOn` 和 `surfaceAddresses` 中的 IPv6 地址都已经去掉了。
+
+同时刷新 ZeroTier Networks 的页面，也可以看到 Physical IP 已经变为 IPv4 的格式，并且和 `surfaceAddresses` 中的地址一致。
+
+[重启服务](#重启服务)，等待生效。
+
+### 连校园网时，其他节点显示 RELAY
+
+::: tip 相关讨论
+zerotier的路由表应该怎么配置。为什么组网不起来 - Powered by Discuz!
+* https://hostloc.com/thread-600976-6-1.html
+
+使用ZeroTier搭建虚拟局域网，完成虚拟局域网内直连_zerotier怎么看是否直连-CSDN博客
+  * https://blog.csdn.net/wmdscjhdpy/article/details/110670451
+  
+Relay connection problem - Community Support - ZeroTier Discussions
+  * https://discuss.zerotier.com/t/relay-connection-problem/18314/3
+
+Router Config Tips - ZeroTier Documentation
+  * https://docs.zerotier.com/routertips
+:::
+
+可以考虑自建 zerotier planet：
+
+* xubiaolin/docker-zerotier-planet: 一分钟私有部署zerotier-planet服务
+  * https://github.com/xubiaolin/docker-zerotier-planet
+
+* Jonnyan404/zerotier-planet: 一分钟自建zerotier-planet
+  * https://github.com/Jonnyan404/zerotier-planet
 
 ## 命令行参数
 
