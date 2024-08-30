@@ -81,6 +81,26 @@ export PATH=$KIBANA_HOME/bin:$PATH
 kibana serve --host 0.0.0.0 --port 5601
 ```
 
+## 常见问题
+
+### 访问网页提示：Kibana server is not ready yet
+
+::: tip elasticsearch - Kibana server is not ready yet - Stack Overflow
+* https://stackoverflow.com/questions/58011088/kibana-server-is-not-ready-yet
+:::
+
+一般是 kibana 没有正常连接 elasticsearch 的服务。 
+
+可以检查 `~/kibana-8.14.1/config/kibana.yml`：
+
+```sh
+# This section was automatically generated during setup.
+elasticsearch.hosts: ['https://localhost:9200']
+xpack.fleet.outputs: [{..., type: elasticsearch, hosts: ['https://localhost:9200'], ...}]
+```
+
+确保这里的两个 `hosts` 是 `localhost` 而不是特定 IP，因为随着网络环境的变化，这个 IP 可能会变。
+
 ## 命令行选项
 
 ```sh
