@@ -236,6 +236,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             "link": "/python-requirements"
           },
           {
+            text: "Python 测试性能",
+            "link": "/python-cprofile"
+          },
+          {
             text: "Sync GitHub to Huggingface",
             link: "/sync-github-to-hf"
           },
