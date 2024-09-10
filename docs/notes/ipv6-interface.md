@@ -1,4 +1,4 @@
-# 指定任意 IPv6 作为出口 IP
+# 指定分配网段内任意 IPv6 作为出口 IP
 
 ::: tip 谁不想要 2^64 个 IP 的代理池 ？ - zu1k
 * https://zu1k.com/posts/tutorials/http-proxy-ipv6-pool/
@@ -13,7 +13,10 @@
 * https://qiedd.com/1927.html
 
 IPv6地址分配统计 - 运营商·运营人 - 通信人家园 - Powered by C114
-  * https://www.txrjy.com/thread-1088343-1-1.html
+* https://www.txrjy.com/thread-1088343-1-1.html
+
+ipv6攻击视角 - r0fus0d 的博客
+* https://r0fus0d.blog.ffffffff0x.com/post/ipv6/#如果你ipv6地址被封了如何更改
 :::
 
 ## 查看 ipv6 地址
@@ -108,7 +111,7 @@ sudo sysctl -p
 sudo apt install ndppd
 ```
 
-### 配置 ndpdd
+### 配置 ndppd
 
 ```sh
 sudo nano /etc/ndppd.conf
@@ -175,6 +178,7 @@ curl --int 240?:????:????:????:abcd:9876:5678:0123 http://ifconfig.me/ip
 运行：
 
 ```sh
+# pip install netifaces requests tclogger
 python ip_tester.py
 ```
 
