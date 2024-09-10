@@ -101,6 +101,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "使用 ZeroTier 组网",
             link: "/zerotier"
+          },
+          {
+            text: "指定任意 IPv6 地址作为出口 IP",
+            link: "/ipv6-interface"
           }
         ]
       },
