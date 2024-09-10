@@ -21,22 +21,23 @@ class IPv6Extractor:
         interfaces = netifaces.interfaces()
         for interface in interfaces:
             addresses = netifaces.ifaddresses(interface)
-            if netifaces.AF_INET6 in addresses:
-                for addr_info in addresses[netifaces.AF_INET6]:
-                    if not addr_info["addr"].startswith("2"):
-                        break
-                    addr = addr_info["addr"]
-                    netmask = addr_info["netmask"]
-                    prefix, prefix_bits = self.extract_prefix(addr, netmask)
-                    self.interfaces.append(
-                        {
-                            "interface": interface,
-                            "addr": addr,
-                            "netmask": netmask,
-                            "prefix": prefix,
-                            "prefix_bits": prefix_bits,
-                        }
-                    )
+            if netifaces.AF_INET6 not in addresses:
+                continue
+            for addr_info in addresses[netifaces.AF_INET6]:
+                if not addr_info["addr"].startswith("2"):
+                    break
+                addr = addr_info["addr"]
+                netmask = addr_info["netmask"]
+                prefix, prefix_bits = self.extract_prefix(addr, netmask)
+                self.interfaces.append(
+                    {
+                        "interface": interface,
+                        "addr": addr,
+                        "netmask": netmask,
+                        "prefix": prefix,
+                        "prefix_bits": prefix_bits,
+                    }
+                )
 
     def get_prefix(self):
         self.get_network_interfaces()

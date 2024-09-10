@@ -49,7 +49,7 @@ ip -6 addr show scope global
 将上面的获得的 ipv6 网段添加到路由表中：
 
 ```sh
-ip route add local 240?:????:????:????::/64 dev eno1
+sudo ip route add local 240?:????:????:????::/64 dev eno1
 ```
 
 - 将 `240?:????:????:????::/64` 替换为实际的 ipv6 网段
@@ -84,8 +84,6 @@ ip -6 route show | grep -v 'fe80::' | grep -v 'lo'
 ```sh
 240?:????:????:???::/64 dev eno1 proto ra metric 100 pref medium
 ```
-
-可以看到，`240?:????:????:???::/64 dev eno1` 已经添加到路由表中。
 
 ## 启用 ip_nonlocal_bind
 
@@ -161,6 +159,43 @@ curl --int 240?:????:????:????:abcd:9876:5678:0123 http://ifconfig.me/ip
 ```sh
 240?:????:????:????:abcd:9876:5678:0123
 ```
+
+## 网段变更
+
+如果光猫重启或者断电，可能会导致 ipv6 网段变更，需要重新添加路由：
+
+```sh
+sudo ip route add local 240x:xxxx:xxxx:xxxx::/64 dev eno1
+```
+
+- 这里的 `240x:xxxx:xxxx:xxxx::/64` 是新的 ipv6 网段
+
+重新配置 ndppd：
+
+```sh
+sudo nano /etc/ndppd.conf
+```
+
+将 `rule 240?:????:????:????::/64` 替换为新的 ipv6 网段：
+
+```lua
+route-ttl 30000
+proxy eno1 {
+    router no
+    timeout 500
+    ttl 30000
+    rule 240x:xxxx:xxxx:xxxx::/64 {
+        static
+    }
+}
+```
+
+重启 ndppd：
+
+```sh
+sudo systemctl restart ndppd
+```
+
 
 ## Python 示例
 
