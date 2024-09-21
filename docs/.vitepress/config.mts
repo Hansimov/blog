@@ -224,7 +224,7 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
         collapsed: true,
         items: [
           {
-            text: "VitePress initialization and setup",
+            text: "使用 VitePress",
             link: "/vitepress-init"
           },
           {

@@ -1,10 +1,10 @@
-# VitePress initialization and setup
+# 使用 VitePress
 
 ## 前置要求
 
 参考：[安装 node.js 和 npm](/notes/nodejs.md)
 
-## Setup vitepress
+## 配置 vitepress
 ::: tip See: https://vitepress.dev/guide/getting-started
 :::
 
@@ -13,7 +13,7 @@ npm add -D vitepress
 npx vitepress init
 ```
 
-Select following options:
+选择如下选项：
 
 ```sh{4,7,10,13}
 ┌  Welcome to VitePress!
@@ -34,13 +34,55 @@ Select following options:
 └
 ```
 
-### Dev
+### dev
 ```sh
-npx vitepress dev docs --host 0.0.0.0
+npx vitepress dev docs --host 0.0.0.0 --port 15173
 # default dev port is 5173
 ```
 
-### Build and preview
+### 常见问题
+
+在 Linux 下运行上一行有可能出现如下错误：
+
+```sh
+Error: ENOSPC: System limit for number of file watchers reached, watch '~/repos/blog/docs/.vitepress/config.mts'
+```
+
+可以修改：
+
+```sh
+sudo nano /etc/sysctl.conf
+```
+
+在文件末尾添加：
+
+```sh
+fs.inotify.max_user_watches = 524288
+```
+
+重启 sysctl 生效：
+
+```sh
+sudo sysctl -p
+```
+
+查看 max_user_wathes:
+
+```sh
+cat /proc/sys/fs/inotify/max_user_watches
+```
+
+输出应为：
+
+```sh
+524288
+```
+
+::: tip watchman - React Native Error: ENOSPC: System limit for number of file watchers reached - Stack Overflow
+* https://stackoverflow.com/questions/55763428/react-native-error-enospc-system-limit-for-number-of-file-watchers-reached
+:::
+
+### build 和 preview
 
 ::: tip See: https://vitepress.dev/guide
 :::
@@ -52,7 +94,7 @@ npx vitepress preview docs --host 0.0.0.0
 # default preview port is 4173
 ```
 
-### Customize public base path
+### 自定义 public base path
 
 ::: tip See: https://vitepress.dev/reference/site-config#base
 :::
@@ -69,7 +111,7 @@ export default defineConfig({
 })
 ```
 
-## Deploy GitHub Pages
+## 部署 GitHub Pages
 
 ::: tip See: https://vitepress.dev/guide/deploy#github-pages
 :::
