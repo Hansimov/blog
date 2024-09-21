@@ -39,6 +39,19 @@ ip -6 addr show scope global
 
 可以看到，`240?:????:????:????::/64` 是分配到的 ipv6 网段。
 
+
+可以进一步过滤出当前的公网 ipv6 地址：
+
+```sh
+ip -6 addr show scope global | grep -E "2409.*" | grep -E "mngtmpaddr" | grep -v "deprecated"
+```
+
+```sh
+    inet6 240?:????:????:????:7890:3456:abcd:0101/64 scope global dynamic mngtmpaddr noprefixroute
+```
+
+输出形如：
+
 三大运营商的 ipv6 地址开头：
 - 中国联通：`2408`
 - 中国移动：`2409`
@@ -196,8 +209,36 @@ proxy eno1 {
 sudo systemctl restart ndppd
 ```
 
+## 一键自动配置
 
-## Python 示例
+该脚本自动完成如下步骤：
+- 查看本机最新 ipv6 前缀
+- 添加路由
+- 修改 ndppd 配置，重启 ndppd
+
+有两个步骤不包括在内（因为只需要操作一次）：
+
+- 启用 ip_nonlocal_bind
+- 安装 ndppd
+
+::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/scripts/ip_router.py
+:::
+
+<details>
+
+<summary><code>ip_router.py</code></summary>
+
+<<< @/notes/scripts/ip_router.py
+
+</details>
+
+运行：
+
+```sh
+sudo env "PATH=$PATH" python ip_router.py
+```
+
+## 测试脚本
 
 ::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/scripts/ip_tester.py
 :::
