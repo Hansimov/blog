@@ -232,7 +232,7 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/multi-github-account"
           },
           {
-            text: "Packaging Python Projects",
+            text: "Python 打包发布",
             link: "/python-package"
           },
           {

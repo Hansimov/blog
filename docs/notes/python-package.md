@@ -1,15 +1,14 @@
-# Packaging Python projects
+# Python 打包发布
 
 ::: tip See: Packaging Python Projects
 - https://packaging.python.org/en/latest/tutorials/packaging-projects/
 :::
 
+## 创建 Python 项目
 
-## Create python project
+### 项目结构
 
-### Project structure
-
-Suppose the package names `expkg`. The structure of this project should be like:
+假如包名为 `expkg`，则项目结构形如：
 
 ```sh
 working_dir/
@@ -26,7 +25,7 @@ working_dir/
 
 ### pyproject.toml
 
-The `pyproject.toml` should be like:
+`pyproject.toml` 形如:
 
 ```toml{2,3,5,7,15,18-20}
 [project]
@@ -51,7 +50,7 @@ Issues = "https://github.com/<author>/expkg/issues"
 Changelog = "https://github.com/<author>/expkg/blob/main/CHANGELOG.md"
 ```
 
-<f>Modify the highlighted lines with the info of your own project.</f>
+<f>将高亮行修改为实际项目信息，将 <code>expkg</code> 替换为实际包名。</f>
 
 
 ::: tip See: Writing your pyproject.toml
@@ -61,7 +60,7 @@ Changelog = "https://github.com/<author>/expkg/blob/main/CHANGELOG.md"
 
 ### LICENSE
 
-Suppose the license is MIT, the `LICENSE` file might look like below.
+以 MIT 为例，`LICENSE` 文件形如：
 
 ```txt{1}
 Copyright (c) 2024 <author>
@@ -85,32 +84,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-<f>Modify the year and author with yours.</f>
+<f>将年份和作者改为实际信息。</f>
 
-## Packaging
-### Install dependencies
+## 打包项目
+### 安装依赖
 
-Install and upgrade `pip`, `build` and `twine`:
+安装和升级 `pip`、`build`、`twine`：
 
 ```sh
 pip install --upgrade pip build twine
 ```
 
-### Build package
-
-Build the package:
+### 构建包
 
 ```sh
 python -m build
 ```
 
-Successful output:
+若成功，输出形如：
 
 ```sh
 Successfully built expkg-0.0.1.tar.gz and expkg-0.0.1-py3-none-any.whl
 ```
 
-This would create new folders and files <f>(highlighted)</f> like below:
+会新建下面高亮的文件夹和文件：
 
 ```sh{2-4,6}
 working_dir/
@@ -124,24 +121,23 @@ working_dir/
 └── ...
 ```
 
-## Upload to PyPI
+## 上传 PyPI
 
-### Create account
+### 创建账户
 
-Register
-on [TestPyPi <f>(Test)</f>](https://test.pypi.org/account/register)
-or [PyPi <f>(Production)</f>](https://pypi.org):
-- Need to verify email, and setup 2FA with Authenticator.
-- Need to save the Recovery codes.
-- Generate new API token.
+注册[TestPyPi <f>(Test)</f>](https://test.pypi.org/account/register)
+或 [PyPi <f>(Production)</f>](https://pypi.org)：
+- 需要验证邮箱，并配置 2FA 认证
+- 需保存 Recovery codes
+- 生成新的 API token
 
-::: warning PRC users might need proxy to make reCaptcha display correctly.
+::: warning 国内用户可能需要代理以正常显示 reCaptcha。
 :::
 
 
-### Configure token for twine
+### 配置 twine 的 token
 
-Create `.pypirc` under user home directory, and add following content:
+在用户 home 目录下创建 `.pypirc`，添加内容如下：
 
 ```sh{5-7}
 [testpypi]
@@ -153,9 +149,9 @@ Create `.pypirc` under user home directory, and add following content:
   password = pypi-...
 ```
 
-<f>The password here is the API token generated above.</f>
+<f>这里的 password 就是上面生成的 API token。</f>
 
-### Upload package with twine
+### 使用 twine 上传包
 
 ```sh{4}
 # TestPyPI
@@ -165,26 +161,27 @@ twine upload dist/*
 twine upload dist/* --skip-existing
 ```
 
-## Develop and test pakcage
-### Install package
+## 开发和测试包
+### 安装包
 
-Install locally (in development):
+本地安装（适用于开发过程中）：
 
 ```sh{2}
 # run in expkg root path
 pip install -e .
 ```
 
-Install from PyPI:
+从 PyPI 安装：
 
 ```sh{4}
 # TestPyPI
 pip install --index-url https://test.pypi.org/simple/ --no-deps expkg
 # PyPI
 pip install --no-deps expkg
+# pip install --no-deps --upgrade -i https://pypi.python.org/simple/ expkg
 ```
 
-### Test pakcage
+### 测试包
 
 ```sh
 python
@@ -192,7 +189,7 @@ python
 >>> example.hello()
 ```
 
-### One Line: rebuild and upload
+### 一键构建和上传
 
 ```sh
 python -m build && twine upload dist/* --skip-existing
@@ -203,9 +200,9 @@ python -m build && twine upload dist/* --skip-existing
 pip install --upgrade expkg --no-cache-dir
 ```
 
-## Auto publish with GitHub Actions
+## 利用 GitHub Actions 自动发布
 
-Create `publish_pypi.yml` in `.github/workflows`:
+在 `.github/workflows` 中创建 `publish_pypi.yml`，内容如下：
 
 ::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/scripts/publish_pypi.yml
 :::
