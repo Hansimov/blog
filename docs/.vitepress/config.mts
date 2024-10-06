@@ -169,6 +169,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/git-mirror"
           },
           {
+            text: "安装 GO",
+            link: "/go"
+          },
+          {
             text: "安装 Docker",
             link: "/docker"
           },
