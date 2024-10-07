@@ -21,6 +21,7 @@ sudo mv go /usr/local
 export GOROOT=/usr/local/go
 export GOPATH=$HOME/go
 export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+export GOPROXY="https://mirrors.aliyun.com/goproxy,direct"
 ```
 
 使配置生效：
@@ -65,4 +66,58 @@ go run hello.go
 
 ```sh
 Hello, World!
+```
+
+## VSCode 设置
+
+```json
+    "[go]": {
+        "editor.formatOnSave": true,
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "never",
+            "source.organizeImports": "never"
+        }
+    },
+```
+
+::: warning 如果 VSCode 里的 GO 插件很卡， 大概率就是没有配置 `editor.codeActionsOnSave`。
+:::
+
+## 安装包
+
+确保添加了国内源：
+
+```sh
+export GOPROXY="https://mirrors.aliyun.com/goproxy,direct"
+```
+
+查看是否配置成功：
+
+```sh
+go env | grep GOPROXY
+```
+
+输出形如：
+
+```sh
+GOPROXY='https://mirrors.aliyun.com/goproxy,direct'
+```
+
+然后安装包。例如安装 VSCode 中 GO 插件需要的包：
+
+```sh
+go install golang.org/x/tools/gopls@latest
+go install honnef.co/go/tools/cmd/staticcheck@latest
+# go install github.com/cweill/gotests/gotests@v1.6.0
+# go install github.com/fatih/gomodifytags@v1.17.0
+# go install github.com/josharian/impl@v1.4.0
+# go install github.com/go-delve/delve/cmd/dlv@latest
+```
+
+查看是否安装：
+
+```sh
+ls ~/go/bin/
 ```
