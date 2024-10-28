@@ -126,6 +126,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/vscode-snippets"
           },
           {
+            text: "VSCode 自定义 tasks",
+            link: "/vscode-tasks"
+          },
+          {
             text: "安装 tmux",
             link: "/tmux"
           },
