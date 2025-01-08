@@ -184,12 +184,14 @@ If you like Certbot, please consider supporting our work by:
  * Donating to EFF:                    https://eff.org/donate-le
 ```
 
-### 在 Nginx 中配置证书
+### 配置证书
 
 certbot 申请的证书文件默认保存到：
 
 - `/etc/letsencrypt/live/blbl.top/fullchain.pem` （证书链）
 - `/etc/letsencrypt/live/blbl.top/privkey.pem` （私钥）
+
+#### 在 Nginx 中配置证书
 
 在 Nginx 配置文件中添加：
 
@@ -205,7 +207,31 @@ server {
 }
 ```
 
-## 自动续期
+#### 在 1panel + OpenResty 中配置证书
+
+如果使用的是 1panel + openresty，各个网站是运行在各自的容器中的，需要进入网站管理界面：
+- http://*.*.*.*:44444/websites/
+- 查看对应的网站
+- openresty 的根目录是：`/opt/1panel/apps/openresty/openresty`
+- 网站的目录是：
+`/opt/1panel/apps/openresty/openresty/www/sites/blbl.top/index`
+
+将上面生成的证书文件拷贝到对应的网站目录下：
+
+```sh
+cp /etc/letsencrypt/live/blbl.top/fullchain.pem /opt/1panel/apps/openresty/openresty/www/sites/blbl.top/fullchain.pem
+cp /etc/letsencrypt/live/blbl.top/privkey.pem /opt/1panel/apps/openresty/openresty/www/sites/blbl.top/privkey.pem
+```
+
+在 1panel 管理界面中，依次选择 “网站” > “证书” > “上传证书” > “导入方式” > “选择服务器文件”，填入：
+- 私钥文件：`/opt/1panel/apps/openresty/openresty/www/sites/blbl.top/privkey.pem`
+- 证书文件：`/opt/1panel/apps/openresty/openresty/www/sites/blbl.top/fullchain.pem`
+
+点击网站域名进入设置界面，选择 “HTTPS”，“证书”选择上面的证书即可。
+
+## 证书续期
+
+### 使用 nginx
 
 添加定时任务：
 
@@ -216,8 +242,40 @@ crontab -e
 内容为：
 
 ```sh
-1 1 */1 * * root certbot renew --manual --preferred-challenges dns --manual-auth-hook "alidns" --manual-cleanup-hook "alidns clean" --deploy-hook "nginx -s reload"
+1 1 */1 * * certbot renew --manual --preferred-challenges dns --manual-auth-hook "alidns" --manual-cleanup-hook "alidns clean" --deploy-hook "nginx -s reload"
 ```
 
 - `1 1 */1 * *`：表示每月1日1时1分执行
 - `--deploy-hook "nginx -s reload"`：表示在续期成功后自动重启 nginx
+
+
+### 使用 1panel + openresty
+
+在命令行，运行：
+
+```sh
+certbot renew --manual --preferred-challenges dns --manual-auth-hook "alidns" --manual-cleanup-hook "alidns clean"
+cp /etc/letsencrypt/live/blbl.top/fullchain.pem /opt/1panel/apps/openresty/openresty/www/sites/blbl.top/fullchain.pem
+cp /etc/letsencrypt/live/blbl.top/privkey.pem /opt/1panel/apps/openresty/openresty/www/sites/blbl.top/privkey.pem
+```
+
+若要定时运行，可以将上面的内容放到脚本中：
+
+```sh
+touch certbot_renew.sh
+nano certbot_renew.sh
+...
+chmod +x certbot_renew.sh
+```
+
+添加定时任务：
+
+```sh
+crontab -e
+```
+
+内容为：
+
+```sh
+1 1 */1 * * ~/certbot_renew.sh
+```

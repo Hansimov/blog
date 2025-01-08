@@ -142,9 +142,11 @@ curl -sSL https://resource.fit2cloud.com/1panel/package/quick_start.sh -o quick_
 2. 若导入方式为 `选择服务器文件`：（适合 certbot 创建的证书）
     - 选择证书和私钥文件路径，点击确认即可。
     - certbot 申请的证书文件默认保存在：
-        - `/etc/letsencrypt/live/blbl.top/fullchain.pem` （证书链）
-        - `/etc/letsencrypt/live/blbl.top/privkey.pem` （私钥）
-
+        - 证书文件：`/etc/letsencrypt/live/blbl.top/fullchain.pem`
+        - 私钥文件：`/etc/letsencrypt/live/blbl.top/privkey.pem`
+    - 1panel 中的证书文件保存在：
+        - 证书文件：`/opt/1panel/apps/openresty/openresty/www/sites/blbl.top/fullchain.pem`
+        - 私钥文件：`/opt/1panel/apps/openresty/openresty/www/sites/blbl.top/privkey.pem`
 ## 启用 HTTPS
 
 ### 在 1panel 中启用 HTTPS
