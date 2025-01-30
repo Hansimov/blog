@@ -201,6 +201,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/mongodb-cmds"
           },
           {
+            text: "安装 Milvus",
+            link: "/milvus"
+          },
+          {
             text: "安装 BBDown",
             link: "/bbdown"
           },

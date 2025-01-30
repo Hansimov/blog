@@ -1,0 +1,122 @@
+# 安装 Milvus、SDK 和 CLI
+
+## 通过 docker-compose 安装运行 Milvus
+
+::: tip Run Milvus with Docker Compose (Linux)
+https://milvus.io/docs/install_standalone-docker-compose.md
+:::
+
+### 下载 docker-compose.yml
+
+```sh
+wget https://github.com/milvus-io/milvus/releases/download/v2.5.4/milvus-standalone-docker-compose.yml -O docker-compose.yml
+```
+
+或者使用 `curl` 经过代理下载：
+
+```sh
+curl -L --proxy http://127.0.0.1:11111 https://github.com/milvus-io/milvus/releases/download/v2.5.4/milvus-standalone-docker-compose.yml -o docker-compose.yml
+```
+
+### 拉取镜像
+
+可以查看都包含哪些镜像：
+
+```sh
+cat docker-compose.yml | grep image
+```
+
+拉取相关镜像：
+- 若拉取较慢，可以换别的源，并将 `docker-compose.yml` 中的对应 `image` 替换为新的源
+- 或者加上环境变量 `https_proxy=http://127.0.0.1:11111` 使用代理
+
+```sh
+docker pull quay.io/coreos/etcd:v3.5.0 # docker pull rancher/mirrored-coreos-etcd:v3.5.0
+docker pull minio/minio:RELEASE.2020-12-03T00-03-10Z
+docker pull milvusdb/milvus:v2.5.4
+```
+
+### 运行 Milvus
+
+```sh
+docker compose up
+```
+
+查看运行状态：
+
+```sh
+docker compose ps
+```
+
+如果正常运行，输出形如：
+
+```sh
+NAME                IMAGE                                      COMMAND                  SERVICE      CREATED              STATUS                        PORTS
+milvus-etcd         quay.io/coreos/etcd:v3.5.16                "etcd -advertise-cli…"   etcd         About a minute ago   Up About a minute (healthy)   2379-2380/tcp
+milvus-minio        minio/minio:RELEASE.2023-03-20T20-16-18Z   "/usr/bin/docker-ent…"   minio        About a minute ago   Up About a minute (healthy)   0.0.0.0:9000-9001->9000-9001/tcp, :::9000-9001->9000-9001/tcp
+milvus-standalone   milvusdb/milvus:v2.5.4                     "/tini -- milvus run…"   standalone   About a minute ago   Up About a minute (healthy)   0.0.0.0:9091->9091/tcp, :::9091->9091/tcp, 0.0.0.0:19530->19530/tcp, :::19530->19530/tcp
+```
+
+### 常见问题
+
+minio 报错：
+
+```sh
+milvus-minio       | ERROR Unable to use the drive /minio_data: Drive /minio_data: found backend type fs, expected xl or xl-single
+```
+
+原因：运行过不同版本的 docker-compose.yml，导致 minio 数据格式不兼容
+
+解决：删除 `volumes` 目录，重新运行
+
+## 安装 Pymilvus
+
+::: tip Install Milvus Python SDK | Milvus Documentation
+* https://milvus.io/docs/install-pymilvus.md
+:::
+
+```sh
+pip install pymilvus==2.5.4
+```
+
+验证安装：
+
+```sh
+python -c "import pymilvus; print(pymilvus.__version__)"
+```
+
+## 安装 Milvus CLI
+
+::: tip Install Milvus_CLI | Milvus Documentation
+* https://milvus.io/docs/install_cli.md
+:::
+
+```sh
+pip install milvus-cli
+```
+
+验证安装：
+
+```sh
+milvus --version
+```
+
+## 安装 GUI 管理工具 Attu
+
+::: tip zilliztech/attu: The GUI for Milvus
+* https://github.com/zilliztech/attu
+:::
+
+下载镜像：
+
+```sh
+docker pull zilliz/attu:v2.4
+```
+
+运行：
+
+```sh
+docker run -p 9009:3000 -e MILVUS_URL=127.0.0.1:19530 zilliz/attu:v2.4
+```
+
+浏览器访问 `http://<server_ip>:9009` 即可。
