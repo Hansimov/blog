@@ -36,10 +36,51 @@ docker pull minio/minio:RELEASE.2020-12-03T00-03-10Z
 docker pull milvusdb/milvus:v2.5.4
 ```
 
+
+### 自定义配置
+
+::: tip Configure Milvus with Docker Compose | Milvus Documentation
+* https://milvus.io/docs/configure-docker.md?tab=component
+:::
+
+下载默认配置文件：
+
+```sh
+wget http://raw.staticdn.net/milvus-io/milvus/v2.5.4/configs/milvus.yaml
+```
+
+修改 `milvus.yaml` 中相关的项，例如将 `maxVectorFieldNum` 从 `4` 改为 `10`：
+
+```sh
+proxy:
+  maxVectorFieldNum: 10 # The maximum number of vector fields that can be specified in a collection. Value range: [1, 10].
+```
+
+在 `docker-compose.yml` 中添加对应的 `volumes`：
+
+```yaml{9}
+services:
+  ...
+  standalone:
+    container_name: milvus-standalone
+    image: milvusdb/milvus:v2.5.4
+    command: ["milvus", "run", "standalone"]
+    ...
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/milvus.yaml:/milvus/configs/milvus.yaml
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/milvus:/var/lib/milvus
+```
+
 ### 运行 Milvus
 
 ```sh
 docker compose up
+```
+
+或者更完整一点：
+
+```sh
+docker compose build && docker compose down && docker compose up
 ```
 
 查看运行状态：
