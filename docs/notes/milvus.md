@@ -49,11 +49,19 @@ docker pull milvusdb/milvus:v2.5.4
 wget http://raw.staticdn.net/milvus-io/milvus/v2.5.4/configs/milvus.yaml
 ```
 
-修改 `milvus.yaml` 中相关的项，例如将 `maxVectorFieldNum` 从 `4` 改为 `10`：
+修改 `milvus.yaml` 中相关的项，例如：
+- 提高 vector 类型的列数限制：`maxVectorFieldNum` 从 `4` 改为 `10`
+- 关闭自动段合并（否则会周期性地高占用CPU）：`enableCompaction` 从 `true` 改为 `false`
+  - 详见 [常见问题：周期性高CPU占用](#周期性高-cpu-占用)
 
 ```sh
 proxy:
   maxVectorFieldNum: 10 # The maximum number of vector fields that can be specified in a collection. Value range: [1, 10].
+
+dataCoord:
+  # Switch value to control if to enable segment compaction.
+  # Compaction merges small-size segments into a large segment, and clears the entities deleted beyond the rentention duration of Time Travel.
+  enableCompaction: false
 ```
 
 在 `docker-compose.yml` 中添加对应的 `volumes`：
@@ -100,7 +108,7 @@ milvus-standalone   milvusdb/milvus:v2.5.4                     "/tini -- milvus 
 
 ### 常见问题
 
-minio 报错：
+#### minio 报错
 
 ```sh
 milvus-minio       | ERROR Unable to use the drive /minio_data: Drive /minio_data: found backend type fs, expected xl or xl-single
@@ -109,6 +117,16 @@ milvus-minio       | ERROR Unable to use the drive /minio_data: Drive /minio_dat
 原因：运行过不同版本的 docker-compose.yml，导致 minio 数据格式不兼容
 
 解决：删除 `volumes` 目录，重新运行
+
+#### 周期性高 CPU 占用
+
+::: warning [Bug]: Milvus (2.5.4) periodically utilizing high cpu, even when there is no in-progress tasks of query and index. · Issue #39830 · milvus-io/milvus
+* https://github.com/milvus-io/milvus/issues/39830
+:::
+
+原因：Milvus 默认开启了自动段合并（compaction）
+
+解决：将 `milvus.yaml` 中的 `enableCompaction` 从 `true` 改为 `false`，重启 Milvus 镜像
 
 ## 安装 Pymilvus
 
@@ -161,3 +179,19 @@ docker run -p 9009:3000 -e MILVUS_URL=127.0.0.1:19530 zilliz/attu:v2.4
 ```
 
 浏览器访问 `http://<server_ip>:9009` 即可。
+
+## pprof 查看性能日志
+
+Dump 日志：
+
+```sh
+wget -O trace.out "http://localhost:9091/debug/pprof/trace?seconds=60"
+```
+
+查看：
+
+```sh
+go tool trace -http=0.0.0.0:40843 trace.out
+```
+
+访问 http://<server_ip>:40843 即可查看
