@@ -205,6 +205,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/milvus"
           },
           {
+            text: "安装 Qdrant",
+            link: "/qdrant"
+          },
+          {
             text: "安装 BBDown",
             link: "/bbdown"
           },
