@@ -25,7 +25,7 @@ curl https://artifacts.elastic.co/downloads/kibana/kibana-8.14.1-linux-x86_64.ta
 
 校验正确应当输出：`kibana-8.14.1-linux-x86_64.tar.gz: OK`
 
-解压缩：
+解压缩到 HOME 目录，其文件名默认为 `kibana-8.14.1`：
 
 ```sh
 tar -xzf kibana-8.14.1-linux-x86_64.tar.gz -C ~
@@ -36,9 +36,17 @@ tar -xzf kibana-8.14.1-linux-x86_64.tar.gz -C ~
 确保 Elasticsearch 已经安装和启动，可参考 [安装 Elasticsearch](./elastic-search.md)。
 
 ```sh
-cd ~/kibana-8.14.1/
+cd ~/kibana-8.14.1
 ./bin/kibana
 ```
+
+如果是远程服务器，可以用下面的命令启动：
+- 因为后续需要访问链接完成认证
+
+```sh
+kibana serve --host 0.0.0.0 --port 5601
+```
+
 
 首次启动 Kibana 时，该命令会在终端中生成一个唯一的链接，用于向 Elasticsearch 注册 Kibana 实例。
 
@@ -80,6 +88,12 @@ export PATH=$KIBANA_HOME/bin:$PATH
 ```sh
 kibana serve --host 0.0.0.0 --port 5601
 ```
+
+## 升级 Kibana
+
+1. 下载新版本：（例如 `8.14.1` -> `8.17.3`）
+  - 由于上面的过程都是在独立的目录下进行，所以可以直接下载新版本并解压缩
+  - 只需要把所有步骤中的 `8.14.1` 替换为 `8.17.3` 即可
 
 ## 常见问题
 

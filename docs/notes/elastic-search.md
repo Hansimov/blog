@@ -34,7 +34,7 @@ shasum -a 512 -c elasticsearch-8.14.1-linux-x86_64.tar.gz.sha512
 校验正确应当输出：`elasticsearch-8.14.1-linux-x86_64.tar.gz: OK`
 
 
-解压缩：
+解压缩到 HOME 目录，其文件名默认为 `elasticsearch-8.14.1`：
 
 ```sh
 tar -xzf elasticsearch-8.14.1-linux-x86_64.tar.gz -C ~
@@ -43,7 +43,7 @@ tar -xzf elasticsearch-8.14.1-linux-x86_64.tar.gz -C ~
 ## 启动
 
 ```sh
-cd ~/elasticsearch-8.14.1/
+cd ~/elasticsearch-8.14.1
 ./bin/elasticsearch
 ```
 
@@ -90,6 +90,12 @@ ElasticSearch 默认运行端口为 `9200`。
 export ES_HOME=~/elasticsearch-8.14.1
 export ELASTIC_PASSWORD="<your_password>"
 export PATH=$ES_HOME/bin:$PATH
+```
+
+重新加载配置：
+
+```sh
+zsh
 ```
 
 ## 检查 Elasticsearch 是否运行
@@ -140,8 +146,8 @@ elasticsearch-create-enrollment-token -s node
 elasticsearch --enrollment-token <enrollment-token>
 ```
 
+这里的 `<enrollment-token>` 是上一步生成的注册令牌。
 Elasticsearch 会自动在 `config/certs` 目录下生成证书和密钥。
-
 
 命令行选项：
 
@@ -168,7 +174,7 @@ Option (* = required)  Description
 ## 安装 Python client
 
 ```sh
-pip install elasticsearch
+pip install elasticsearch --upgrade
 ```
 
 ::: tip Python Client Examples
@@ -205,7 +211,6 @@ Elasticsearch 中文分词器-阿里云开发者社区
 * https://developer.aliyun.com/article/848626
 :::
 
-
 ### 安装 pinyin 插件
 
 ```sh
@@ -233,6 +238,13 @@ elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-stc
 ### 重启 Elasticsearch 以使插件生效
 
 ```sh
+cd ~/elasticsearch-8.14.1/
+./bin/elasticsearch
+```
+
+或者：（可执行程序已经添加到环境变量）
+
+```sh
 elasticsearch
 ```
 
@@ -242,108 +254,16 @@ elasticsearch
 elasticsearch-plugin list
 ```
 
-## 创建 connector
+## 升级 ElasticSearch
 
-::: tip Running from a Docker container | Enterprise Search documentation [8.14] | Elastic
-* https://www.elastic.co/guide/en/enterprise-search/8.14/connectors-run-from-docker.html
-
-connectors/config.yml.example
-* https://github.com/elastic/connectors/blob/main/config.yml.example
-
-Using connectors | Enterprise Search documentation [8.14] | Elastic
-* https://www.elastic.co/guide/en/enterprise-search/current/connectors-usage.html
-
-Elastic MongoDB connector reference | Enterprise Search documentation [8.14] | Elastic
-* https://www.elastic.co/guide/en/enterprise-search/current/connectors-mongodb.html
+::: tip Elastic Installation and Upgrade Guide [8.17] | Elastic
+* https://www.elastic.co/guide/en/elastic-stack/8.17/upgrading-elasticsearch.html
 :::
 
-这里以 MongoDB Connector 为例。ElasticSearch 版本为 `8.14.1`。
-
-### 创建 Connector 和 API key
-
-- 首先在标题栏搜索 `connectors`，进入页面 `Search > Content > Connectors`
-- 点击 `New connector`，选择 `MongoDB`，填入 `Connector name`，点击 `Create connector`
-- 在 `Attach an index` 中选择已有的索引或新建一个，点击 `Save configuration`
-- 点击 `Generate API key`，生成对应的 api key 和 `config.yml`
-
-### 克隆 connectors 仓库
-
-在本地 `~/repos` 下运行：
-
-```sh
-git clone https://github.com/elastic/connectors.git
-```
-
-复制 `http_ca.crt` 文件到 `connectors` 目录下：
-
-```sh
-cp ~/elasticsearch-8.14.1/config/certs/http_ca.crt ~/repos/connectors
-```
-
-下面操作的路径目录均为 `~/repos/connectors`。
-
-创建 `config.yml`，内容如下：
-
-```sh
-connectors:
-  - connector_id: "zADx****************"
-    service_type: "mongodb"
-    api_key: "RGRB******************************************************=="
-elasticsearch:
-  host: "https://localhost:9200"
-  api_key: "RGRB******************************************************=="
-  ca_certs: "/config/http_ca.crt"
-```
-
-- 注意 `host` 是 `https` 而不是 `http`
-- `connector_id` 是自动生成的
-- `RGRB****...` 为 api key
-- `ca_certs` 为证书文件路径，<m>如果不加会报错</m>
-
-### 运行 docker 容器
-
-创建 `run_docker.sh`，内容如下：
-
-```sh
-docker run -v ".:/config" --rm --tty -i --network host docker.elastic.co/enterprise-search/elastic-connectors:8.14.1.0 /app/bin/elastic-ingest -c /config/config.yml
-```
-
-- 需要注意 `elastic-connectors` 的版本要和 `ElasticSearch` 的版本一致
-
-运行：
-  
-```sh
-chmod +x run_docker.sh
-./run_docker.sh
-```
-
-### 连接 MongoDB
-
-配置 MongoDB 的连接信息：
-
-- `Server hostname`: `mongodb://localhost:27017/`
-- `Database`: ...
-- `Collection`: ...
-- `Direct connection`: `false`
-- `SSL/TLS Connection`: `false`
-
-点击 `Sync`，选择 `Full Content`，即可开始同步。
-
-
-### 停止 docker 容器
-
-查看正在运行的 docker 容器：
-
-```sh
-docker ps
-```
-
-然后停止容器：
-
-```sh
-docker stop $(docker ps -q --filter ancestor="docker.elastic.co/enterprise-search/elastic-connectors:8.14.1.0" )
-```
-
-### Common issue
-
-点击 Sync 之后没有反应。（当前未能解决，故暂时不使用 Connector）
+1. 备份或清空数据
+2. 关停所有数据库读写任务
+3. 关停所有 ElasticSearch 和 Kibana 的服务
+4. 下载新版本：（例如 `8.14.1` -> `8.17.3`）
+  - 由于上面的过程都是在独立的目录下进行，所以可以直接下载新版本并解压缩
+  - 只需要把所有步骤中的 `8.14.1` 替换为 `8.17.3` 即可
+5. 升级 Kibana，详见：[升级 Kibana](./elastic-kibana#升级-kibana)
