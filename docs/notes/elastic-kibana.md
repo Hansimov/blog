@@ -74,6 +74,11 @@ eyJ2ZX*********...*********In0=
 - 粘贴 Elasticsearch 生成的注册令牌，然后单击按钮将 Kibana 实例与 Elasticsearch 连接。
 - 以 Elasticsearch 的 `elastic` 用户名和密码登录 Kibana。
 
+或者通过命令行的方式：
+
+```sh
+bin/kibana-setup --enrollment-token eyJ2ZX*********...*********In0=
+
 ## 添加环境变量
 
 将下列内容添加到 `.bashrc` 或 `.zshrc`：

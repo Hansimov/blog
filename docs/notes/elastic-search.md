@@ -20,30 +20,30 @@ Run Elasticsearch from the command line
 下载压缩包：
 
 ```sh
-wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.14.1-linux-x86_64.tar.gz
+wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.17.3-linux-x86_64.tar.gz
 ```
 
 校验 SHA512：（可选）
 
 
 ```sh
-wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.14.1-linux-x86_64.tar.gz.sha512
-shasum -a 512 -c elasticsearch-8.14.1-linux-x86_64.tar.gz.sha512
+wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.17.3-linux-x86_64.tar.gz.sha512
+shasum -a 512 -c elasticsearch-8.17.3-linux-x86_64.tar.gz.sha512
 ```
 
-校验正确应当输出：`elasticsearch-8.14.1-linux-x86_64.tar.gz: OK`
+校验正确应当输出：`elasticsearch-8.17.3-linux-x86_64.tar.gz: OK`
 
 
-解压缩到 HOME 目录，其文件名默认为 `elasticsearch-8.14.1`：
+解压缩到 HOME 目录，其文件名默认为 `elasticsearch-8.17.3`：
 
 ```sh
-tar -xzf elasticsearch-8.14.1-linux-x86_64.tar.gz -C ~
+tar -xzf elasticsearch-8.17.3-linux-x86_64.tar.gz -C ~
 ```
 
 ## 启动
 
 ```sh
-cd ~/elasticsearch-8.14.1
+cd ~/elasticsearch-8.17.3
 ./bin/elasticsearch
 ```
 
@@ -87,7 +87,7 @@ ElasticSearch 默认运行端口为 `9200`。
 将下列内容添加到 `.bashrc` 或 `.zshrc`：
 
 ```sh
-export ES_HOME=~/elasticsearch-8.14.1
+export ES_HOME=~/elasticsearch-8.17.3
 export ELASTIC_PASSWORD="<your_password>"
 export PATH=$ES_HOME/bin:$PATH
 ```
@@ -112,7 +112,7 @@ curl --cacert $ES_HOME/config/certs/http_ca.crt -u elastic:$ELASTIC_PASSWORD htt
   "cluster_name" : "elasticsearch",
   "cluster_uuid" : "**********************",
   "version" : {
-    "number" : "8.14.1",
+    "number" : "8.17.3",
     "build_flavor" : "default",
     "build_type" : "tar",
     "build_hash" : "****************************************",
@@ -171,6 +171,12 @@ Option (* = required)  Description
 -v, --verbose          Show verbose output
 ```
 
+## 复制证书到其他目录
+
+```sh
+cp $ES_HOME/config/certs/http_ca.crt ~/repos/bili-scraper/configs/elastic_ca.crt
+```
+
 ## 安装 Python client
 
 ```sh
@@ -199,7 +205,7 @@ elasticsearch-plugin install analysis-smartcn
 ### 安装 IK 分词插件
 
 ```sh
-elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-ik/8.14.1
+elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-ik/8.17.3
 ```
 
 注意：`analysis-ik` 插件需要与 Elasticsearch 版本匹配。
@@ -214,7 +220,7 @@ Elasticsearch 中文分词器-阿里云开发者社区
 ### 安装 pinyin 插件
 
 ```sh
-elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-pinyin/8.14.1
+elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-pinyin/8.17.3
 ```
 
 注意：`analysis-pinyin` 插件需要与 Elasticsearch 版本匹配。
@@ -226,7 +232,7 @@ elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-pin
 ### 安装 stconvert 插件
 
 ```sh
-elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-stconvert/8.14.1
+elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-stconvert/8.17.3
 ```
 
 注意：`analysis-stconvert` 插件需要与 Elasticsearch 版本匹配。
@@ -238,7 +244,7 @@ elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-stc
 ### 重启 Elasticsearch 以使插件生效
 
 ```sh
-cd ~/elasticsearch-8.14.1/
+cd ~/elasticsearch-8.17.3/
 ./bin/elasticsearch
 ```
 
@@ -252,6 +258,15 @@ elasticsearch
 
 ```sh
 elasticsearch-plugin list
+```
+
+输出形如：
+
+```sh
+analysis-ik
+analysis-pinyin
+analysis-smartcn
+analysis-stconvert
 ```
 
 ## 升级 ElasticSearch
