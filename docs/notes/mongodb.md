@@ -120,7 +120,7 @@ mongosh
   * https://www.mongodb.com/zh-cn/docs/manual/reference/configuration-options/#mongodb-setting-net.bindIp
 :::
 
-修改配置文件 `nano /etc/mongod.conf`，将 `bindIp` 改为 `0.0.0.0`，以允许所有 IP 远程访问：
+修改配置文件 `sudo nano /etc/mongod.conf`，将 `bindIp` 改为 `0.0.0.0`，以允许所有 IP 远程访问：
 
 ```sh
 # network interfaces
@@ -145,13 +145,14 @@ storage.wiredTiger.engineConfig.cacheSizeGB
 * https://www.mongodb.com/zh-cn/docs/manual/reference/configuration-options/#mongodb-setting-storage.wiredTiger.engineConfig.cacheSizeGB
 :::
 
-修改配置文件 `/etc/mongod.conf`，例如，将缓存上限设为 32GB：
+修改配置文件 `sudo nano /etc/mongod.conf`，例如，将缓存上限设为 320GB：
 
-```sh{4}
+```sh{5}
+# engine:
 storage:
   wiredTiger:
     engineConfig:
-      cacheSizeGB: 32
+      cacheSizeGB: 320
 ```
 
 重启服务：
@@ -208,7 +209,7 @@ sudo systemctl stop mongod
 #### 配置副本集
 
 ```sh
-nano /etc/mongod.conf
+sudo nano /etc/mongod.conf
 ```
 
 添加如下内容：

@@ -64,6 +64,9 @@ alias tn="tmux new -s x"
 alias tl="tmux ls"
 alias ts="tmux select-pane -T"
 
+alias tm="top -o %MEM -d 2 -c"
+alias tc="top -o %CPU -d 2 -c"
+
 alias k9="kill -9"
 alias lt="ls -lt"
 alias hi="hostname -i"

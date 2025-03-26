@@ -271,6 +271,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "管理 Huggingface 库",
             link: "/hf-repo"
           },
+          {
+            text: "服务器断电重启任务恢复",
+            link: "/boot-tasks"
+          }
         ]
       },
       {
