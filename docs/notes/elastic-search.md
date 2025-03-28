@@ -210,6 +210,15 @@ elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-ik/
 
 注意：`analysis-ik` 插件需要与 Elasticsearch 版本匹配。
 
+默认的 `stopword.dic` 文件中包含了一些停用词（stop word），分词的时候会被过滤。如果不想过滤这些词，可以将该 dic 文件清空：
+
+```sh
+cd $ES_HOME/config/analysis-ik
+cp stopword.dic stopword.dic.bak && rm stopword.dic && touch stopword.dic
+```
+
+重启 Elasticsearch 以使清空配置的操作生效。
+
 ::: tip infinilabs/analysis-ik: 🚌 The IK Analysis plugin integrates Lucene IK analyzer into Elasticsearch and OpenSearch, support customized dictionary.
 * https://github.com/infinilabs/analysis-ik
 

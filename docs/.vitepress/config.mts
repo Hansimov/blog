@@ -185,6 +185,29 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             "link": "/nodejs"
           },
           {
+            text: "安装 BBDown",
+            link: "/bbdown"
+          },
+          {
+            text: "安装 whisper",
+            link: "/whisper"
+          },
+          {
+            text: "ffmpeg 常用命令",
+            link: "/ffmpeg-cmds"
+          },
+          {
+            text: "Win 10 关闭自动更新",
+            link: "/windows-updates"
+          }
+        ]
+      },
+      {
+        text: "Databases",
+        base: "/notes",
+        collapsed: false,
+        items: [
+          {
             text: "安装 Postgresql",
             link: "/postgresql"
           },
@@ -201,26 +224,6 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/mongodb-cmds"
           },
           {
-            text: "安装 Milvus",
-            link: "/milvus"
-          },
-          {
-            text: "安装 Qdrant",
-            link: "/qdrant"
-          },
-          {
-            text: "安装 BBDown",
-            link: "/bbdown"
-          },
-          {
-            text: "安装 whisper",
-            link: "/whisper"
-          },
-          {
-            text: "ffmpeg 常用命令",
-            link: "/ffmpeg-cmds"
-          },
-          {
             text: "安装 Elastic Search",
             link: "/elastic-search"
           },
@@ -229,9 +232,17 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/elastic-kibana"
           },
           {
-            text: "Win 10 关闭自动更新",
-            link: "/windows-updates"
-          }
+            text: "安装 Milvus",
+            link: "/milvus"
+          },
+          {
+            text: "安装 Qdrant",
+            link: "/qdrant"
+          },
+          {
+            text: "安装 ClickHouse",
+            link: "/clickhouse"
+          },
         ]
       },
       {
