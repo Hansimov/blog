@@ -36,6 +36,7 @@ export default defineConfig({
     }
   },
   lastUpdated: true,
+  ignoreDeadLinks: true
 })
 
 
@@ -150,7 +151,7 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
       {
         text: "Softwares",
         base: "/notes",
-        collapsed: false,
+        collapsed: true,
         items: [
           {
             text: "Linux 常用命令",
@@ -248,7 +249,7 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
       {
         text: "Workflows",
         base: "/notes",
-        collapsed: true,
+        collapsed: false,
         items: [
           {
             text: "使用 VitePress",
@@ -291,7 +292,7 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
       {
         text: "Ubuntu",
         base: "/notes",
-        collapsed: true,
+        collapsed: false,
         items: [
           {
             text: "个人 Ubuntu 配置流程",
@@ -325,7 +326,7 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
       },
       {
         text: "LLMs",
-        collapsed: false,
+        collapsed: true,
         base: "/notes",
         items: [
           {
