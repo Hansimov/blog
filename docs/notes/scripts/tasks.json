@@ -15,13 +15,22 @@
             "args": [
                 "~/scripts/copy_path_and_content.py",
                 "${workspaceFolder}",
-                "${relativeFile}"
+                "${relativeFile}",
+                "${input:selectedFiles}"
             ],
             "problemMatcher": [],
             "group": {
                 "kind": "build",
                 "isDefault": true
             }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "selectedFiles",
+            "type": "promptString",
+            "description": "Enter one or more relative file paths, separated by comma (`,`)",
+            "default": " "
         }
     ]
 }
