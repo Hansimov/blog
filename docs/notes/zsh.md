@@ -6,6 +6,12 @@
 apt install zsh
 ```
 
+如果报错 `E: Package 'zsh' has no installation candidate`，则需要先更新源再安装：
+
+```sh
+apt update && apt install zsh
+```
+
 ::: tip See: Installing ZSH
 - https://github.com/ohmyzsh/ohmyzsh/wiki/Installing-ZSH
 - https://github.com/ohmyzsh/ohmyzsh/wiki/Installing-ZSH#ubuntu-debian--derivatives-windows-10-wsl--native-linux-kernel-with-windows-10-build-1903
