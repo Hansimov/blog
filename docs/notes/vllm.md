@@ -55,7 +55,8 @@ wget https://hf-mirror.com/unsloth/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_
 ```
 
 ```sh
-vllm serve "./models/Qwen3-1.7B-Q4_K_M.gguf" --tokenizer Qwen/Qwen3-1.7B --max-model-len 4096 --enable-reasoning --reasoning-parser deepseek_r1 --host 0.0.0.0 --port 48888 --tensor-parallel-size 2
+MODEL_NAME="Qwen/Qwen3-1.7B"
+vllm serve "./models/Qwen3-1.7B-Q4_K_M.gguf" --served-model-name $MODEL_NAME --tokenizer $MODEL_NAME --hf-config-path $MODEL_NAME --max-model-len 4096 --enable-reasoning --reasoning-parser deepseek_r1 --host 0.0.0.0 --port 48888 --tensor-parallel-size 2
 ```
 
 ## 通过 Python 运行服务
