@@ -19,7 +19,7 @@ pip install vllm
 vllm serve Qwen/Qwen3-1.7B --enable-reasoning --reasoning-parser deepseek_r1 --host 0.0.0.0 --port 48888 --tensor-parallel-size 2
 ```
 
-## 测试
+### 测试
 
 ```sh
 curl http://localhost:48888/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "Qwen/Qwen3-1.7B","messages": [{"role": "user", "content": "来自 Hansimov 的消息：\"你是谁? 我是谁?\" 你的回答必须简短。"}], "chat_template_kwargs": {"enable_thinking": false}}' | jq
@@ -49,14 +49,54 @@ unsloth/Qwen3-32B-GGUF · Hugging Face
 * https://huggingface.co/unsloth/Qwen3-32B-GGUF
 :::
 
+
+
 ```sh
-cd ~/models
-wget https://hf-mirror.com/unsloth/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf
+STORAGE="$HOME/megrez-tmp/models"
+MODEL_NAME="Qwen/Qwen3-1.7B" MODEL_GGUF=Qwen3-1.7B-Q4_K_M.gguf
+# MODEL_NAME="Qwen/Qwen3-4B" MODEL_GGUF=Qwen3-4B-Q4_K_M.gguf
+MODEL_PATH="$STORAGE/$MODEL_GGUF"
 ```
 
 ```sh
-MODEL_NAME="Qwen/Qwen3-1.7B"
-vllm serve "./models/Qwen3-1.7B-Q4_K_M.gguf" --served-model-name $MODEL_NAME --tokenizer $MODEL_NAME --hf-config-path $MODEL_NAME --max-model-len 4096 --enable-reasoning --reasoning-parser deepseek_r1 --host 0.0.0.0 --port 48888 --tensor-parallel-size 2
+MODEL_REPO="unsloth/Qwen3-1.7B-GGUF"
+curl -LC - "https://hf-mirror.com/$MODLE_REPO/resolve/main/$MODEL_GGUF" -o $MODEL_PATH
+```
+
+```sh
+CUDA_VISIBLE_DEVICES=0,1
+```
+
+```sh
+vllm serve $MODEL_PATH --served-model-name $MODEL_NAME --tokenizer $MODEL_NAME --hf-config-path $MODEL_NAME --max-model-len 4096 --enable-reasoning --reasoning-parser deepseek_r1 --host 0.0.0.0 --port 48888 --tensor-parallel-size 2
+```
+
+### 使用 .sh 脚本
+
+样例1：
+
+```sh
+# vllm_qwen3_1.7b.sh
+export STORAGE="$HOME/megrez-tmp/models"
+export MODEL_NAME="Qwen/Qwen3-1.7B"
+export MODEL_GGUF="Qwen3-1.7B-Q4_K_M.gguf"
+export MODEL_PATH="$STORAGE/$MODEL_GGUF"
+export CUDA_VISIBLE_DEVICES=0,1
+export MODEL_PORT=48888
+vllm serve "$MODEL_PATH" --served-model-name $MODEL_NAME --tokenizer $MODEL_NAME --hf-config-path $MODEL_NAME --max-model-len 4096 --enable-reasoning --reasoning-parser deepseek_r1 --host 0.0.0.0 --port $MODEL_PORT --tensor-parallel-size 2
+```
+
+样例2：
+
+```sh
+# vllm_qwen3_4b.sh
+export STORAGE="$HOME/megrez-tmp/models"
+export MODEL_NAME="Qwen/Qwen3-4B"
+export MODEL_GGUF="Qwen3-4B-Q4_K_M.gguf"
+export MODEL_PATH="$STORAGE/$MODEL_GGUF"
+export CUDA_VISIBLE_DEVICES=2,3
+export MODEL_PORT=48889
+vllm serve "$MODEL_PATH" --served-model-name $MODEL_NAME --tokenizer $MODEL_NAME --hf-config-path $MODEL_NAME --max-model-len 4096 --enable-reasoning --reasoning-parser deepseek_r1 --host 0.0.0.0 --port $MODEL_PORT --tensor-parallel-size 2
 ```
 
 ## 通过 Python 运行服务

@@ -53,7 +53,7 @@ function navItems(): DefaultTheme.NavItem[] {
         { text: "Databases", link: "/notes/postgresql" },
         { text: "Workflows", link: "/notes/vitepress-init" },
         { text: "Ubuntu", link: "/notes/ubuntu-config" },
-        { text: "LLMs", link: "/notes/llama-cpp" },
+        { text: "LLMs", link: "/notes/vllm" },
         { text: "Configs", link: "/notes/bash-aliases" }
       ]
     },
@@ -331,16 +331,16 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
         base: "/notes",
         items: [
           {
-            text: "Run local LLM with llama-cpp",
-            link: "/llama-cpp"
-          },
-          {
             text: "本地运行 vllm",
             link: "/vllm"
           },
           {
             text: "Ollama 运行本地 LLM",
             link: "/ollama"
+          },
+          {
+            text: "Run local LLM with llama-cpp",
+            link: "/llama-cpp"
           },
           {
             text: "本地运行 Qwen-VL-Chat-Int4",
