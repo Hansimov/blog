@@ -1,8 +1,8 @@
-# Sync Github Repo to Huggingface Hub
+# 同步 Github 仓库到其他平台
 
-## Steps
+## Huggingface
 
-Create a huggingface token
+### 创建 huggingface token
 * https://huggingface.co/settings/tokens
 
 Put it in the repo secrets with name like `HF_TOKEN` in related Github repo setitngs:
@@ -23,17 +23,33 @@ git push --force space main
   - spaces: `spaces/<user_name>/<repo_name>`
 
 
-## Automate with Github Actions
+### 使用 Github Actions 自动化
 Then add a `sync_to_huggingface_space.yml` in `.github/workflows`:
 * Replace the `<user_name>` (x2) and `<repo_name>` in the last line for current repo.
 * The `HF_TOKEN` name should be the same with the one specified in the step above.
 
-
-<<< @/notes/scripts/sync_to_hf.yml{17,18}
-
 ::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/scripts/sync_to_hf.yml
 :::
+
+<<< @/notes/scripts/sync_to_hf.yml{17,18}
 
 ::: tip See: Managing Spaces with Github Actions
 * https://huggingface.co/docs/hub/spaces-github-actions
 :::
+
+
+## Gitee
+
+### 创建私人令牌
+
+* https://gitee.com/profile/personal_access_tokens
+
+### 使用 Github Actions 自动化
+
+::: warning 注意：Gitee 仓库的`<user_name>`必须全部小写
+:::
+
+::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/scripts/sync_to_gitee.yml
+:::
+
+<<< @/notes/scripts/sync_to_gitee.yml{17,18}

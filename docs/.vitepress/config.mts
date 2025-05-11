@@ -273,8 +273,8 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             "link": "/python-cprofile"
           },
           {
-            text: "Sync GitHub to Huggingface",
-            link: "/sync-github-to-hf"
+            text: "同步 Github 仓库到其他平台",
+            link: "/sync-github-repo"
           },
           {
             text: "下载 Huggingface 文件",
