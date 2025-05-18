@@ -49,8 +49,6 @@ unsloth/Qwen3-32B-GGUF · Hugging Face
 * https://huggingface.co/unsloth/Qwen3-32B-GGUF
 :::
 
-
-
 ```sh
 STORAGE="$HOME/megrez-tmp/models"
 MODEL_NAME="Qwen/Qwen3-1.7B" MODEL_GGUF=Qwen3-1.7B-Q4_K_M.gguf
@@ -98,6 +96,39 @@ export CUDA_VISIBLE_DEVICES=2,3
 export MODEL_PORT=48889
 vllm serve "$MODEL_PATH" --served-model-name $MODEL_NAME --tokenizer $MODEL_NAME --hf-config-path $MODEL_NAME --max-model-len 4096 --enable-reasoning --reasoning-parser deepseek_r1 --host 0.0.0.0 --port $MODEL_PORT --tensor-parallel-size 2
 ```
+
+样例3:
+
+```sh
+# vllm_bge_large.sh
+export STORAGE="$HOME/megrez-tmp/models"
+export MODEL_NAME="BAAI/bge-large-zh-v1.5"
+export CUDA_VISIBLE_DEVICES=2,3
+export MODEL_PORT=48889
+vllm serve $MODEL_NAME --served-model-name $MODEL_NAME --task embed --enable-prefix-caching --host 0.0.0.0 --port $MODEL_PORT --tensor-parallel-size 2
+```
+
+测试：
+
+```sh
+curl http://localhost:48889/v1/embeddings -H "Content-Type: application/json" -d '{"model": "BAAI/bge-large-zh-v1.5","input": ["今天天气怎么样"]}' | jq
+```
+
+样例4: (暂时有 Bug，似乎是量化的 GGUF 的问题)
+
+```sh
+# vllm_bge_large_gguf.sh
+# download model before running this script
+# curl -LC - "https://hf-mirror.com/CompendiumLabs/bge-large-zh-v1.5-gguf/resolve/main/bge-large-zh-v1.5-q4_k_m.gguf" -o "$HOME/megrez-tmp/models/bge-large-zh-v1.5-q4_k_m.gguf"
+export STORAGE="$HOME/megrez-tmp/models"
+export MODEL_NAME="BAAI/bge-large-zh-v1.5"
+export MODEL_GGUF="bge-large-zh-v1.5-q4_k_m.gguf"
+export MODEL_PATH="$STORAGE/$MODEL_GGUF"
+export CUDA_VISIBLE_DEVICES=2,3
+export MODEL_PORT=48889
+vllm serve "$MODEL_PATH" --served-model-name $MODEL_NAME --tokenizer $MODEL_NAME --hf-config-path $MODEL_NAME --task embed --enable-prefix-caching --host 0.0.0.0 --port $MODEL_PORT --tensor-parallel-size 2
+```
+
 
 ## 通过 Python 运行服务
 ```sh
