@@ -1,32 +1,37 @@
 .tagline {
-    text-align: center;
+  text-align: center;
 }
 
 /* footnote */
 f {
-    font-size: small;
-    color: SteelBlue;
+  font-size: small;
+  color: SteelBlue;
 }
 
 /* mark, emphasis */
 m {
-    /* font-weight: bold; */
-    color: HotPink;
+  /* font-weight: bold; */
+  color: HotPink;
 }
 
 /* link: no decoration */
 a {
-    text-decoration: none !important;
+  text-decoration: none !important;
 }
 
 details {
-    border: 1px dashed #c0c0c0;
+  /* border: 1px dashed #c0c0c0; */
+  line-height: 2;
 }
 
 .timeline-dot-title > a {
-    font-size: 20px;
+  font-size: 20px;
 }
 
 tip {
-    font-size: 14px;
+  font-size: 14px;
+}
+
+h3 {
+  padding-bottom: 10px;
 }

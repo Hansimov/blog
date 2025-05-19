@@ -105,7 +105,12 @@ export STORAGE="$HOME/megrez-tmp/models"
 export MODEL_NAME="BAAI/bge-large-zh-v1.5"
 export CUDA_VISIBLE_DEVICES=2,3
 export MODEL_PORT=48889
-vllm serve $MODEL_NAME --served-model-name $MODEL_NAME --task embed --enable-prefix-caching --host 0.0.0.0 --port $MODEL_PORT --tensor-parallel-size 2
+vllm serve $MODEL_NAME --served-model-name $MODEL_NAME --task embedding \
+    --host 0.0.0.0 --port $MODEL_PORT \
+    --tensor-parallel-size 2 --gpu-memory-utilization 0.9  --cpu-offload-gb 20 \
+    --load-format auto --enable-prefix-caching --kv-cache-dtype auto \
+    --max-num-batched-tokens 131072 --max-num-seqs 1024 --tokenizer-pool-size 32 \
+    --disable-log-requests --disable-log-stats
 ```
 
 测试：
