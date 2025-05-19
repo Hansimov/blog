@@ -4,7 +4,8 @@
 * https://www.elastic.co/guide/en/elasticsearch/reference/current/getting-started.html
 :::
 
-## 下载和安装
+## 在本地运行 ElasticSearch
+### 下载和安装
 
 ::: tip Installing Elasticsearch
 * https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html
@@ -16,7 +17,6 @@ Run Elasticsearch from the command line
 * https://www.elastic.co/guide/en/elasticsearch/reference/current/targz.html#targz-running
 :::
 
-
 下载压缩包：
 
 ```sh
@@ -25,7 +25,6 @@ wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.17.3-l
 
 校验 SHA512：（可选）
 
-
 ```sh
 wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.17.3-linux-x86_64.tar.gz.sha512
 shasum -a 512 -c elasticsearch-8.17.3-linux-x86_64.tar.gz.sha512
@@ -33,14 +32,13 @@ shasum -a 512 -c elasticsearch-8.17.3-linux-x86_64.tar.gz.sha512
 
 校验正确应当输出：`elasticsearch-8.17.3-linux-x86_64.tar.gz: OK`
 
-
 解压缩到 HOME 目录，其文件名默认为 `elasticsearch-8.17.3`：
 
 ```sh
 tar -xzf elasticsearch-8.17.3-linux-x86_64.tar.gz -C ~
 ```
 
-## 启动
+### 启动 Elasticsearch
 
 ```sh
 cd ~/elasticsearch-8.17.3
@@ -82,7 +80,7 @@ cd ~/elasticsearch-8.17.3
 
 ElasticSearch 默认运行端口为 `9200`。
 
-## 添加环境变量
+### 添加环境变量
 
 将下列内容添加到 `.bashrc` 或 `.zshrc`：
 
@@ -98,7 +96,7 @@ export PATH=$ES_HOME/bin:$PATH
 zsh
 ```
 
-## 检查 Elasticsearch 是否运行
+### 检查 Elasticsearch 是否运行
 
 ```sh
 curl --cacert $ES_HOME/config/certs/http_ca.crt -u elastic:$ELASTIC_PASSWORD https://localhost:9200
@@ -126,13 +124,13 @@ curl --cacert $ES_HOME/config/certs/http_ca.crt -u elastic:$ELASTIC_PASSWORD htt
 }
 ```
 
-## 重置密码
+### 重置密码
 
 ```sh
 elasticsearch-reset-password -u elastic
 ```
 
-## 在集群中注册新节点
+### 在集群中注册新节点
 
 首先在运行 Elasticsearch 的终端中执行：
 
@@ -171,13 +169,13 @@ Option (* = required)  Description
 -v, --verbose          Show verbose output
 ```
 
-## 复制证书到其他目录
+### 复制证书到其他目录
 
 ```sh
 cp $ES_HOME/config/certs/http_ca.crt ~/repos/bili-scraper/configs/elastic_ca.crt
 ```
 
-## 安装 Python client
+### 安装 Python client
 
 ```sh
 pip install elasticsearch --upgrade
@@ -190,9 +188,9 @@ Python Client Helpers
 * https://www.elastic.co/guide/en/elasticsearch/client/python-api/current/client-helpers.html
 :::
 
-## 安装插件
+### 安装插件
 
-### 安装 Smart Chinese analysis 插件
+#### 安装 Smart Chinese analysis 插件
 
 ```sh
 elasticsearch-plugin install analysis-smartcn
@@ -202,7 +200,7 @@ elasticsearch-plugin install analysis-smartcn
 * https://www.elastic.co/guide/en/elasticsearch/plugins/current/analysis-smartcn.html
 :::
 
-### 安装 IK 分词插件
+#### 安装 IK 分词插件
 
 ```sh
 elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-ik/8.17.3
@@ -226,7 +224,7 @@ Elasticsearch 中文分词器-阿里云开发者社区
 * https://developer.aliyun.com/article/848626
 :::
 
-### 安装 pinyin 插件
+#### 安装 pinyin 插件
 
 ```sh
 elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-pinyin/8.17.3
@@ -238,7 +236,7 @@ elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-pin
 * https://github.com/infinilabs/analysis-pinyin
 :::
 
-### 安装 stconvert 插件
+#### 安装 stconvert 插件
 
 ```sh
 elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-stconvert/8.17.3
@@ -250,7 +248,7 @@ elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-stc
 * https://github.com/infinilabs/analysis-stconvert
 :::
 
-### 重启 Elasticsearch 以使插件生效
+#### 重启 Elasticsearch 以使插件生效
 
 ```sh
 cd ~/elasticsearch-8.17.3/
@@ -263,7 +261,7 @@ cd ~/elasticsearch-8.17.3/
 elasticsearch
 ```
 
-### 查看已安装插件
+#### 查看已安装插件
 
 ```sh
 elasticsearch-plugin list
@@ -278,7 +276,7 @@ analysis-smartcn
 analysis-stconvert
 ```
 
-## 升级 ElasticSearch
+### 升级 ElasticSearch
 
 ::: tip Elastic Installation and Upgrade Guide [8.17] | Elastic
 * https://www.elastic.co/guide/en/elastic-stack/8.17/upgrading-elasticsearch.html
@@ -291,3 +289,116 @@ analysis-stconvert
   - 由于上面的过程都是在独立的目录下进行，所以可以直接下载新版本并解压缩
   - 只需要把所有步骤中的 `8.14.1` 替换为 `8.17.3` 即可
 5. 升级 Kibana，详见：[升级 Kibana](./elastic-kibana#升级-kibana)
+
+
+## 在 Docker 中运行 ElasticSearch
+
+::: tip Start a multi-node cluster with Docker Compose | Elastic Docs
+* https://www.elastic.co/docs/deploy-manage/deploy/self-managed/install-elasticsearch-docker-compose
+:::
+
+### 下载配置
+
+下载 `.env` 和 `docker-compose.yml` 文件到当前目录：
+
+```sh
+mkdir elasticsearch-docker && cd elasticsearch-docker
+```
+
+```sh
+wget https://githubfast.com/elastic/elasticsearch/raw/refs/heads/main/docs/reference/setup/install/docker/.env
+wget https://githubfast.com/elastic/elasticsearch/raw/refs/heads/main/docs/reference/setup/install/docker/docker-compose.yml
+```
+
+### 修改配置
+
+修改 `.env` 和 `docker-compose.yml`，参考[样例配置](#样例配置)。
+
+- 挂载 `data` 和 `certs` 目录到 host
+- 设置 PASSWORD 和 PORT 等环境变量
+- 注释掉 `docker-compose.yml` 中的 `chown` 命令
+
+### 启动 Docker
+
+设置 `vm.max_map_count`， 以确保 Elasticsearch 有足够的内存映射：
+
+```sh
+sudo sysctl -w vm.max_map_count=262144
+# cat /proc/sys/vm/max_map_count
+```
+
+::: tip docker 启动时报错：
+* `ERROR: Elasticsearch died while starting up, with exit code 78`
+
+Increase virtual memory | Elastic Docs
+  * https://www.elastic.co/docs/deploy-manage/deploy/self-managed/vm-max-map-count
+
+Elasticsearch Container Stopped with `Exit 78` state in Ubuntu 18.04 · Issue #1699 · laradock/laradock
+  * https://github.com/laradock/laradock/issues/1699
+:::
+
+运行下列命令，启动：
+
+```sh
+docker compose build && docker compose down && docker compose up
+```
+
+::: tip Using the Docker images in production | Elastic Docs
+* https://www.elastic.co/docs/deploy-manage/deploy/self-managed/install-elasticsearch-docker-prod
+:::
+
+初次启动时，默认以 root 身份在 host 中创建 mount 的目录，会报权限错误。
+
+所以需要设置目录权限，以使内部的 elasticsearch 进程可以访问这些目录：
+
+```sh
+sudo chown -R 1000:1000 data certs
+```
+
+同时注释掉 `docker-compose.yml` 中的下面一行：
+
+```sh
+echo "Setting file permissions"
+chown -R root:root config/certs;
+```
+
+::: warning 注意：如果 host 中的环境变量已经设置了 `ELASTIC_PASSWORD`，那么在容器中也会自动设置该变量。
+此时 `.env` 中的设置会被忽略。
+:::
+
+检测 Elasticsearch 是否运行：
+
+```sh
+curl --cacert ./certs/ca/ca.crt -u elastic:$ELASTIC_PASSWORD https://localhost:19200
+```
+
+### 样例配置
+
+#### .env
+
+::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/elastic-docker/.env
+:::
+
+<details> <summary><code>.env</code></summary>
+
+<<< @/notes/configs/elastic-docker/.env{2,5,8,18,22,26}
+
+</details>
+
+#### docker-compose.yml
+
+<details> <summary><code>docker-compose.yml</code></summary>
+
+<<< @/notes/configs/elastic-docker/docker-compose.yml
+
+</details>
+
+::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/elastic-docker/docker-compose.yml
+:::
+
+#### 复制本地配置到笔记
+
+```sh
+cp ~/elasticsearch-docker/.env ~/repos/blog/docs/notes/configs/elastic-docker/.env
+cp ~/elasticsearch-docker/docker-compose.yml ~/repos/blog/docs/notes/configs/elastic-docker/docker-compose.yml
+```
