@@ -347,15 +347,15 @@ docker compose build && docker compose down && docker compose up
 * https://www.elastic.co/docs/deploy-manage/deploy/self-managed/install-elasticsearch-docker-prod
 :::
 
-初次启动时，默认以 root 身份在 host 中创建 mount 的目录，会报权限错误。
+首次启动时，默认以 root 身份在 host 中创建 mount 的目录，会报权限错误。
 
 所以需要设置目录权限，以使内部的 elasticsearch 进程可以访问这些目录：
 
 ```sh
-sudo chown -R 1000:1000 data certs
+sudo chown -R 1000:1000 data certs plugins
 ```
 
-同时注释掉 `docker-compose.yml` 中的下面一行：
+同时注释掉 `docker-compose.yml` 中的下面一行：（注意，首次启动时不要注释）
 
 ```sh
 echo "Setting file permissions"
@@ -365,6 +365,12 @@ chown -R root:root config/certs;
 ::: warning 注意：如果 host 中的环境变量已经设置了 `ELASTIC_PASSWORD`，那么在容器中也会自动设置该变量。
 此时 `.env` 中的设置会被忽略。
 :::
+
+重新启动：
+
+```sh
+docker compose build && docker compose down && docker compose up
+```
 
 检测 Elasticsearch 是否运行：
 
