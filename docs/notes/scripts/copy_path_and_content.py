@@ -1,49 +1,80 @@
+import re
 import sys
 import os
 
+from copy import deepcopy
+from typing import Union
 
-def get_file_path_by_name(
-    workspace_folder: str,
-    filename: str,
-    ignore_case: bool = True,
-    ignore_ext: bool = True,
-) -> str:
-    filename = filename.strip()
-    for root, dirs, files in os.walk(workspace_folder):
+
+def get_all_filepaths_under_dir(
+    workdir: str, exclude_patterns: list[str] = None
+) -> list[str]:
+    filepaths: list[str] = []
+    for root, dirs, files in os.walk(workdir):
         for file in files:
-            if ignore_case:
-                src = filename.lower()
-                dst = file.lower()
-            else:
-                src = filename
-                dst = file
-            if ignore_ext:
-                src = os.path.splitext(src)[0]
-                dst = os.path.splitext(dst)[0]
-            if src == dst:
-                return os.path.join(root, file)
-    return None
+            filepath = os.path.join(root, file)
+            if exclude_patterns:
+                if any(pattern in filepath for pattern in exclude_patterns):
+                    continue
+            filepaths.append(filepath)
+    return filepaths
 
 
-def get_selected_paths(workspace_folder: str, selected_files_arg: str) -> list[str]:
+def get_filepath_by_name(
+    all_filepaths: list[str], filename: str, ignore_case: bool = True
+) -> Union[str, list[str]]:
+    filename = filename.strip()
+    filepaths = deepcopy(all_filepaths)
+    if ignore_case:
+        filename = filename.lower()
+        filepaths = [fp.lower() for fp in filepaths]
+    basenames = [os.path.basename(fp) for fp in filepaths]
+    # case1: match full basename
+    if filename in basenames:
+        idx = basenames.index(filename)
+        return all_filepaths[idx]
+    # case2: match no-ext basename
+    for idx, basename in enumerate(basenames):
+        if os.path.splitext(basename)[0] == filename:
+            return all_filepaths[idx]
+    # case3: match by regex
+    filename = filename.replace(".", r"\.").replace("*", ".*")
+    pattern = re.compile(filename)
+    res = []
+    for idx, filepath in enumerate(filepaths):
+        if pattern.search(filepath):
+            res.append(all_filepaths[idx])
+    if len(res) == 0:
+        return None
+    else:
+        return res
+
+
+def get_selected_paths(workdir: str, selected_files_arg: str) -> list[str]:
     selected_files = selected_files_arg.split(",")
     selected_paths = []
+    all_filepaths = get_all_filepaths_under_dir(workdir)
     for filename in selected_files:
-        filepath = get_file_path_by_name(workspace_folder, filename)
+        filepath = get_filepath_by_name(all_filepaths, filename)
         if filepath:
-            selected_paths.append(filepath)
-            print(f"  + {filepath}")
+            if isinstance(filepath, list):
+                selected_paths.extend(filepath)
+                for fp in filepath:
+                    print(f"  + {fp}")
+            else:
+                selected_paths.append(filepath)
+                print(f"  + {filepath}")
         else:
             print(f"  × {filename}")
     return selected_paths
 
 
-def get_relative_paths(workspace_folder: str) -> list[str]:
+def get_relative_paths(workdir: str) -> list[str]:
     relative_file = sys.argv[2]
-    relative_path = os.path.join(workspace_folder, relative_file)
-    file_paths = [relative_path]
+    relative_path = os.path.join(workdir, relative_file)
+    filepaths = [relative_path]
     print(f"  * {relative_path}")
-    return file_paths
+    return filepaths
 
 
 def dump_contexts(context_paths: list[str]) -> str:
@@ -68,15 +99,15 @@ def dump_contexts(context_paths: list[str]) -> str:
 
 
 def main():
-    workspace_folder = sys.argv[1]
+    workdir = sys.argv[1]
     selected_files_arg = sys.argv[3]
-    print(f"> select files:")
+    print(f"> selected files:")
     if not selected_files_arg.strip():
-        file_paths = get_relative_paths(workspace_folder)
+        filepaths = get_relative_paths(workdir)
     else:
-        file_paths = get_selected_paths(workspace_folder, selected_files_arg)
+        filepaths = get_selected_paths(workdir, selected_files_arg)
 
-    dump_contexts(file_paths)
+    dump_contexts(filepaths)
 
 
 if __name__ == "__main__":

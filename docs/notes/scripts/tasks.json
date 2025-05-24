@@ -16,7 +16,7 @@
                 "~/scripts/copy_path_and_content.py",
                 "${workspaceFolder}",
                 "${relativeFile}",
-                "${input:selectedFiles}"
+                "\"${input:selectedFiles}\""
             ],
             "problemMatcher": [],
             "group": {
@@ -29,7 +29,7 @@
         {
             "id": "selectedFiles",
             "type": "promptString",
-            "description": "Enter one or more relative file paths, separated by comma (`,`)",
+            "description": "Enter one or more relative file paths, separated by comma(`,`)",
             "default": " "
         }
     ]
