@@ -23,67 +23,72 @@ nicolas/webdis - Docker Image | Docker Hub
 
 ## 在 Docker 中运行 Redis
 
-```sh
-mkdir redis && cd redis
-touch docker-compose.yml
-```
+0. 创建目录：
 
-添加 `docker-compose.yml`，参考[样例配置](#样例配置)。
+    ```sh
+    mkdir redis && cd redis
+    ```
 
-添加 `redis.conf`，参考[样例配置](#样例配置)。
+1. 添加 [`docker-compose.yml`](#docker-compose-yml)
+   
+   ```sh
+   touch docker-compose.yml
+   ```
 
-```sh
-wget https://raw.staticdn.net/redis/redis/8.0/redis.conf -O redis.conf
-```
+2. 添加 [`redis.conf`](#redis-conf)：
 
-`redis.conf` 部分配置修改如下：
+    ```sh
+    wget https://raw.staticdn.net/redis/redis/8.0/redis.conf -O redis.conf
+    ```
 
-```sh
-maxmemory 200gb
-requirepass defaultpass
-# bind 127.0.0.1 -::1
-bind 0.0.0.0
-```
+    `redis.conf` 部分配置修改如下：
 
+    ```sh
+    maxmemory 200gb
+    requirepass defaultpass
+    # bind 127.0.0.1 -::1
+    bind 0.0.0.0
+    ```
 
-添加 `webdis.json`，参考[样例配置](#样例配置)。
+3. 添加 [`webdis.json`](#webdis-json)：
 
-```sh
-docker pull docker.mybacc.com/nicolas/webdis
-wget https://githubfast.com/nicolasff/webdis/raw/refs/heads/master/webdis.json -O webdis.json
-```
+    ```sh
+    docker pull docker.mybacc.com/nicolas/webdis
+    wget https://githubfast.com/nicolasff/webdis/raw/refs/heads/master/webdis.json -O webdis.json
+    ```
 
-`webdis.json` 部分配置修改如下：
+    `webdis.json` 部分配置修改如下：
 
-```json
-{
-  "redis_host": "redis",
-  "redis_port": 6379,
-  "redis_auth": [
-    "default",
-    "defaultpass"
-  ]
-}
-```
+    ```json
+    {
+    "redis_host": "redis",
+    "redis_port": 6379,
+    "redis_auth": [
+        "default",
+        "defaultpass"
+    ]
+    }
+    ```
 
-运行：
+4. 运行 `docker compose`：
 
-```sh
-docker compose build && docker compose down && docker compose up
-```
+   ```sh
+   docker compose build && docker compose down && docker compose up
+   ```
 
-测试：
+5. 通过 webdis 测试 redis 服务状态：
 
-```sh
-curl http://127.0.0.1:7379/PING
-```
+   ```sh
+   curl http://127.0.0.1:7379/PING
+   ```
 
-应当返回：
+   应当返回：
 
-```json
-{"PING":[true,"PONG"]}
-```
+   ```json
+   {"PING":[true,"PONG"]}
+   ```
 
+6. 【可选】下载安装 GUI 管理软件：[Redis Insight](https://redis.io/downloads/#:~:text=Redis-,Insight,-Download%20a%20powerful)
 
 ## 样例配置
 
