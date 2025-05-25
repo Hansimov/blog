@@ -73,6 +73,19 @@ For more examples and ideas, visit:
  https://docs.docker.com/get-started/
 ```
 
+
+## 【推荐】命令行指定镜像源 dock pull 
+
+::: tip See: dongyubin/DockerHub: 2025年5月更新，目前国内可用Docker镜像源汇总，DockerHub国内镜像加速列表
+* https://github.com/dongyubin/DockerHub
+:::
+
+样例：
+
+```sh
+docker pull docker.mybacc.com/nicolas/webdis
+```
+
 ## 添加镜像
 
 创建 `/etc/docker/daemon.json`，并添加镜像：

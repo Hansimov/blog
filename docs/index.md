@@ -30,9 +30,10 @@ It's never too late. Just do it better.
 
 <a href="https://github.com/Hansimov/blog" title="Hansimov's blog site"><u>blog</u></a>
  · <a href="https://github.com/Hansimov/csapp" title="个人整理的《深入理解计算机系统》中文电子版（原书第 3 版）与实验材料：https://hansimov.gitbook.io/csapp"><u>csapp</u></a>
- · <a href="https://github.com/Hansimov/hf-llm-api" title="Huggingface LLM Inference API in OpenAI message format"><u>hf-llm-api</u></a>
+ · <a href="https://github.com/Hansimov/tclogger" title="Python terminal colored logger"><u>tclogger</u></a>
+ · <a href="https://github.com/Hansimov/sedb" title="Search Engine DataBase utils"><u>sedb</u></a>
  · <a href="https://github.com/Hansimov/ai-read" title="An AI-assisted reading script in browsers."><u>ai-read</u></a>
- · <a href="https://github.com/Hansimov/bili-search" title="Search videos, danmakus and replies in Bilibili."><u>bili-search</u></a>
+ · <a href="https://github.com/Hansimov/bili-search" title="Backend of Bili Search Engine (blbl.top)"><u>bili-search</u></a>
 
 </div>
 
@@ -45,6 +46,7 @@ It's never too late. Just do it better.
 <a href="./notes/frp-proxy"><u>Networks</u></a>
  · <a href="./notes/remote-ssh"><u>Tools</u></a>
  · <a href="./notes/conda"><u>Softwares</u></a>
+ · <a href="./notes/postgresql"><u>Databases</u></a>
  · <a href="./notes/vitepress-init"><u>Workflows</u></a>
  · <a href="./notes/ubuntu-config"><u>Ubuntu</u></a>
  · <a href="./notes/llama-cpp"><u>LLMs</u></a>
