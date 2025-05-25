@@ -1,0 +1,28 @@
+services:
+  redis:
+    image: redis:8.0-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - shared
+    volumes:
+      - ./data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+
+  webdis:
+    image: docker.mybacc.com/nicolas/webdis:latest
+    container_name: webdis
+    depends_on:
+      - redis
+    ports:
+      - "7379:7379"
+    networks:
+      - shared
+    volumes:
+      - ./webdis.json:/config/webdis.json:ro
+    command: ["/usr/local/bin/webdis", "/config/webdis.json"]
+
+networks:
+  shared:

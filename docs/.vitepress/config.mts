@@ -226,6 +226,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/mongodb-cmds"
           },
           {
+            text: "安装 Redis",
+            link: "/redis"
+          },
+          {
             text: "安装 Elastic Search",
             link: "/elastic-search"
           },
