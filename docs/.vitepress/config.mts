@@ -201,6 +201,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "Win 10 关闭自动更新",
             link: "/windows-updates"
+          },
+          {
+            text: "MobaXterm 无法接受键盘输入",
+            link: "/mobaxterm-issue"
           }
         ]
       },
@@ -249,6 +253,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "安装 ClickHouse",
             link: "/clickhouse"
           },
+          {
+            text: "安装 Grafana",
+            link: "/grafana"
+          }
         ]
       },
       {
