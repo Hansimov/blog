@@ -147,6 +147,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "安装 nethogs",
             link: "/nethogs"
           },
+          {
+            text: "安装 Grafana",
+            link: "/grafana"
+          }
         ]
       },
       {
@@ -252,10 +256,6 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "安装 ClickHouse",
             link: "/clickhouse"
-          },
-          {
-            text: "安装 Grafana",
-            link: "/grafana"
           }
         ]
       },
