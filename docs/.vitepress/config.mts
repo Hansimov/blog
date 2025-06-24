@@ -256,6 +256,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "安装 ClickHouse",
             link: "/clickhouse"
+          },
+          {
+            text: "安装 Rocksdb",
+            link: "/rocksdb"
           }
         ]
       },
