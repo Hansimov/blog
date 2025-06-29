@@ -59,30 +59,33 @@ sudo ldconfig
 
 ## 安装 Python 绑定
 
+<details> <summary>过时的库</summary>
+
 ::: warning twmht/python-rocksdb: Python bindings for RocksDB
 * https://github.com/twmht/python-rocksdb
 
 Unable to install python-rocksdb · Issue #111 · twmht/python-rocksdb
 * https://github.com/twmht/python-rocksdb/issues/111
-:::
 
-::: tip trK54Ylmz/rocksdb-py: Python bindings for RocksDB written in Rust.
+trK54Ylmz/rocksdb-py: Python bindings for RocksDB written in Rust.
 * https://github.com/trK54Ylmz/rocksdb-py
 
 rocksdb-py · PyPI
 * https://pypi.org/project/rocksdb-py
 :::
 
+</details>
+
+::: tip rocksdict/RocksDict: Python fast on-disk dictionary / RocksDB & SpeeDB Python binding
+* https://github.com/rocksdict/RocksDict/tree/main
+* https://github.com/rocksdict/RocksDict/blob/main/src/options.rs
+
+rocksdict API documentation
+  * https://rocksdict.github.io/RocksDict/rocksdict.html
+:::
+
 ```sh
-pip install --upgrade rocksdb-py
+pip install rocksdict
 ```
 
-简单测试：
-
-```python
-import rocksdbpy
-db = rocksdbpy.open_default("./z.rdb")
-db.set(b"a", b"123")
-db.get(b"a")
-db.close()
-```
+使用方法参见：[sedb.rocks](https://github.com/Hansimov/sedb/blob/main/src/sedb/rocks.py)
