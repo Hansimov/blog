@@ -209,6 +209,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "MobaXterm 无法接受键盘输入",
             link: "/mobaxterm-issue"
+          },
+          {
+            text: "Linux 安装 Chrome 和 ChromeDriver",
+            link: "/linux-chrome"
           }
         ]
       },
