@@ -176,7 +176,7 @@ sudo wget https://githubfast.com/v2fly/domain-list-community/releases/latest/dow
 或者创建 `launch_v2ray.bat` 文件，内容如下。双击启动：
 
 ```sh
-v2ray.exe run config.json
+v2ray.exe run --config=config.json
 ```
 
 若要开机自启，创建快捷方式，发送到下面路径即可：
@@ -187,9 +187,50 @@ v2ray.exe run config.json
 
 ### 配置 server 的 X-UI
 
-在远端服务器 x-ui 的 dashboard 里添加一个 vmess 节点。
+::: tip MHSanaei/3x-ui
+https://github.com/MHSanaei/3x-ui
+https://github.com/MHSanaei/3x-ui/wiki/Installation#install-in-one-line-recommended
+:::
 
-后面需要的信息：`address`, `port`, `users` (`id`, `alterId`)。
+在远端代理服务器安装 x-ui：
+
+```sh
+bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
+```
+
+安装时会提示设置 `port`。注意需要在防火墙中开放该端口。同时还会生成 Username 和 Password。输出形如：
+
+```sh
+Username: **********
+Password: **********
+Port: 9999
+WebBasePath: ******************
+Access URL: http://XXX.XXX.XXX.XXX:9999/******************
+```
+
+查看设置：
+
+```sh
+x-ui settings
+```
+
+输出形如：
+
+```sh
+The OS release is: ubuntu
+[INF] current panel settings as follows:
+Warning: Panel is not secure with SSL
+hasDefaultCredential: false
+port: 9999
+webBasePath: /******************/
+Access URL: http://XXX.XXX.XXX.XXX:9999/******************/
+```
+
+访问 `Access URL`，输入之前命令行的 `Username` 和 `Password`，进入 x-ui 的 dashboard。
+
+在入站列表添加一个 vmess 节点。
+
+这几个信息后面会用到：`address`, `port`, `users` (`id`, `alterId`)。
 
 ### 配置 client 的 config.json
 
@@ -237,6 +278,71 @@ journalctl -u v2ray.service
 * https://unix.stackexchange.com/questions/225401/how-to-see-full-log-from-systemctl-status-service
 :::
 
+## 运行多个 v2ray 服务
+
+假如想要添加的新服务对应的配置文件为 `config_2.json`。同时不想改动原有的 v2ray 的服务，这时可以采用 `v2ray@service` 这个模板单元。
+
+```sh
+cat /etc/systemd/system/v2ray@.service
+```
+
+```sh
+[Unit]
+Description=V2Ray Service
+Documentation=https://www.v2fly.org/
+After=network.target nss-lookup.target
+
+[Service]
+User=nobody
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+ExecStart=/usr/local/bin/v2ray -config /usr/local/etc/v2ray/%i.json
+Restart=on-failure
+RestartPreventExitStatus=23
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```sh
+sudo cp /usr/local/etc/v2ray/config.json /usr/local/etc/v2ray/new.json
+sudo nano /usr/local/etc/v2ray/new.json
+```
+
+修改 `new.json` 中的对应内容：
+- `inbounds`: `port` (socks + http)
+- `outbounds`: `address`, `port`, `id`
+
+重载 systemd 配置：
+
+```sh
+sudo systemctl daemon-reload
+```
+
+设置开机自启:
+
+```sh
+sudo systemctl enable v2ray@new
+```
+
+启动服务：
+
+```sh
+sudo systemctl start v2ray@new
+```
+
+查看服务状态：
+
+```sh
+sudo systemctl status v2ray@new
+```
+
+测试新代理：
+
+```sh
+curl --proxy http://127.0.0.1:11119 http://ifconfig.me/ip
+```
 
 ## 附录
 ### v2ray 完整安装脚本
