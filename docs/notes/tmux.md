@@ -82,6 +82,9 @@ tmux source ~/.tmux.conf
 
 Restoring programs
 * https://github.com/tmux-plugins/tmux-resurrect/blob/master/docs/restoring_programs.md
+
+Undo the last session saved with Tmux Resurrect | by Pasindu Rumal Perera | Medium
+* https://medium.com/%40udnisap/restore-older-sessions-in-tmux-resurrect-8892629ef004
 :::
 
 ### 安装插件
@@ -96,7 +99,7 @@ set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'tmux-plugins/tmux-resurrect'
 ```
 
-按下插件管理器的安装快捷键：`Prefix` + `I`。
+按下插件管理器的安装快捷键：`ctrl+b` + `I`。
 等待一会，安装完成会提示按下 `Esc` 退出。
 
 ### 恢复程序
@@ -126,8 +129,43 @@ set -g @plugin 'tmux-plugins/tmux-resurrect'
 
 ### 保存和恢复会话
 
-- 保存：`Prefix` + `ctrl-s`
-- 恢复：`Prefix` + `ctrl-r`
+快捷键：
+
+- 保存：`ctrl+b` + `ctrl+s`
+- 恢复：`ctrl+b` + `ctrl+r`
+
+会话默认保存在：
+- `~/.tmux/resurrect/`
+- `~/.local/share/tmux/resurrect/`
+
+查看保存的会话：
+
+```sh
+ls -l ~/.local/share/tmux/resurrect
+```
+
+输出形如：
+
+```sh
+lrwxrwxrwx 1 user user   34  7月 28 06:31 last -> tmux_resurrect_20250728T063124.txt
+-rw-rw-r-- 1 user user 8172  6月  5 09:07 tmux_resurrect_20250605T090739.txt
+-rw-rw-r-- 1 user user 9076  7月  8 05:41 tmux_resurrect_20250708T054126.txt
+-rw-rw-r-- 1 user user 8627  7月 21 15:25 tmux_resurrect_20250721T152506.txt
+-rw-rw-r-- 1 user user 8708  7月 24 04:22 tmux_resurrect_20250724T042208.txt
+-rw-rw-r-- 1 user user 9329  7月 28 06:31 tmux_resurrect_20250728T063124.txt
+```
+
+将 last 对应的 txt 复制到 `~/downloads` 中：
+
+```sh
+cp ~/.local/share/tmux/resurrect/last ~/downloads/tmux_resurrect_last.txt
+```
+
+将 last 软链接到其他 txt：
+
+```sh
+ln -s ~/.local/share/tmux/resurrect/tmux_resurrect_XXXX.txt ~/.local/share/tmux/resurrect/last
+```
 
 ### 配置示例
 

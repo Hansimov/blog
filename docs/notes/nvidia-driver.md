@@ -190,6 +190,14 @@ gpustat -cpu -i
 > 
 > Using these methods, I have restored two 1080ti cards which have the same issues.
 
-::: warning NVIDIA-SMI Shows ERR! on both Fan and Power Usage - Graphics / Linux / Linux - NVIDIA Developer Forums
+::: tip NVIDIA-SMI Shows ERR! on both Fan and Power Usage - Graphics / Linux / Linux - NVIDIA Developer Forums
 * https://forums.developer.nvidia.com/t/nvidia-smi-shows-err-on-both-fan-and-power-usage/68293/14
+:::
+
+不过也有贴子提到，更新主板 BIOS 可以解决。（待验证）
+
+> To follow up, I solved this by upgrading my motherboard (ASUS PRIME X470-PRO) BIOS to the latest version.
+
+::: tip RTX 4090 Fan state says "ERR!", performance is throttled - Graphics / Linux / Linux - NVIDIA Developer Forums
+* https://forums.developer.nvidia.com/t/rtx-4090-fan-state-says-err-performance-is-throttled/264705/3
 :::
