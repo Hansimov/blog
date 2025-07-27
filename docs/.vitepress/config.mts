@@ -355,6 +355,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/vllm"
           },
           {
+            text: "docker 运行 vllm",
+            link: "/vllm-docker"
+          },
+          {
             text: "Ollama 运行本地 LLM",
             link: "/ollama"
           },
