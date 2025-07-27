@@ -355,7 +355,7 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             link: "/vllm"
           },
           {
-            text: "docker 运行 vllm",
+            text: "Docker 运行 vllm",
             link: "/vllm-docker"
           },
           {

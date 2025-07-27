@@ -1,5 +1,4 @@
-
-## docker 运行 vllm
+# Docker 运行 vllm
 
 ::: tip Using Docker - vLLM
 * https://docs.vllm.ai/en/stable/deployment/docker.html
@@ -22,6 +21,8 @@ Docker Error - Unknown or Invalid Runtime Name: Nvidia · Issue #132 · NVIDIA-I
 nvidia-container-cli reports incorrect CUDA driver version on WSL2 · Issue #148 · NVIDIA/nvidia-container-toolkit
 * https://github.com/NVIDIA/nvidia-container-toolkit/issues/148#issuecomment-1811432275
 :::
+
+## 安装 NVIDIA Container Toolkit
 
 配置 production repo：
 
@@ -52,6 +53,8 @@ export NVIDIA_CONTAINER_TOOLKIT_VERSION=1.17.8-1
 sudo apt-get install -y nvidia-container-toolkit=$NVIDIA_CONTAINER_TOOLKIT_VERSION nvidia-container-toolkit-base=$NVIDIA_CONTAINER_TOOLKIT_VERSION libnvidia-container-tools=$NVIDIA_CONTAINER_TOOLKIT_VERSION libnvidia-container1=$NVIDIA_CONTAINER_TOOLKIT_VERSION
 ```
 
+## 配置 NVIDIA Container Runtime
+
 `sudo nano /etc/docker/daemon.json`，添加如下内容：
 
 ```json
@@ -65,12 +68,14 @@ sudo apt-get install -y nvidia-container-toolkit=$NVIDIA_CONTAINER_TOOLKIT_VERSI
 }
 ```
 
-重启 daemon 和 Docker 服务：
+重启 daemon 和 docker 服务：
 
 ```sh
 sudo systemctl daemon-reload
 sudo systemctl restart docker
 ```
+
+## 下载模型
 
 在 docker 中运行 vllm，无法使用 HF_ENDPOINT。所以先下载模型到本地：
 
@@ -88,6 +93,8 @@ sudo chown -R "$(id -u):$(id -g)" ~/.cache/huggingface
 ```
 
 然后再运行 `huggingface-cli` 下载。
+
+## 运行容器
 
 在 Docker 中运行：
 
