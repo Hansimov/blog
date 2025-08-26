@@ -71,11 +71,6 @@ alias k9="kill -9"
 alias lt="ls -lt"
 alias hi="hostname -i"
 
-alias cda="conda activate ai"
-alias cdd="conda deactivate"
-
-alias nu="gpustat -cpu -i"
-
 # bind keys
 bindkey "^[[1;5C" forward-word
 bindkey "^[[1;3C" forward-word
@@ -95,10 +90,58 @@ source ~/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh
 # style of auto complete
 zstyle ':completion:*'  list-colors '=*=96'
 
-# Environment variables
+# # >>> conda initialize >>>
+# # !! Contents within this block are managed by 'conda init' !!
+# __conda_setup="$('/home/asimov/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+# if [ $? -eq 0 ]; then
+#     eval "$__conda_setup"
+# else
+#     if [ -f "/home/asimov/miniconda3/etc/profile.d/conda.sh" ]; then
+#         . "/home/asimov/miniconda3/etc/profile.d/conda.sh"
+#     else
+#         export PATH="/home/asimov/miniconda3/bin:$PATH"
+#     fi
+# fi
+# unset __conda_setup
+# # <<< conda initialize <<<
 
-# huggingface mirror
+# alias cda="conda activate ai"
+# alias cdd="conda deactivate"
+# alias nu="gpustat -cpu -i"
+# # alias cu='cat /sys/class/thermal/thermal_zone*/temp | awk '\''{ print ($1 / 1000) "°C" }'\'''
+# alias cu='sensors | grep Tctl | head -1'
+# alias ct="gh copilot"
+# alias ce="gh copilot explain"
+# alias cs="gh copilot suggest -t shell"
+
+# conda activate ai
+
+# Envs
 export HF_ENDPOINT=https://hf-mirror.com
-# postgres
 # export PATH=/usr/lib/postgresql/16/bin:$PATH
 # export PG_CONFIG=/Library/PostgreSQL/16/bin/pg_config
+# export ES_HOME=~/elasticsearch-8.17.3
+# export ELASTIC_PASSWORD="***************-****" # CHANGE_TO_YOUR_OWN
+# export PATH=$ES_HOME/bin:$PATH
+# export KIBANA_HOME=~/kibana-8.17.3
+# export PATH=$KIBANA_HOME/bin:$PATH
+# export NVM_DIR="$HOME/.nvm"
+# [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+# [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# export GOROOT=/usr/local/go
+# export GOPATH=$HOME/go
+# export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+# export GOPROXY="https://mirrors.aliyun.com/goproxy,direct"
+
+# export SUDOPASS=****  # CHANGE_TO_YOUR_OWN
+# export PATH=$HOME/gradle-8.14.1/bin:$PATH
+# export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+# export PATH=$JAVA_HOME/bin:$PATH
+
+# # set up Xvfb for headless GUI applications
+# Xvfb -ac :99 -screen 0 1280x1024x16 &
+# export DISPLAY=:99 DBUS_SESSION_BUS_ADDRESS=none
+# # reset display
+# # xdpyinfo -display :10.0
+# # export DISPLAY=localhost:10.0 DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1000/bus"

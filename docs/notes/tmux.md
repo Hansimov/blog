@@ -24,6 +24,12 @@ tmux attach -d -t <session_id>
 tmux attach
 ```
 
+保存最近 N 行输出到本地文件：
+
+```sh
+tmux capture-pane -p -J -S -100 > ./tmux_stdout.log
+```
+
 
 ## 一键配置
 
