@@ -10,13 +10,21 @@ Engine Arguments — vLLM
 ## 通过 pip 安装
 
 ```sh
-pip install vllm
+pip install --upgrade transformers vllm
 ```
 
 ## 直接运行服务
 
 ```sh
-vllm serve Qwen/Qwen3-1.7B --enable-reasoning --reasoning-parser deepseek_r1 --host 0.0.0.0 --port 48888 --tensor-parallel-size 2
+vllm serve Qwen/Qwen3-1.7B --reasoning-parser deepseek_r1 --host 0.0.0.0 --port 48888 --max-model-len 4096 --tensor-parallel-size 1
+```
+
+等待模型下载和导入，缓存图、编译，直到出现下面的信息：
+
+```sh
+(APIServer pid=676607) INFO:     Started server process [676607]
+(APIServer pid=676607) INFO:     Waiting for application startup.
+(APIServer pid=676607) INFO:     Application startup complete.
 ```
 
 ### 测试
