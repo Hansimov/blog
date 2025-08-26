@@ -28,7 +28,8 @@ wget https://github.com/fatedier/frp/releases/download/v0.58.1/frp_0.58.1_linux_
 ## 配置远程机器 R 的 frps.toml
 
 ```ini
-bind_addr = 800
+bindPort = 7000
+auth.token = "******"
 ```
 
 启动 frps：
@@ -42,6 +43,7 @@ bind_addr = 800
 ```ini
 serverAddr = "x.x.x.x"
 serverPort = 7000
+auth.token = "******"
 
 [[proxies]]
 name = "ANY_NAME"
@@ -53,7 +55,8 @@ remotePort = 29000
 
 - `serverAddr` 是远程机器 R 的公网 IP
 - `localPort` 是本地机器 L 上的服务端口，`remotePort` 是远程机器 R 上的服务端口
-- `serverPort` 是远程机器 R 上 frps 的端口，默认是 7000
+- `serverPort` 是远程机器 R 上 frps 的绑定端口 (bindPort)，默认是 7000
+- `auth.token` 是认证口令，frpc 和 frps 需要相同
 
 启动 frpc：
 
