@@ -63,7 +63,7 @@ function navItems(): DefaultTheme.NavItem[] {
   ]
 }
 
-function sidebarItems(): DefaultTheme.SidebarItem[] {
+function sidebarItems() {
   // https://vitepress.dev/reference/default-theme-nav#navigation-links
   return {
     "/notes/": [
@@ -213,6 +213,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
           {
             text: "Linux 安装 Chrome 和 ChromeDriver",
             link: "/linux-chrome"
+          },
+          {
+            text: "允许新版 Chrome 使用旧版插件",
+            link: "/chrome-extensions"
           }
         ]
       },
