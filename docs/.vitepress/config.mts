@@ -343,6 +343,10 @@ function sidebarItems(): DefaultTheme.SidebarItem[] {
             text: "Ubuntu 安装 NVIDIA 驱动和 CUDA (NVCC)",
             "link": "/nvidia-driver"
           },
+          {
+            text: "Ubuntu 设置 GPU 风扇速度",
+            "link": "/gpu-fan"
+          }
         ]
       },
       {
