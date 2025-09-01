@@ -268,6 +268,10 @@ function sidebarItems() {
           {
             text: "安装 Rocksdb",
             link: "/rocksdb"
+          },
+          {
+            text: "安装 MinIO",
+            link: "/minio"
           }
         ]
       },
