@@ -102,7 +102,15 @@ ip -6 route show | grep -v 'fe80::' | grep -v 'lo'
 240?:????:????:???::/64 dev eno1 proto ra metric 100 pref medium
 ```
 
-## 启用 ip_nonlocal_bind
+## 修改 sysctl.conf
+
+查看当前内核参数：
+
+```sh
+sudo sysctl -a | grep -E "(proxy_ndp|forwarding|nonlocal_bind)" | grep ipv6
+```
+
+修改内核参数文件：
 
 ```sh
 sudo nano /etc/sysctl.conf
@@ -110,9 +118,17 @@ sudo nano /etc/sysctl.conf
 
 在文件末尾添加内容并保存：
 
-```sh
-net.ipv6.ip_nonlocal_bind = 1
+```sh{5,6}
+net.ipv6.conf.all.proxy_ndp=1
+net.ipv6.conf.all.forwarding=1
+net.ipv6.conf.default.proxy_ndp=1
+net.ipv6.conf.default.forwarding=1
+net.ipv6.conf.eno1.proxy_ndp=1
+net.ipv6.conf.eno1.forwarding=1
+net.ipv6.ip_nonlocal_bind=1
 ```
+
+* 将 `eno1` 替换为实际的网卡名称
 
 使配置生效：
 
@@ -240,6 +256,26 @@ sudo systemctl restart ndppd
 
 ```sh
 sudo env "PATH=$PATH" python ip_router.py
+```
+
+## 生成脚本
+
+::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/scripts/ip_generator.py
+:::
+
+<details>
+
+<summary><code>ip_generator.py</code></summary>
+
+<<< @/notes/scripts/ip_generator.py
+
+</details>
+
+
+运行：
+
+```sh
+python ip_generator.py
 ```
 
 ## 测试脚本

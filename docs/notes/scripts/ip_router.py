@@ -1,5 +1,6 @@
 import netifaces
 import random
+import re
 import requests
 import requests.packages.urllib3.util.connection as urllib3_cn
 import socket
@@ -11,7 +12,7 @@ from tclogger import logger, logstr, decolored, shell_cmd
 from typing import Union
 
 REQUESTS_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0 Safari/537.36"
 }
 
 
@@ -69,7 +70,7 @@ class IPv6Generator:
                 if not addr_info["addr"].startswith("2"):
                     break
                 addr = addr_info["addr"]
-                netmask = addr_info["netmask"]
+                netmask = addr_info.get("netmask") or addr_info.get("mask")
                 prefix, prefix_bits = self.get_addr_prefix(addr, netmask)
                 self.interfaces.append(
                     {
@@ -85,7 +86,7 @@ class IPv6Generator:
         logger.note("> Get ipv6 prefix:")
         self.get_network_interfaces()
         interface = self.interfaces[0]
-        prefix = interface["prefix"]
+        prefix = interface["prefix"].strip(":")
         prefix_bits = interface["prefix_bits"]
         netint = interface["interface"]
         if self.verbose:
@@ -95,8 +96,8 @@ class IPv6Generator:
         self.netint = netint
         self.prefix = prefix
         self.prefix_bits = prefix_bits
-        logger.file(f"  * prefix: {logstr.success(prefix)}")
-        logger.file(f"  * netint: {logstr.success(netint)}")
+        logger.file(f"  * prefix: {logstr.okay(prefix)}")
+        logger.file(f"  * netint: {logstr.okay(netint)}")
         if return_netint:
             return self.prefix, netint
         else:
@@ -121,6 +122,41 @@ class IPv6RouteModifier:
         self.ndppd_conf = ndppd_conf or Path("/etc/ndppd.conf")
         self.prefix = prefix
         self.netint = netint
+
+    def is_ndppd_conf_latest(self):
+        logger.note("> Check proxy (netint) and rule (prefix) in ndppd.conf:")
+        if not self.ndppd_conf.exists():
+            logger.mesg(f"ndppd.conf does not exist: {self.ndppd_conf}")
+            return False
+
+        with open(self.ndppd_conf, "r") as rf:
+            lines = rf.readlines()
+
+        is_netint_found = False
+        netint_pattern = re.compile(rf"proxy\s+{self.netint}")
+        for line in lines:
+            if netint_pattern.search(line):
+                netint_str = logstr.file(self.netint)
+                logger.mesg(f"  + Found proxy (netint): {netint_str}")
+                is_netint_found = True
+                break
+        if not is_netint_found:
+            logger.mesg(f"  - Not found proxy (netint): {netint_str}")
+            return False
+
+        is_prefix_found = False
+        prefix_pattern = re.compile(rf"rule\s+{self.prefix}::/64")
+        for line in lines:
+            if prefix_pattern.search(line):
+                prefix_str = logstr.file(f"{self.prefix}::/64")
+                logger.mesg(f"  + Found rule (prefix/): {prefix_str}")
+                is_prefix_found = True
+                break
+        if not is_prefix_found:
+            logger.mesg(f"  - Not found rule (prefix/): {prefix_str}")
+            return False
+
+        return True
 
     def add_route(self):
         logger.note("> Add IP route:")
@@ -166,19 +202,23 @@ class IPv6RouteModifier:
         shell_cmd(cmd)
         logger.success(f"✓ Restarted: {logstr.file('ndppd')}")
 
+    def wait_ndppd_work(self, wait_seconds: int = 5):
+        logger.note(f"> Waiting {wait_seconds} seconds for ndppd to work ...")
+        time.sleep(wait_seconds)
 
-if __name__ == "__main__":
+
+def main():
     generator = IPv6Generator()
     prefix, netint = generator.get_prefix(return_netint=True)
-
     modifier = IPv6RouteModifier(prefix=prefix, netint=netint)
     modifier.add_route()
-    modifier.modify_ndppd_conf(overwrite=True)
-    modifier.restart_ndppd()
 
-    sleep_seconds = 5
-    logger.note(f"> Waiting {sleep_seconds} seconds for ndppd to work ...")
-    time.sleep(sleep_seconds)
+    if modifier.is_ndppd_conf_latest():
+        logger.success(f"✓ ndppd.conf is up-to-date, skip restart.")
+    else:
+        modifier.modify_ndppd_conf(overwrite=True)
+        modifier.restart_ndppd()
+        modifier.wait_ndppd_work(wait_seconds=5)
 
     logger.note("> Testing ipv6 addrs:")
     session = requests.Session()
@@ -190,4 +230,18 @@ if __name__ == "__main__":
         logger.note(f"  > [{prefix}:{logstr.file(suffix)}]")
         adapter.adapt(session, ipv6)
         response = session.get("https://test.ipw.cn", headers=REQUESTS_HEADERS)
-        logger.mesg(f"  * [{response.text}]")
+        resp_ipv6_str = response.text.split("\n")[0].strip()
+        resp_ipv6_str = resp_ipv6_str.replace(":0:", "::")
+        logger.mesg(f"  * [{resp_ipv6_str}]")
+
+
+if __name__ == "__main__":
+    main()
+
+    # sudo is needed to modify ndppd.conf
+
+    # Case1: Run directly, need to type sudo password
+    # sudo env "PATH=$PATH" python -m networks.ipv6.router
+
+    # Case2: Run with piped password
+    # echo $SUDOPASS | sudo -S env "PATH=$PATH" python -m networks.ipv6.router
