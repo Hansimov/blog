@@ -18,6 +18,13 @@ sudo lshw -C display
 cat /proc/driver/nvidia/version
 ```
 
+输出形如：
+
+```sh
+NVRM version: NVIDIA UNIX x86_64 Kernel Module  575.64.03  Wed Jun 25 18:40:52 UTC 2025
+GCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.2)
+```
+
 如果没安装，会提示 `No such file or directory`。
 
 
@@ -25,6 +32,23 @@ cat /proc/driver/nvidia/version
 
 ```sh
 nvidia-smi
+```
+
+输出形如：
+
+```sh
+Tue Sep  2 16:17:39 2025
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 575.64.03              Driver Version: 575.64.03      CUDA Version: 12.9     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   1  NVIDIA GeForce RTX 4090        Off |   00000000:41:00.0 Off |                  Off |
+| 35%   35C    P8             27W /  450W |      43MiB /  49140MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
 ```
 
 如果安装不正确，可能会提示：
@@ -53,7 +77,8 @@ sudo ubuntu-drivers devices | grep recommended
 
 输出形如：
 ```sh
-driver   : nvidia-driver-535 - distro non-free recommended
+# driver   : nvidia-driver-535 - distro non-free recommended
+driver   : nvidia-driver-575 - distro non-free recommended   # latest on 2025-09-02
 ```
 
 ::: tip See: NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver - Stack Overflow
@@ -72,24 +97,33 @@ sudo ubuntu-drivers list
 例如，Ubuntu 22.04 的可用驱动输出：
 
 ```sh
-nvidia-driver-535-server-open, (kernel modules provided by linux-modules-nvidia-535-server-open-generic-hwe-22.04)
-nvidia-driver-545-open, (kernel modules provided by nvidia-dkms-545-open)
-nvidia-driver-470, (kernel modules provided by linux-modules-nvidia-470-generic-hwe-22.04)
-nvidia-driver-535-open, (kernel modules provided by linux-modules-nvidia-535-open-generic-hwe-22.04)
-nvidia-driver-418-server, (kernel modules provided by nvidia-dkms-418-server)
+nvidia-driver-535-open, (kernel modules provided by linux-modules-nvidia-535-open-generic-hwe-22.04)                                                                              [30/49]
 nvidia-driver-535, (kernel modules provided by linux-modules-nvidia-535-generic-hwe-22.04)
-nvidia-driver-450-server, (kernel modules provided by nvidia-dkms-450-server)
-nvidia-driver-545, (kernel modules provided by nvidia-dkms-545)
+nvidia-driver-580, (kernel modules provided by nvidia-dkms-580)
+nvidia-driver-580-open, (kernel modules provided by nvidia-dkms-580-open)
+nvidia-driver-575-server, (kernel modules provided by linux-modules-nvidia-575-server-generic-hwe-22.04)
+nvidia-driver-575, (kernel modules provided by linux-modules-nvidia-575-generic-hwe-22.04)
 nvidia-driver-535-server, (kernel modules provided by linux-modules-nvidia-535-server-generic-hwe-22.04)
-nvidia-driver-470-server, (kernel modules provided by linux-modules-nvidia-470-server-generic-hwe-22.04)
+nvidia-driver-575-open, (kernel modules provided by linux-modules-nvidia-575-open-generic-hwe-22.04)
+...
 ```
 
 ### 安装驱动
 
+更新软件包列表：
+
+```sh
+sudo apt-get update
+```
+
+* 清华源可能会有 403 Forbidden 错误
+* 建议使用中科大源，详见：[Ubuntu 换国内源](./ubuntu-sources.md)
+
 直接安装推荐的驱动：
 
 ```sh
-sudo apt install nvidia-driver-535
+# sudo apt install nvidia-driver-535
+sudo apt install nvidia-driver-575   # latest on 2025-09-02
 ```
 
 用这种方式安装可以自动安装依赖的内核模块。
@@ -122,9 +156,9 @@ sudo shutdown -r now
 sudo apt purge "nvidia-*" && sudo apt autoremove && sudo apt autoclean
 ```
 
-## 安装 CUDA
+## 安装 CUDA (NVCC)
 
-### 安装 nvcc
+### 通过 apt 安装 nvcc
 
 ```sh
 sudo apt install nvidia-cuda-toolkit
@@ -133,6 +167,8 @@ sudo apt install nvidia-cuda-toolkit
 ::: tip See: How to install CUDA & cuDNN on Ubuntu 22.04
  - https://gist.github.com/denguir/b21aa66ae7fb1089655dd9de8351a202
 :::
+
+### 通过 conda 安装 nvcc
 
 如果想在没有 root 权限的情况下安装 nvcc（比如在 conda 环境），可以运行：
 
@@ -143,12 +179,39 @@ conda install nvidia/label/cuda-11.7.0::cuda-toolkit
 ::: tip See: https://anaconda.org/nvidia/cuda-toolkit
 :::
 
+### 通过 NVIDIA 源安装指定版本 nvcc
+
+::: tip CUDA Toolkit 12.9 Downloads | NVIDIA Developer
+* https://developer.nvidia.com/cuda-12-9-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&target_version=22.04&target_type=deb_network
+:::
+
+```sh
+cd ~/downloads
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+sudo dpkg -i cuda-keyring_1.1-1_all.deb
+sudo apt-get update
+sudo apt-get -y install cuda-toolkit-12-9
+```
+
+在 `.zshrc` 中添加：
+
+```sh
+export PATH=/usr/local/cuda/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+```
+
 ### 查看 CUDA 版本
+
+```sh
+which nvcc
+```
+
+* 如果是通过 NVIDIA 源安装，并且设置了环境变量，则输出为：`/usr/local/cuda/bin/nvcc`
+* 如果是通过 apt 安装，则输出为：`/usr/bin/nvcc`
 
 ```sh
 nvcc --version
 ```
-
 
 ::: tip See: Different CUDA versions shown by nvcc and NVIDIA-smi - Stack Overflow
 * https://stackoverflow.com/questions/53422407/different-cuda-versions-shown-by-nvcc-and-nvidia-smi
