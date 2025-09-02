@@ -193,6 +193,21 @@ DISPLAY=:0 nvidia-settings -q '[fan:2]/GPUTargetFanSpeed'
 nvidia-smi
 ```
 
+## 一键配置
+
+```sh
+cd downloads
+wget https://raw.githubusercontent.com/Hansimov/blog/main/docs/notes/scripts/gpu_fan.sh -O gpu_fan.sh
+chmod +x gpu_fan.sh
+./gpu_fan.sh
+```
+
+::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/scripts/gpu_fan.sh
+:::
+
+<<< @/notes/scripts/gpu_fan.sh
+
+
 ## 常见问题1：无法修改部分属性
 
 ::: warning drivers - Unable to Control NVIDIA Fan Speed - Ask Ubuntu
