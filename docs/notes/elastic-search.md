@@ -302,7 +302,8 @@ analysis-stconvert
 下载 `.env` 和 `docker-compose.yml` 文件到当前目录：
 
 ```sh
-mkdir elasticsearch-docker && cd elasticsearch-docker
+ES_DOCKER_ROOT="$HOME/elasticsearch-docker-9.1.3"
+mkdir -p $ES_DOCKER_ROOT && cd $ES_DOCKER_ROOT
 ```
 
 ```sh
@@ -347,19 +348,29 @@ docker compose build && docker compose down && docker compose up
 * https://www.elastic.co/docs/deploy-manage/deploy/self-managed/install-elasticsearch-docker-prod
 :::
 
-首次启动时，默认以 root 身份在 host 中创建 mount 的目录，会报权限错误。
+首次启动时，默认以 root 身份在 host 中创建 mount 的目录，会报权限错误。ElasticSearch 和 Kibana 都可能出现。
+
+```sh
+FATAL Error: Unable to write to UUID file at /usr/share/kibana/data/uuid. 
+Ensure Kibana has sufficient permissions to read / write to this file. Error was: EACCES
+```
 
 所以需要设置目录权限，以使内部的 elasticsearch 进程可以访问这些目录：
 
 ```sh
+# mkdir -p plugins
 sudo chown -R 1000:1000 data certs plugins
 ```
 
-同时注释掉 `docker-compose.yml` 中的下面一行：（注意，首次启动时不要注释）
+* 如果不成功，试试在容器仍在运行时执行上面这行命令
+
+同时注释掉 `docker-compose.yml` 中的下面这几行：（注意，首次启动时不要注释）
 
 ```sh
 echo "Setting file permissions"
-chown -R root:root config/certs;
+chown -R root:root config/certs;  # after first run, comment this line.
+                                  # after first run, execute following line:
+                                  # `sudo chown -R 1000:1000 data certs plugins`
 ```
 
 ::: warning 注意：如果 host 中的环境变量已经设置了 `ELASTIC_PASSWORD`，那么在容器中也会自动设置该变量。
@@ -372,10 +383,40 @@ chown -R root:root config/certs;
 docker compose build && docker compose down && docker compose up
 ```
 
+容器日志输出下面的内容就表示成功：
+
+```sh
+setup-1   | Setting kibana_system password
+setup-1   | All done!
+setup-1 exited with code 0
+```
+
 检测 Elasticsearch 是否运行：
 
 ```sh
 curl --cacert ./certs/ca/ca.crt -u elastic:$ELASTIC_PASSWORD https://localhost:19200
+```
+
+输出形如：
+
+```json
+{
+  "name" : "es01",
+  "cluster_name" : "es-docker-cluster",
+  "cluster_uuid" : "df-****************SvQ",
+  "version" : {
+    "number" : "9.1.3",
+    "build_flavor" : "default",
+    "build_type" : "docker",
+    "build_hash" : "0c781091a2f57de895a73a1391ff8426c0153c8d",
+    "build_date" : "2025-08-24T22:05:04.526302670Z",
+    "build_snapshot" : false,
+    "lucene_version" : "10.2.2",
+    "minimum_wire_compatibility_version" : "8.19.0",
+    "minimum_index_compatibility_version" : "8.0.0"
+  },
+  "tagline" : "You Know, for Search"
+}
 ```
 
 ### 样例配置

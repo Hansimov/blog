@@ -35,7 +35,9 @@ services:
           unzip config/certs/certs.zip -d config/certs;
         fi;
         echo "Setting file permissions"
-        # chown -R root:root config/certs;
+        chown -R root:root config/certs;  # after first run, comment this line.
+                                          # after first run, execute following line:
+                                          # `sudo chown -R 1000:1000 data certs plugins`
         find . -type d -exec chmod 750 \{\} \;;
         find . -type f -exec chmod 640 \{\} \;;
         echo "Waiting for Elasticsearch availability";
