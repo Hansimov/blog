@@ -1,4 +1,4 @@
-# VSCode 的一些坑
+# VSCode 常见问题
 
 ## Remote SSH - 卡在 Download VSCode Server
 
@@ -44,8 +44,41 @@ mv vscode-server-linux-x64 8b3775030ed1a69b13e4f4c628c612102e30a681
 
 ## .yml 被强制缩进 4 个空格
 
-删掉 `settings.json` 中的这行：
+删掉 `.vscode/settings.json` 中的这行：
 
 ```json
 "prettier.tabWidth": 4
+```
+
+## 在项目中使用网络代理
+
+在项目根目录创建 `.vscode/settings.json`：
+
+```json
+{
+    "http.proxy": "http://<proxy-server>:<port>",
+    "http.proxyStrictSSL": false
+}
+```
+
+## 通过命令行启动多个窗口
+
+常用参数：
+
+- `--new-window`：打开新窗口（同路径不会重复打开）
+- `--reuse-window`：复用已有窗口
+- `--folder-uri`：打开文件夹
+- `--file-uri`：打开文件
+
+打开本地文件目录：
+
+```sh
+code --new-window --folder-uri "file:///E:\********\keys.txt"
+code --reuse-window --folder-uri "file:///E:\*****\todos.txt"
+```
+
+打开远程文件 ：
+
+```sh
+code --new-window --folder-uri "vscode-remote://ssh-remote+asimov@xeon/home/asimov/repos/blog/"
 ```

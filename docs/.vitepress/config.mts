@@ -120,7 +120,7 @@ function sidebarItems() {
             "link": "/remote-ssh"
           },
           {
-            text: "VSCode 的一些坑",
+            text: "VSCode 常见问题",
             "link": "/vscode"
           },
           {
