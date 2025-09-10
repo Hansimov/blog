@@ -60,6 +60,7 @@ services:
     volumes:
       - ./certs:/usr/share/elasticsearch/config/certs
       - ./data/es01:/usr/share/elasticsearch/data
+      - ./plugins/es01:/usr/share/elasticsearch/plugins
     ports:
       - ${ES_PORT}:9200
     environment:

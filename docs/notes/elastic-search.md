@@ -419,6 +419,14 @@ curl --cacert ./certs/ca/ca.crt -u elastic:$ELASTIC_PASSWORD https://localhost:1
 }
 ```
 
+### 复制证书到其他目录
+
+```sh
+ES_DOCKER_ROOT="$HOME/elasticsearch-docker-9.1.3"
+cp $ES_DOCKER_ROOT/certs/ca/ca.crt ~/repos/bili-search/configs/elastic_ca_dev.crt
+cp $ES_DOCKER_ROOT/certs/ca/ca.crt ~/repos/bili-scraper/configs/elastic_ca_dev.crt
+```
+
 ### 样例配置
 
 #### .env
