@@ -41,6 +41,27 @@ Name.com：
 
 点开域名对应的 `管理`，在 `基本信息` 中点击 `修改DNS`。可以设置为阿里云或 Cloudflare 的 DNS 服务器。
 
+Cloudflare 的 DNS 服务器可以在如下地方查看：
+  - https://dash.cloudflare.com
+  - `DNS` > `Records` > `Cloudflare Nameservers`
+
+DNS 修改完成后，可以通过下面的命令来查看：
+
+```sh
+dig NS blbl.top +short
+```
+
+输出形如：
+
+```sh
+# cloudflare
+ns1.cloudflare.com.
+ns2.cloudflare.com.
+# aliyun
+dns12.hichina.com.
+dns11.hichina.com.
+```
+
 - 阿里云域名解析设置：
   - https://dns.console.aliyun.com/#/dns/domainList
 

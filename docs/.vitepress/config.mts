@@ -81,7 +81,7 @@ function sidebarItems() {
             link: "/frp-reverse-proxy"
           },
           {
-            text: "Port local service to public with Cloudflare Tunnel",
+            text: "使用 Cloudflare Tunnel 将本地服务端口连接到公网域名",
             link: "/cf-tunnel"
           },
           {

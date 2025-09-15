@@ -35,6 +35,21 @@ sudo dpkg -i cloudflared.deb
 cloudflared tunnel login
 ```
 
+如果出现下面的报错：
+
+```sh
+2025-09-15T10:35:29Z ERR You have an existing certificate at /home/asimov/.cloudflared/cert.pem which login would overwrite.
+If this is intentional, please move or delete that file then run this command again.
+```
+
+这时需要先删除旧的证书：
+
+```sh
+rm ~/.cloudflared/cert.pem
+```
+
+然后重新运行 `cloudflared tunnel login`。
+
 点击命令行的链接，选择列出的域名（**olivaw.space**），然后点击 **Authorize**。
 
 若创建成功，输出形如：
@@ -79,7 +94,7 @@ https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/ge
 cloudflared tunnel list
 ```
 
-### 删除指定 tunn
+### 删除指定 tunnel
   
 ```sh
 # cloudflared tunnel delete <tunnel-name>
@@ -87,6 +102,10 @@ cloudflared tunnel delete chat
 ```
 
 ### 将 tunnel route 到 DNS 域名
+
+如果域名不在 cloudflare 上托管，需要先将 DNS 解析地址换成 cloudflare 的。（参考：[域名解析 - 在阿里云中添加解析记录](./website-dns#在阿里云中添加解析记录)）
+
+如果域名在 cloudflare 上托管，直接运行：
 
 ```sh
 # cloudflared tunnel route dns <tunnel_name> <subdomain>
@@ -98,6 +117,25 @@ cloudflared tunnel route dns chat chat.olivaw.space
 ```sh
 Added CNAME chat.olivaw.space which will route to this tunnel tunnelID=********-****-****-****-************
 ```
+
+如果出现如下报错：
+
+```sh
+Failed to add route: code: 10000, reason: Authentication error
+```
+
+一般是因为要绑定的是新域名，和现有的证书不一样。
+
+解决方法是删除旧的证书，然后重新登录：
+
+```sh
+rm ~/.cloudflared/cert.pem
+cloudflared tunnel login
+```
+
+如果之前已经绑定过一个同名的 tunnel，可以在 cloudflare 中域名的 Dash 界面，`DNS > Records` 找到对应的 CNAME 记录，`Edit > Delete`。
+
+然后重新运行 `cloudflared tunnel route dns <tunnel_name> <subdomain>`。
 
 ### 在 tunnel 中 run 本地服务端口
 
