@@ -195,3 +195,12 @@ docker compose -f docker-chui.yml down && docker compose -f docker-chui.yml up -
 ```
 
 访问 `http://<server-name>:5521` 即可查看 ch-ui 页面。
+
+## 安装 clickhouse-connect
+::: tip Python Integration with ClickHouse Connect | ClickHouse Docs
+* https://clickhouse.com/docs/integrations/python
+:::
+
+```sh
+pip install clickhouse-connect --index-url https://mirrors.ustc.edu.cn/pypi/simple
+```

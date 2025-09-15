@@ -19,11 +19,14 @@ mkdir -p ~/.pip && wget https://raw.staticdn.net/Hansimov/blog/main/docs/notes/c
 pip config list
 ```
 
-::: tip See: pip 使用国内镜像源 | 菜鸟教程
+::: tip pip 使用国内镜像源 | 菜鸟教程
 * https://www.runoob.com/w3cnote/pip-cn-mirror.html
 
-See: pypi | 镜像站使用帮助 | 清华大学开源软件镜像站 | Tsinghua Open Source Mirror
+pypi | 镜像站使用帮助 | 清华大学开源软件镜像站 | Tsinghua Open Source Mirror
 * https://mirrors.tuna.tsinghua.edu.cn/help/pypi
+
+PyPI - USTC Mirror Help
+* https://mirrors.ustc.edu.cn/help/pypi.html
 :::
 
 ## 安装 pipreqs
