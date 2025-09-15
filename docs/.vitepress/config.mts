@@ -315,6 +315,10 @@ function sidebarItems() {
           {
             text: "服务器断电重启任务恢复",
             link: "/boot-tasks"
+          },
+          {
+            text: "微信小程序开发",
+            link: "/weixin-miniprogram"
           }
         ]
       },
