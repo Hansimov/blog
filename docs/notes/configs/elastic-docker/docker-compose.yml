@@ -5,6 +5,8 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     volumes:
       - ./certs:/usr/share/elasticsearch/config/certs
+      - ./data:/usr/share/elasticsearch/data
+      - ./plugins:/usr/share/elasticsearch/plugins
     user: "0"
     command: >
       bash -c '
@@ -15,6 +17,10 @@ services:
           echo "Set the KIBANA_PASSWORD environment variable in the .env file";
           exit 1;
         fi;
+        
+        # Create directories if they do not exist
+        mkdir -p config/certs data plugins data/es01 data/kibana plugins/es01;
+        
         if [ ! -f config/certs/ca.zip ]; then
           echo "Creating CA";
           bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip;
@@ -34,12 +40,19 @@ services:
           bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
           unzip config/certs/certs.zip -d config/certs;
         fi;
-        echo "Setting file permissions"
-        chown -R root:root config/certs;  # after first run, comment this line.
-                                          # after first run, execute following line:
-                                          # `sudo chown -R 1000:1000 data certs plugins`
-        find . -type d -exec chmod 750 \{\} \;;
-        find . -type f -exec chmod 640 \{\} \;;
+        
+        echo "Setting file permissions for elasticsearch and kibana users (UID 1000)";
+        # Set ownership to user with UID 1000 for all mounted directories
+        # Both Elasticsearch and Kibana run with UID 1000 in their respective containers
+        chown -R 1000:1000 config/certs data plugins;
+        # Set appropriate permissions
+        find config/certs -type d -exec chmod 750 \{\} \;;
+        find config/certs -type f -exec chmod 640 \{\} \;;
+        find data -type d -exec chmod 750 \{\} \; 2>/dev/null || true;
+        find data -type f -exec chmod 640 \{\} \; 2>/dev/null || true;
+        find plugins -type d -exec chmod 750 \{\} \; 2>/dev/null || true;
+        find plugins -type f -exec chmod 640 \{\} \; 2>/dev/null || true;
+        
         echo "Waiting for Elasticsearch availability";
         until curl -s --cacert config/certs/ca/ca.crt https://es01:9200 | grep -q "missing authentication credentials"; do sleep 30; done;
         echo "Setting kibana_system password";

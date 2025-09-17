@@ -295,6 +295,10 @@ analysis-stconvert
 
 ::: tip Start a multi-node cluster with Docker Compose | Elastic Docs
 * https://www.elastic.co/docs/deploy-manage/deploy/self-managed/install-elasticsearch-docker-compose
+
+elasticsearch/docs/reference/setup/install/docker/docker-compose.yml
+* https://github.com/elastic/elasticsearch/blob/main/docs/reference/setup/install/docker/docker-compose.yml
+* https://github.com/elastic/elasticsearch/blob/main/docs/reference/setup/install/docker/.env
 :::
 
 ### 下载配置
@@ -348,6 +352,9 @@ docker compose build && docker compose down && docker compose up
 * https://www.elastic.co/docs/deploy-manage/deploy/self-managed/install-elasticsearch-docker-prod
 :::
 
+
+<details> <summary>旧脚本修复权限问题</summary>
+
 首次启动时，默认以 root 身份在 host 中创建 mount 的目录，会报权限错误。ElasticSearch 和 Kibana 都可能出现。
 
 ```sh
@@ -382,6 +389,19 @@ chown -R root:root config/certs;  # after first run, comment this line.
 ```sh
 docker compose build && docker compose down && docker compose up
 ```
+
+</details>
+
+<details open> <summary>新脚本已修复权限问题</summary>
+
+::: tip 新的 `docker-compose.yml` 脚本已经解决了权限问题，无需手动修改权限。`setup` 容器会自动：
+1. 创建必要的目录（`certs`, `data`, `plugins`）
+2. 生成 SSL 证书
+3. 将所有文件的所有权设置为 `1000:1000`（elasticsearch 用户）
+4. 设置适当的文件权限
+:::
+
+</details>
 
 容器日志输出下面的内容就表示成功：
 
