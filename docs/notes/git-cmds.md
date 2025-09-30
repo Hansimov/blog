@@ -49,3 +49,27 @@ git branch -m master main && git fetch origin && git branch -u origin/main main 
 ::: tip See: Quickly rewrite git repository history (filter-branch replacement)
 * https://github.com/newren/git-filter-repo
 :::
+
+
+## 清除 GitHub 上的僵尸提醒
+
+::: tip Stuck with a notification for a deleted repository #174843
+* https://github.com/orgs/community/discussions/174843
+
+Bug: ghost notifications #6874
+* https://github.com/orgs/community/discussions/6874#discussioncomment-14508572
+:::
+
+这种一般是因为提醒的仓库被删除了。
+
+清除未读提醒：
+
+```sh
+gh api notifications\?all=true | jq -r 'map(select(.unread) | .id)[]' | xargs -L1 sh -c 'gh api -X PATCH notifications/threads/$0'
+```
+
+如果还想删除侧边栏里这些提醒的仓库列表：
+
+```sh
+gh api 'notifications?all=true' | jq -r '.[].id' | xargs -I {} gh api -X DELETE 'notifications/threads/{}'
+```
