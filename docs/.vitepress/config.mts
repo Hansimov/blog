@@ -319,6 +319,10 @@ function sidebarItems() {
           {
             text: "微信小程序开发",
             link: "/weixin-miniprogram"
+          },
+          {
+            text: "苹果手机注册美区账号",
+            link: "/apple-us"
           }
         ]
       },
