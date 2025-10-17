@@ -321,7 +321,7 @@ function sidebarItems() {
             link: "/weixin-miniprogram"
           },
           {
-            text: "苹果手机注册美区账号",
+            text: "苹果手机注册美区账号和充值礼品卡",
             link: "/apple-us"
           }
         ]
