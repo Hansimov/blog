@@ -323,6 +323,10 @@ function sidebarItems() {
           {
             text: "苹果手机注册美区账号和充值礼品卡",
             link: "/apple-us"
+          },
+          {
+            text: "服务器搬运",
+            link: "/server-transport"
           }
         ]
       },
