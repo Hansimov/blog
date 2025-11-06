@@ -19,76 +19,98 @@ nicolas/webdis - Docker Image | Docker Hub
 * https://hub.docker.com/r/nicolas/webdis
 * https://github.com/nicolasff/webdis/blob/master/docs/webdis-redis-docker-compose.md
 * https://github.com/nicolasff/webdis/blob/master/webdis.json
+
+redis/redisinsight - Docker Image | Docker Hub
+* https://hub.docker.com/r/redis/redisinsight
 :::
 
 ## 在 Docker 中运行 Redis
 
-0. 创建目录：
+### 配置 Redis
 
-    ```sh
-    mkdir redis && cd redis
-    ```
+创建目录：
 
-1. 添加 [`docker-compose.yml`](#docker-compose-yml)
+```sh
+mkdir redis && cd redis
+```
+
+添加 [`docker-compose.yml`](#docker-compose-yml)：
    
-   ```sh
-   touch docker-compose.yml
-   ```
+```sh
+touch docker-compose.yml
+```
 
-2. 添加 [`redis.conf`](#redis-conf)：
+添加 [`redis.conf`](#redis-conf)：
 
-    ```sh
-    wget https://raw.staticdn.net/redis/redis/8.0/redis.conf -O redis.conf
-    ```
+```sh
+wget https://raw.staticdn.net/redis/redis/8.0/redis.conf -O redis.conf
+```
 
-    `redis.conf` 部分配置修改如下：
+`redis.conf` 部分配置修改如下：
 
-    ```sh
-    maxmemory 200gb
-    requirepass defaultpass
-    # bind 127.0.0.1 -::1
-    bind 0.0.0.0
-    ```
+```sh
+maxmemory 200gb
+maxmemory-policy allkeys-lru
+requirepass defaultpass
+# bind 127.0.0.1 -::1
+bind 0.0.0.0
+```
 
-3. 添加 [`webdis.json`](#webdis-json)：
+### 配置 webdis
 
-    ```sh
-    docker pull docker.mybacc.com/nicolas/webdis
-    wget https://githubfast.com/nicolasff/webdis/raw/refs/heads/master/webdis.json -O webdis.json
-    ```
+添加 [`webdis.json`](#webdis-json)：
 
-    `webdis.json` 部分配置修改如下：
+```sh
+docker pull docker.mybacc.com/nicolas/webdis
+wget https://githubfast.com/nicolasff/webdis/raw/refs/heads/master/webdis.json -O webdis.json
+```
 
-    ```json
-    {
-    "redis_host": "redis",
-    "redis_port": 6379,
-    "redis_auth": [
-        "default",
-        "defaultpass"
-    ]
-    }
-    ```
+`webdis.json` 部分配置修改如下：
 
-4. 运行 `docker compose`：
+```json
+{
+  "redis_host": "redis",
+  "redis_port": 6379,
+  "redis_auth": [
+    "default",
+    "defaultpass"
+  ]
+}
+```
 
-   ```sh
-   docker compose build && docker compose down && docker compose up
-   ```
+### 配置 Redis Insight
 
-5. 通过 webdis 测试 redis 服务状态：
+在 docker-compose 中增加 Redis Insight 的服务，见：[`docker-compose.yml`](#docker-compose-yml)。
+    
+或可下载 Windows 应用：[Redis Insight](https://redis.io/downloads/#:~:text=Redis-,Insight,-Download%20a%20powerful)
 
-   ```sh
-   curl http://127.0.0.1:7379/PING
-   ```
+### 运行 docker compose
 
-   应当返回：
+```sh
+docker compose build && docker compose down && docker compose up
+```
 
-   ```json
-   {"PING":[true,"PONG"]}
-   ```
+### 测试 redis 服务状态
 
-6. 【可选】下载安装 GUI 管理软件：[Redis Insight](https://redis.io/downloads/#:~:text=Redis-,Insight,-Download%20a%20powerful)
+通过 webdis：
+
+```sh
+curl http://127.0.0.1:7379/PING
+```
+
+应当返回：
+
+```json
+{"PING":[true,"PONG"]}
+```
+
+通过 Redis Insight：
+
+- 访问 Redis Insight：`http://xeon:5540`
+  - `Add Redis Database`：`redis://default:defaultpass@xeon:6379`
+  - 点击 `Test Connection`
+    - 若成功，则点击 `Add Database`
+    - 若失败，则考虑是密码和服务器名称的问题
 
 ## 样例配置
 
@@ -97,7 +119,7 @@ nicolas/webdis - Docker Image | Docker Hub
 ::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/redis-docker/docker-compose.yml
 :::
 
-<details> <summary><code>docker-compose.yml</code></summary>
+<details open> <summary><code>docker-compose.yml</code></summary>
 
 <<< @/notes/configs/redis-docker/docker-compose.yml
 
