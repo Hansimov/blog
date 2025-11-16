@@ -323,13 +323,31 @@ wget https://githubfast.com/elastic/elasticsearch/raw/refs/heads/main/docs/refer
 - 设置 PASSWORD 和 PORT 等环境变量
 - 注释掉 `docker-compose.yml` 中的 `chown` 命令
 
-### 启动 Docker
+### 设置内存
 
 设置 `vm.max_map_count`， 以确保 Elasticsearch 有足够的内存映射：
 
 ```sh
 sudo sysctl -w vm.max_map_count=262144
 # cat /proc/sys/vm/max_map_count
+```
+
+为了让每个 shell 都自动执行，可以将其放到 `.zshrc` 中，并为其开启 sudo 无密码权限：
+
+```sh
+sudo visudo
+```
+
+在文件末尾增加下面的内容：
+
+```sh
+asimov ALL=(root) NOPASSWD: /sbin/sysctl -w vm.max_map_count=262144
+```
+
+然后在 `.zshrc` 中添加：
+
+```sh
+sudo sysctl -w vm.max_map_count=262144 >/dev/null 2>&1
 ```
 
 ::: tip docker 启动时报错：
@@ -341,6 +359,8 @@ Increase virtual memory | Elastic Docs
 Elasticsearch Container Stopped with `Exit 78` state in Ubuntu 18.04 · Issue #1699 · laradock/laradock
   * https://github.com/laradock/laradock/issues/1699
 :::
+
+### 启动 Docker
 
 运行下列命令，启动：
 
