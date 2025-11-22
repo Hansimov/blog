@@ -185,6 +185,31 @@ https://github.com/pbatard/rufus/releases/download/v4.11/rufus-4.11.exe
 
 至此，4TB 盘就已经作为 vmdata 存储挂载成功了，后面建 VM 时就能选。
 
+### 命令行
+
+点击 `Datacenter` > `pve` > `>_ Shell`，即可打开命令行终端。
+
+查看 LVM 信息：
+```sh
+pvesm status
+```
+
+输出形如：
+
+```sh{5}
+root@pve:~# pvesm status
+Name             Type     Status     Total (KiB)      Used (KiB) Available (KiB)        %
+local             dir     active        98497780         3849496        89598736    3.91%
+local-lvm     lvmthin     active       794337280               0       794337280    0.00%
+vmdata        lvmthin     active      3717050368               0      3717050368    0.00%
+```
+
+如果看到类似下面的输出，就说明 vmdata 这个 LVM-Thin 存储已经被 PVE 正确识别了：
+
+```sh
+vmdata  lvmthin  active  ...  
+```
+
 ### 调整默认存储策略（让 VM 默认走 4TB 盘）
 
 安装完后，系统盘上的存储一般是这样的：
@@ -214,13 +239,42 @@ https://github.com/pbatard/rufus/releases/download/v4.11/rufus-4.11.exe
 - 创建并启动 VM，安装随便一个系统；
 - VM 装好后，在节点 → vmdata 存储上可以看到对应的虚拟磁盘，说明 VM 确实在 4TB 上了。
 
-## 可选：换成社区源（去掉企业订阅提示）
-如果你没有付费订阅，可以切到 no-subscription 仓库：
-- 在 Web 界面打开 Shell，或 SSH 到 PVE；
-- 编辑 /etc/apt/sources.list.d/pve-enterprise.list：
-  - 在唯一那行前面加 # 注释掉；
-- 新建一个 /etc/apt/sources.list.d/pve-no-subscription.list，内容类似：
-  ```sh
-  deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription
-  ```
-- `apt update` 后，再进 Web 界面点 “Updates”，就能正常更新了。
+## 换源
+
+Proxmox - USTC Mirror Help
+https://mirrors.ustc.edu.cn/help/proxmox.html
+
+查看当前源：
+
+```sh
+grep -R "enterprise.proxmox.com" /etc/apt/sources.list* /etc/apt/sources.list.d -n
+```
+
+创建下面的脚本：
+
+```sh
+# at: /root
+touch ./pve_sources.sh && chmod +x ./pve_sources.sh && nano ./pve_sources.sh
+```
+
+写入下面的内容：
+
+<<< @/notes/scripts/pve_sources.sh{sh}
+
+运行脚本，并更新源：
+
+```sh
+./pve_sources.sh
+apt update
+```
+
+如果成功，输出形如：
+
+```sh
+Hit:1 http://mirrors.ustc.edu.cn/debian trixie InRelease
+Hit:2 http://mirrors.ustc.edu.cn/debian trixie-updates InRelease                                                                        
+Hit:3 https://mirrors.ustc.edu.cn/proxmox/debian/ceph-squid trixie InRelease                             
+Hit:4 https://mirrors.ustc.edu.cn/proxmox/debian/pve trixie InRelease              
+Hit:5 http://security.debian.org/debian-security trixie-security InRelease         
+```
+
