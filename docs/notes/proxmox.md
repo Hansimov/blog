@@ -82,7 +82,7 @@ https://github.com/pbatard/rufus/releases/download/v4.11/rufus-4.11.exe
   - Keyboard：选 U.S. English
 
 ### root 密码和邮箱
-- 设置 root 密码（尽量强一点）；
+- 设置密码，用户名固定是 `root` （浏览器登录时用到）
 - Email 用来收报警/备份通知，将来想用 Proxmox Backup 或 ACME 证书很有用。
 
 ### 网络配置
@@ -101,28 +101,31 @@ https://github.com/pbatard/rufus/releases/download/v4.11/rufus-4.11.exe
 - 点 Install，几分钟就装完（这时代码会装完整 Debian + PVE 包）。
 
 ### 首次重启
-
-- 安装完成后，拔掉 U 盘；
+- 默认会自动重启
+- 需要用 IPMI 的 KVM 里的虚拟键盘，狂按 F11，进入启动菜单
+- 选择 `proxmox (INTEL SSDPF2KX960HZ-****)`，从 1TB SSD 启动
 - 系统会从 1TB SSD 启动，控制台上会显示：
   - 管理 URL：https://你的IP:8006
-  - Hostname 等信息。
-
+  - Hostname 等信息
+  - 记下 URL，后面要用浏览器访问
 
 ## 首次登录 Web 界面
 
-### 在你桌面/笔记本上打开浏览器
+### 在笔记本上打开浏览器
 
 - 访问 https://<PVE服务器IP>:8006
+- 例如 `https://192.168.31.103:8006`
 - 证书是自签名的，浏览器会提示不安全，选高级 → 继续访问。
 
 ### 登录
 
-- 用户名：root
-- 密码：安装时设的；
-- Realm 先用 Linux PAM 或 Proxmox VE authentication server 都行。
+- 用户名：`root`
+- 密码：安装时设置的
+- Realm 先用 `Linux PAM` 或 `Proxmox VE authentication server` 都行。
 
 ### 订阅提示
-- 第一次登录会弹出 “No valid subscription” 的提示，直接点 OK 忽略即可（你也可以以后再改成 no-subscription 源）。
+- 第一次登录会弹出 “No valid subscription” 的提示
+- 直接点 OK 忽略即可（可以后面改成 no-subscription 源）。
 
 ## 将4TB盘配置为VM存储
 
@@ -130,57 +133,57 @@ https://github.com/pbatard/rufus/releases/download/v4.11/rufus-4.11.exe
 
 ### 在 PVE 里识别 4TB SSD
 
-- 左侧点你这个节点（比如 pve1） → 顶部选项卡 Disks；
-- 在 Disks → Disks 子标签下，你应该能看到：
+- 在左侧点击节点，`Datacenter` > `pve`）
+- 点击右侧一级选项卡 `Disks`，可以看到：
   - 1TB 那块盘（上面已经有 pve 的分区）；
-  - 4TB 那块 空盘（Size ~3.6T，Model 显示 Intel）。
-  - 如果 4TB 之前用过，可能会有旧分区/数据，下面先清理。
+  - 4TB 那块 空盘（Size ~3.84T，Model 显示 `INTEL SSDPF2KX038TZ`）。
+  - 如果 4TB 之前用过，可能会有旧分区/数据，下面先清理
 
 ### 初始化 4TB 磁盘（GPT）
 
 在 Disks 菜单下：
 - 选中那块 4TB SSD；
 - 如果有旧分区：
-  - 点击 Wipe Disk，确认清空（会删除盘上所有数据，确保无重要数据）；
-- 然后点 Initialize Disk with GPT：
-  - 选中 4TB 盘；
-  - 确认执行。
+  - 点击 `Wipe Disk`，确认清空（会删除盘上所有数据，确保无重要数据）
+- 点击 `Initialize Disk with GPT`
+  - 选中 4TB 盘，确认执行
 - 这样磁盘就有一个干净的 GPT 分区表，后面好做 LVM。
 
 ### 创建 LVM-Thin Thinpool（vmdata）
 
-继续在同一个节点下操作：
-- 切到上方 LVM-Thin 子标签；
-- 点击右上角 Create: Thinpool；
+继续在同一个节点 `pve` 下操作：
+- 切到 `LVM-Thin` 选项卡
+- 点击右上角 `Create: Thinpool`
 - 在弹窗中：
-  - Name：比如写 vmdata；
-  - Disk：选你的 4TB SSD；
-  - 其他默认（Proxmox 会自动创建 VG+Thinpool 结构）。
-- 点击 Create 完成。
+  - Name：比如写 `vmdata`；
+  - Disk：选你的 4TB SSD (类似 `/dev/nvme0n1`)
+  - 其他默认（Proxmox 会自动创建 VG+Thinpool 结构）
+  - 建议勾选添加存储（默认）
+- 点击 `Create` 完成。
 
 这样系统就会在 4TB 盘上创建：
-- 一个 Volume Group；
-- 其中的一个 Thin Pool（如 vmdata）。
+- 一个 Volume Group
+- 其中的一个 Thin Pool（如 vmdata）
 
 ### 在 Datacenter 里检查/添加存储条目
 
 有的版本创建 Thinpool 时会顺带在 Storage 里创建存储，有的不会，我们检查一下：
-- 左侧点 Datacenter → 选项卡 Storage；
-- 看列表里有没有一个类型为 LVM-Thin、ID 或 Name 为你刚才起的 vmdata 的条目：
+- 左侧点 `Datacenter`，然后在右侧选项卡里点 `Storage`
+- 会显示一个表格，包含 `ID`, `Type` (Directory/LVM-Thin), `Content` 等列
+- 查看是否有一行，`ID` 为 `vmdata(pve)`，`Type` 为 `LVM-Thin`，
   - 如果有：
-    - 选中它 → 点击 Edit；
-    - 确认：
-      - Content 至少勾选：Disk image、Container（你想用它放 VM/CT 磁盘）；
-      - Nodes 勾上当前节点。
+    - 选中它，点击 Edit，确认：
+      - `Content` 至少勾选：`Disk image`、`Container`（想用它放 VM/CT 磁盘的话）
+      - `Nodes` 勾上当前节点（`pve`）
   - 如果没有：
-    - 点右上角 Add → LVM-Thin；
-    - ID：vmdata
-    - Volume group / Thin pool：选你在前一步创建的 VG/Thinpool；
-    - Nodes：勾上当前节点；
-    - Content：勾 Disk image、Container；
+    - 点表格左上方的 `Add`，下拉菜单里选择 `LVM-Thin`
+    - ID：`vmdata`
+    - Volume group / Thin pool：选择在前一步创建的 VG/Thinpool
+    - Nodes：勾上当前节点（`pve`）
+    - Content：勾选`Disk image`、`Container`
     - 保存。
-至此，4TB 盘就已经作为 vmdata 存储挂载成功了，后面建 VM 时就能选。
 
+至此，4TB 盘就已经作为 vmdata 存储挂载成功了，后面建 VM 时就能选。
 
 ### 调整默认存储策略（让 VM 默认走 4TB 盘）
 
