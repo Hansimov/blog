@@ -107,6 +107,10 @@ function sidebarItems() {
           {
             text: "指定任意 IPv6 地址作为出口 IP",
             link: "/ipv6-interface"
+          },
+          {
+            text: "交换机和路由器互连",
+            link: "/switch"
           }
         ]
       },
