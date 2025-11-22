@@ -27,7 +27,12 @@ apt install ipmitool -y
 ```
 
 ## 调整风扇模式
-`Configuration` > `Fan Mode` > `Set Fan to Optimal Speed`
+
+`Configuration` > `Fan Mode`，设为 `Set Fan to Optimal Speed`
+
+## 设置网络会话超时
+
+`Configuration` > `Web Session` > `Session Timeout Value`，设为 0，表示永不超时。
 
 ## 查看传感器信息
 
@@ -48,6 +53,14 @@ ipmitool raw 0x30 0x45 0x00
 # 04 → Heavy I/O（重 I/O / GPU 模式）
 ```
 
+## 设置风扇为模式
+
+```sh
+# Set Fan mode to Full to take full control fans
+# 这个会立马开启全转速，需要立刻运行后面的  0x30 0x70 0x66 0x01 <zone> <ratio> 调整转速
+ipmitool raw 0x30 0x45 0x01 0x01
+```
+
 ## 设置告警阈值转速
 
 ```sh
@@ -64,13 +77,9 @@ for i in {1..10}; do ipmitool sensor thresh "FAN$i" lower 0 0 0; done
 
 这里将最低阈值设为 0，避免风扇转速过低或缺乏风扇触发告警，导致其他风扇拉满产生极大噪声。
 
-## 设置风扇为全速模式
+注意：每次插拔风扇时，都需要重置告警阈值。不然一旦某个风扇通电后再拔走，就会把 `na` 重新变成 `nr`，就会触发告警，导致其他还在的风扇拉满。
 
-```sh
-# Set Fan mode to Full to take full control fans
-# 这个会立马开启全转速，需要立刻运行后面的  0x30 0x70 0x66 0x01 <zone> <ratio> 调整转速
-ipmitool raw 0x30 0x45 0x01 0x01
-```
+该设置需要重启 IPMI 才能生效。
 
 ## 风扇命令注释
 
