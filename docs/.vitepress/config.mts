@@ -105,6 +105,10 @@ function sidebarItems() {
             link: "/zerotier"
           },
           {
+            text: "使用 Merak 组网",
+            link: "/merak"
+          },
+          {
             text: "指定任意 IPv6 地址作为出口 IP",
             link: "/ipv6-interface"
           },
