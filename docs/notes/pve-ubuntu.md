@@ -127,53 +127,88 @@
 
 ## 三、在 VM 里安装 Ubuntu 22.04
 
-1. 左侧选中刚创建的 VM（比如 `101 (ubuntu-22.04)`）。
-2. 点击上方 `Start` 启动。
-3. 再点 `Console`，选择 `noVNC` 打开控制台。
-
-4. 会从 ISO 启动进入 Ubuntu 安装界面：
-
-   * 选择语言、键盘布局。
-   * Desktop / Server 看你下载的版本。
-   * 分区时直接选 `Erase disk and install Ubuntu`：
-
-     * **这里看到的“磁盘”是你刚在 `vmdata` 上创建的虚拟磁盘，不是宿主机的物理盘，放心选。**
-   * 设置主机名、用户、密码等。
-   * 可选：勾选安装 OpenSSH Server（以后方便用 SSH 登入）。
-   * 等待安装完成，最后提示 `Reboot Now` 时回车重启。
-
-5. **移除 ISO / 调整启动顺序（避免下次还从光驱起）**
-
-   * 在 PVE 左侧选中该 VM → `Hardware`。
+* 在左侧的树结构中，选择刚创建的 VM（比如 `101 (AI-122)`）
+* 点击上方 `Start` 启动
+* 点击 `Console` 下拉列表，选择 `noVNC` 打开控制台
+* 会从 ISO 启动进入 Ubuntu 安装界面：
+   * 如果电脑的分辨率不够，需要滚动右侧的滚动条来看下方的选项
+   * 语言选择 `English`，点击 `Install Ubuntu`
+   * 选择键盘布局 `English (US)`
+   * 选择 `Normal installation`
+   * 取消勾选 `Download updates while installing Ubuntu`（后面可以手动更新）
+   * 分区时选 `Erase disk and install Ubuntu`：
+     * 这里看到的“磁盘”是刚刚在 `vmdata` 上创建的虚拟磁盘，不是宿主机的物理盘，放心选
+   * 选择时区：`Shanghai`
+   * 设置主机名、用户、密码等
+     * `Your Name`：
+     * `Your computer's name`：`ai122`
+     * `Pick a username`：
+     * `Choose a password`：
+     * `Confirm your password`：
+     * 勾选 `Log in automatically`（方便使用）
+   * 等待安装完成
+   * 可选：勾选安装 OpenSSH Server（以后方便用 SSH 登入）
+   * 等待安装完成，点击 `Restart Now` 重启
+   * 此时会提示 `Please remove the installation medium, then press ENTER`
+* 移除 ISO / 调整启动顺序（避免下次还从光驱启动）
+   * 在 PVE 左侧选中该 VM → 点击选项卡 `Hardware`
    * 找到 `CD/DVD Drive` → `Edit`：
+     * 选 `Do not use any media`，点 OK
+   * 然后点击选项卡 `Options` → `Boot Order` → `Edit`：
+     * 确保 `scsi0`（系统盘）排在第一行
+   * 回到 Console 的那个提示界面，回车，应该就可以直接从安装好的系统启动
+* 登录系统，点击 `Activities` → 搜索 `Terminal` 打开终端，并且添加到 Favorites 方便以后打开
+* 点击右上角电源图标，选择 `Settings`
+  * `Appearance` → 选择 `Dark` 主题
+  * `Power` → `Power Saving Options`
+    * `Screen Blank` 设为 `Never`
+    * `Automatic suspend` 设为 `Off`（避免虚拟机自动休眠）
+  * `Network` → `Wired` → 点击 `Connected` 右边的设置图标 → `IPv4`：
+    * `IPv4 Method` 选 `Manual`
+    * `Addresses`：
+      * `Address`：`192.168.31.122`
+      * `Netmask`：`255.255.255.0`
+      * `Gateway`：`192.168.31.1`
+    * `DNS`：取消勾选 `Automatic`，填入 `192.168.31.1`
+    * 点击 `Apply` 保存
+    * 重启以使得静态 IP 地址设置生效
 
-     * `Media` 选 `Do not use any media`，点 OK。
-   * 然后到 `Options` → `Boot Order`：
+## 换源
 
-     * 确保 `scsi0`（系统盘）排在第一。
-   * 重新启动虚拟机，应该就直接从安装好的系统启动。
+::: tip USTC Mirror Help
+- https://mirrors.ustc.edu.cn/help/ubuntu.html
+:::
 
----
+```sh
+sudo sed -i 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.list
+
+# 一般不建议替换 security 源
+# 镜像站同步有延迟，可能会导致生产环境不能及时安装上最新的安全更新
+sudo sed -i 's/security.ubuntu.com/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
+
+# 使用 HTTPS 避免运营商缓存劫持
+sudo sed -i 's/http:/https:/g' /etc/apt/sources.list
+```
+
+## 开启SSH
+
+```sh
+sudo apt install openssh-server
+```
 
 ## 四、在 Ubuntu 内安装 QEMU Guest Agent（建议）
 
-如果你在创建 VM 时已经勾了 `QEMU Guest Agent`，现在只需要在 VM 里安装软件。
-
+如果在创建 VM 时已经勾了 `QEMU Guest Agent`，现在只需要在 VM 里安装软件。
 1. 在 PVE 里确认选项：
-
-   * VM → `Options` → `QEMU Guest Agent`，状态为 `Enabled`，如果不是就 `Edit` 勾上。
-
+   * 选中 VM （`AI-122`）→ `Options` → `QEMU Guest Agent`
+   * 确保状态为 `Enabled`，如果不是就 `Edit` 勾上
 2. 在 Ubuntu 里执行（通过 Console 或 SSH）：
-
    ```bash
    sudo apt update
    sudo apt install qemu-guest-agent
    sudo systemctl enable --now qemu-guest-agent
    ```
-
 3. 回到 PVE 的 VM 概要页面，稍等几秒，就能看到 VM 的 IP 地址等信息自动显示。
-
----
 
 ## 五、把 20TB HDD 配置成大容量数据存储并挂给 VM（可选，但符合你需求）
 
