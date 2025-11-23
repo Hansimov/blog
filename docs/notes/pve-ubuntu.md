@@ -267,7 +267,237 @@ sudo systemctl status ssh
    ```
 3. 稍等几秒，在 PVE 中，选择 VM（比如 `ai122`）的 `Summary` 选项卡，就能看到 IP 等信息自动显示
 
-## 五、把 20TB HDD 配置成大容量数据存储并挂给 VM（可选，但符合你需求）
+## 五、将显卡直通给 VM
+
+### 在 PVE 9 上启用 IOMMU
+
+```sh
+nano /etc/kernel/cmdline
+```
+
+添加：
+
+```sh
+intel_iommu=on iommu=pt
+```
+
+运行：
+
+```sh
+proxmox-boot-tool refresh
+```
+
+重启 PVE：
+
+```sh
+reboot
+```
+
+确认 IOMMU 状态：
+
+```sh
+dmesg | grep -e DMAR -e IOMMU -e AMD-Vi | grep -i ioomu
+```
+
+如果输出中看到类似 `IOMMU enabled` 的内容，就说明 IOMMU 启用成功。
+
+输出形如：
+
+```sh
+[    9.191140] DMAR-IR: IOAPIC id 12 under DRHD base  0xc5ffc000 IOMMU 6
+[    9.191142] DMAR-IR: IOAPIC id 11 under DRHD base  0xb87fc000 IOMMU 5
+[    9.191144] DMAR-IR: IOAPIC id 10 under DRHD base  0xaaffc000 IOMMU 4
+[    9.191146] DMAR-IR: IOAPIC id 18 under DRHD base  0xfbffc000 IOMMU 3
+[    9.191147] DMAR-IR: IOAPIC id 17 under DRHD base  0xee7fc000 IOMMU 2
+[    9.191149] DMAR-IR: IOAPIC id 16 under DRHD base  0xe0ffc000 IOMMU 1
+[    9.191151] DMAR-IR: IOAPIC id 15 under DRHD base  0xd37fc000 IOMMU 0
+[    9.191152] DMAR-IR: IOAPIC id  8 under DRHD base  0x9d7fc000 IOMMU 7
+[    9.191154] DMAR-IR: IOAPIC id  9 under DRHD base  0x9d7fc000 IOMMU 7
+```
+
+### 加载 VFIO 模块
+
+```sh
+nano /etc/modules
+```
+
+在末尾添加：
+
+```sh
+vfio
+vfio_pci
+vfio_iommu_type1
+vfio_virqfd
+```
+
+### 黑名单宿主机显卡驱动
+
+::: warning 
+注意：如果宿主机还需要用某块卡输出图形，就不要把那一块卡对应的驱动全黑名单。
+理想情况是宿主机用主板自带 iGPU 或 IPMI，把 8 块独显全部给 VM。
+:::
+
+对于 NVIDIA 显卡：
+
+```sh
+echo "blacklist nouveau"  > /etc/modprobe.d/blacklist-nouveau.conf
+echo "blacklist nvidia"   > /etc/modprobe.d/blacklist-nvidia.conf
+echo "blacklist nvidiafb" > /etc/modprobe.d/blacklist-nvidiafb.conf
+```
+
+### 将显卡全部绑定到 vfio-pci
+
+查看显卡列表：
+
+```sh
+lspci -nn | grep -E "VGA|3D|Display"
+```
+
+输出形如：
+
+```sh
+03:00.0 VGA compatible controller [0300]: ASPEED Technology, Inc. ASPEED Graphics Family [1a03:2000] (rev 41)
+1a:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA102 [GeForce RTX 3080] [10de:2206] (rev a1)
+1b:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA102 [GeForce RTX 3080] [10de:2206] (rev a1)
+3d:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA102 [GeForce RTX 3080] [10de:2206] (rev a1)
+3e:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA102 [GeForce RTX 3080] [10de:2206] (rev a1)
+88:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA102 [GeForce RTX 3080] [10de:2206] (rev a1)
+89:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA102 [GeForce RTX 3080] [10de:2206] (rev a1)
+b1:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA102 [GeForce RTX 3080] [10de:2206] (rev a1)
+b2:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA102 [GeForce RTX 3080] [10de:2206] (rev a1)
+d8:00.0 Non-Volatile memory controller [0108]: Intel Corporation NVMe DC SSD [3DNAND, Sentinel Rock Controller] [8086:0b60]
+d9:00.0 Non-Volatile memory controller [0108]: Intel Corporation NVMe DC SSD [3DNAND, Sentinel Rock Controller] [8086:0b60]
+```
+
+- 方括号里的 `10de:2206` 就是 `vendor:device` ID。
+- 对同型号的 8 块卡，这个 ID 往往都是一样的。
+
+```sh
+# 很多显卡有独立的音频功能
+lspci -nn | grep -i audio
+```
+
+输出形如：
+
+```sh
+1a:00.1 Audio device [0403]: NVIDIA Corporation GA102 High Definition Audio Controller [10de:1aef] (rev a1)
+1b:00.1 Audio device [0403]: NVIDIA Corporation GA102 High Definition Audio Controller [10de:1aef] (rev a1)
+3d:00.1 Audio device [0403]: NVIDIA Corporation GA102 High Definition Audio Controller [10de:1aef] (rev a1)
+3e:00.1 Audio device [0403]: NVIDIA Corporation GA102 High Definition Audio Controller [10de:1aef] (rev a1)
+88:00.1 Audio device [0403]: NVIDIA Corporation GA102 High Definition Audio Controller [10de:1aef] (rev a1)
+89:00.1 Audio device [0403]: NVIDIA Corporation GA102 High Definition Audio Controller [10de:1aef] (rev a1)
+b1:00.1 Audio device [0403]: NVIDIA Corporation GA102 High Definition Audio Controller [10de:1aef] (rev a1)
+b2:00.1 Audio device [0403]: NVIDIA Corporation GA102 High Definition Audio Controller [10de:1aef] (rev a1)
+```
+
+- 这里的 `10de:1aef` 就是音频部分的 `vendor:device` ID。
+
+查看 IOMMU 组：
+
+```sh
+find /sys/kernel/iommu_groups/ -type l
+```
+
+- 确认没有和别的重要设备绑在一起
+- 因为是“8 块卡都给同一台 VM”，即便多块卡在同一个 IOMMU 组里，问题也不大
+- 只要组里别混着 SATA 控制器之类宿主机必须用的设备
+
+将这些卡全部绑定到 vfio-pci：
+
+```sh
+nano /etc/modprobe.d/vfio.conf
+```
+
+添加：
+
+```sh
+options vfio-pci ids=10de:2206,10de:1aef
+```
+
+重新生成 initramfs：
+
+```sh
+update-initramfs -u
+```
+
+重启：
+
+```sh
+reboot
+```
+
+重启之后确认每块 GPU 已经绑定到 vfio-pci：
+
+```sh
+# lspci -nnk | grep -A3 -E "VGA|3D|Display"
+lspci -nnk | grep -A3 -E "NVIDIA" | grep -i kernel
+```
+
+输出形如：
+
+```sh
+Kernel driver in use: vfio-pci
+# Kernel modules: nvidiafb, nouveau
+# Kernel modules: snd_hda_intel
+```
+
+这就说明宿主机已经把显卡让出来了。
+
+### 将显卡全部直通给 VM
+
+现在开始在 PVE 的 Web 界面操作。
+
+左侧树结构选中 VM （比如 `ai122`）→ `Hardware` 选项卡：
+- 确认 `BIOS: OVMF (UEFI)`
+- 确认 `Machine: q35`
+- 点击 `Add` 下拉列表 → 选择 `PCI Device`
+- 选择 `Raw Device`，点击出现列表，点选 `IOMMU Group` 正向排序（一般 GPU 都排在靠前的组）
+- 在列表里选第一块 GPU
+  - 同一块 GPU 通常会有一个 VGA + 一个 Audio
+  - 勾选 `All Functions`，让 PVE 自动把同一张卡的所有函数一起直通
+  - 不勾 `Primary GPU`：
+    - 如果只是算力卡，用远程 SSH，不用勾选
+    - 如果想用这块卡做虚拟机的显示输出（接显示器），可以在其中一块卡上勾
+  - 点开 `Advanced`
+    - 勾选 `PCI-Express`（q35 + 现代 GPU）
+  - 确认无误，点击 `Add`
+  - 添加好后，可以看到信息栏 `PCI Device` 多了一条记录，类似 `0000:3d:00,pcie=1`
+- 重复上一步，把剩下的 7 块 GPU 都按同样方式加进来：
+  - 每次 Add → PCI Device，选不同的 GPU / IOMMU 组。
+  - 如果某几块卡在同一个 IOMMU 组里，PVE 会强制你把整个组都直通过去，这对“全给 ai122”来说是OK的
+  - 可以先加 1 块卡，确认没问题后再加剩下的
+
+### 验证是否 VM 中显卡是否已经直通
+
+在 PVE 中选择 `AI-122`，点击 `Start`。可能要多等一会。
+
+运行：
+
+```sh
+lspci -nn | grep -E "VGA|3D|Display"
+```
+
+输出形如：
+
+```sh
+00:01.0 VGA compatible controller [0300]: Device [1234:1111] (rev 02)
+01:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA102 [GeForce RTX 3080] [10de:2206] (rev a1)
+```
+
+```sh
+lspci -nn | grep -i audio
+```
+
+输出形如：
+
+```sh
+00:1b.0 Audio device [0403]: Intel Corporation 82801I (ICH9 Family) HD Audio Controller [8086:293e] (rev 03)
+01:00.1 Audio device [0403]: NVIDIA Corporation GA102 High Definition Audio Controller [10de:1aef] (rev a1)
+```
+
+就表示已经成功直通。
+
+## 六、把 20TB HDD 配置成大容量数据存储并挂给 VM（可选，但符合你需求）
 
 你说想用 `/dev/sda` 这块 20TB HDD 来放大容量数据。典型做法是：
 
