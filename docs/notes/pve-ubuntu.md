@@ -173,7 +173,11 @@
     * 点击 `Apply` 保存
     * 重启以使得静态 IP 地址设置生效
 
-## 换源
+## 一些常用配置
+
+### 换源
+
+参考：[Ubuntu 换国内源](./ubuntu-sources.md)
 
 ::: tip USTC Mirror Help
 - https://mirrors.ustc.edu.cn/help/ubuntu.html
@@ -188,13 +192,66 @@ sudo sed -i 's/security.ubuntu.com/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
 
 # 使用 HTTPS 避免运营商缓存劫持
 sudo sed -i 's/http:/https:/g' /etc/apt/sources.list
+
+更新软件包列表：
+
+```sh
+sudo apt update
 ```
 
-## 开启SSH
+### 开启SSH
+
+参考：[Ubuntu 开启 SSH服务](./ubuntu-ssh.md)
+
+安装：
 
 ```sh
 sudo apt install openssh-server
 ```
+
+启动：
+
+```sh
+sudo systemctl enable ssh --now
+```
+
+查看服务状态：
+
+```sh
+sudo systemctl status ssh
+```
+
+之后就可以通过 SSH 登录这台虚拟机了。
+
+### 安装 Merak
+
+参考：[使用 Merak 组网](./merak.md)
+
+之后就可以通过 Merak 远程访问这台虚拟机了。
+
+### 安装 tmux
+
+参考：[安装 tmux](./tmux.md)
+
+### 安装 zsh
+
+参考：[安装 zsh](./zsh.md)
+
+### 安装 v2ray
+
+参考：[安装 v2ray](./v2ray.md)
+
+### 安装 conda + Python
+
+参考：[安装 conda](./conda.md), [Python 依赖管理](./python-requirements.md)
+
+### 安装 git
+
+参考：[安装 git](./git.md)
+
+### 安装 NVDIA 驱动和 NVCC+CUDA
+
+参考：[Ubuntu 安装 NVIDIA 驱动和 CUDA (NVCC)](./nvidia-driver.md)
 
 ## 四、在 Ubuntu 内安装 QEMU Guest Agent（建议）
 
@@ -208,7 +265,7 @@ sudo apt install openssh-server
    sudo apt install qemu-guest-agent
    sudo systemctl enable --now qemu-guest-agent
    ```
-3. 回到 PVE 的 VM 概要页面，稍等几秒，就能看到 VM 的 IP 地址等信息自动显示。
+3. 稍等几秒，在 PVE 中，选择 VM（比如 `ai122`）的 `Summary` 选项卡，就能看到 IP 等信息自动显示
 
 ## 五、把 20TB HDD 配置成大容量数据存储并挂给 VM（可选，但符合你需求）
 
