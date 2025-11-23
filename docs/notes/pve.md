@@ -1,16 +1,18 @@
-# Proxmox VE 安装流程
+# 安装 PVE
 
-## 使用 Rufus 制作 Proxmox VE 启动盘
-ISO - Proxmox Virtual Environment
-https://www.proxmox.com/en/downloads/proxmox-virtual-environment/iso
+## 使用 Rufus 制作 PVE 启动盘
+
+::: tip ISO - Proxmox Virtual Environment
+- https://www.proxmox.com/en/downloads/proxmox-virtual-environment/iso
 https://enterprise.proxmox.com/iso/proxmox-ve_9.1-1.iso
 
 Rufus - 轻松创建 USB 启动盘
-https://rufus.ie/zh/#download
+- https://rufus.ie/zh/#download
 https://github.com/pbatard/rufus/releases/download/v4.11/rufus-4.11.exe
+:::
 
 
-## 4029GP BIOS/BMC设置
+## 4029GP BIOS/BMC 设置
 
 ### 进入 BIOS
 - `IPMI` > `Remote Control` > `Launch Console`
@@ -56,7 +58,7 @@ https://github.com/pbatard/rufus/releases/download/v4.11/rufus-4.11.exe
 
 这样应该就会从 U 盘启动。
 
-## 从 U 盘安装Proxmox VE
+## 从 U 盘安装 PVE
 
 ### 从 U 盘启动
 
@@ -127,7 +129,7 @@ https://github.com/pbatard/rufus/releases/download/v4.11/rufus-4.11.exe
 - 第一次登录会弹出 “No valid subscription” 的提示
 - 直接点 OK 忽略即可（可以后面改成 no-subscription 源）。
 
-## 将4TB盘配置为VM存储
+## 将 4TB SSD 配置为 VM 存储
 
 现在 1TB 上已经有一个默认的 local 和 local-lvm 存储了，我们接下来把 4TB SSD 加成一个新的 LVM-Thin 存储，比如叫 vmdata，专门放虚拟机/容器磁盘。
 
@@ -228,17 +230,6 @@ vmdata  lvmthin  active  ...
   - 在 vmdata 的 Edit 里确认已经勾选 Disk image、Container；
   - 有多个存储时，新建 VM 的窗口里会允许你选，这时选 vmdata 即可。
 
-
-## 建一台测试 VM
-
-- 在 Web 界面左上，选你的节点 → 右键 → Create VM；
-- 常规配置填一下（Name、ISO 选择放在 local 的安装镜像等）；
-- 到 Hard Disk 选项卡：
-  - Storage：选 vmdata；
-  - Disk size：先随便 20–40GB；
-- 创建并启动 VM，安装随便一个系统；
-- VM 装好后，在节点 → vmdata 存储上可以看到对应的虚拟磁盘，说明 VM 确实在 4TB 上了。
-
 ## 换源
 
 Proxmox - USTC Mirror Help
@@ -278,3 +269,6 @@ Hit:4 https://mirrors.ustc.edu.cn/proxmox/debian/pve trixie InRelease
 Hit:5 http://security.debian.org/debian-security trixie-security InRelease         
 ```
 
+## 创建 VM
+
+参考：[PVE 创建 Ubuntu 虚拟机](./pve-ubuntu.md)

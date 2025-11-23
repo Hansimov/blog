@@ -3,6 +3,13 @@
 ## 列出 GPU 信息
 
 ```sh
+lspci | egrep -i "vga|3d|display"
+```
+
+或者：
+
+```sh
+# sudo apt-get install lshw
 sudo lshw -C display
 ```
 

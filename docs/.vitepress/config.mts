@@ -374,6 +374,14 @@ function sidebarItems() {
           {
             text: "Ubuntu 设置 GPU 风扇速度",
             "link": "/gpu-fan"
+          },
+          {
+            text: "安装 PVE",
+            link: "/pve"
+          },
+          {
+            text: "PVE 创建 Ubuntu 虚拟机",
+            link: "/pve-ubuntu"
           }
         ]
       },
