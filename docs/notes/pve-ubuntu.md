@@ -479,16 +479,7 @@ Kernel driver in use: vfio-pci
 
 ### 验证 VM 中显卡是否已经直通
 
-在 PVE 中选择 `AI-122`，点击 `Start`。第一次启动需要等个大概10-15分钟。
-
-::: warning 【待解决】启用 IOMMU / Passthrough（直通）后，启动慢似乎是个已知问题
-
-【Windows】PVE直通下的Windows开机巨慢的解决方案之一
-- https://blog.csdn.net/Freesia_2350/article/details/146205627
-
-Extremely slow VM startup when IOMMU/Passthrough is enabled
-- https://www.reddit.com/r/Proxmox/comments/wowj61/extremely_slow_vm_startup_when_iommupassthrough
-:::
+在 PVE 中选择 `AI-122`，点击 `Start`。
 
 运行：
 
@@ -521,6 +512,32 @@ lspci -nn | grep -i audio
 ### 安装 NVDIA 驱动和 NVCC+CUDA
 
 参考：[Ubuntu 安装 NVIDIA 驱动和 CUDA (NVCC)](./nvidia-driver.md)
+
+
+## 常见问题
+
+### 启动时间太长
+
+例如：超过5分钟。
+
+::: warning 【待解决】启用 IOMMU / Passthrough（直通）后，启动慢似乎是个已知问题
+
+【Windows】PVE直通下的Windows开机巨慢的解决方案之一
+- https://blog.csdn.net/Freesia_2350/article/details/146205627
+
+Extremely slow VM startup when IOMMU/Passthrough is enabled
+- https://www.reddit.com/r/Proxmox/comments/wowj61/extremely_slow_vm_startup_when_iommupassthrough
+:::
+
+::: tip 【已验证】似乎启动慢是因为给 VM 分配的内存太大，初始化需要很久
+试试把 VM 的内存调小一些，比如从 1TB (1048576) 调到 128GB (131072) 或者 64GB (65536)。
+:::
+
+### 启动失败
+
+::: tip 【已验证】试试 Remove 几张显卡。
+:::
+
 
 ## 六、把 20TB HDD 配置成大容量数据存储并挂给 VM
 

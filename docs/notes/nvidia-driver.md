@@ -38,6 +38,7 @@ GCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.2)
 或者运行：
 
 ```sh
+# sudo apt install nvidia-utils-575
 nvidia-smi
 ```
 
@@ -85,7 +86,8 @@ sudo ubuntu-drivers devices | grep recommended
 输出形如：
 ```sh
 # driver   : nvidia-driver-535 - distro non-free recommended
-driver   : nvidia-driver-575 - distro non-free recommended   # latest on 2025-09-02
+# driver   : nvidia-driver-575 - distro non-free recommended      # latest on 2025-09-02
+# driver   : nvidia-driver-580 - third-party non-free recommended # latest on 2025-11-24
 ```
 
 ::: tip See: NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver - Stack Overflow
@@ -130,7 +132,8 @@ sudo apt-get update
 
 ```sh
 # sudo apt install nvidia-driver-535
-sudo apt install nvidia-driver-575   # latest on 2025-09-02
+# sudo apt install nvidia-driver-575   # latest on 2025-09-02
+sudo apt install nvidia-driver-580   # latest on 2025-11-24
 ```
 
 用这种方式安装可以自动安装依赖的内核模块。
@@ -154,10 +157,13 @@ sudo apt install nvidia-driver-575   # latest on 2025-09-02
 ### 重启生效
 
 ```sh
+# sudo reboot
 sudo shutdown -r now
 ```
 
 ### 卸载驱动
+
+如果版本不对，或者需要重新安装，可以先卸载已安装的驱动：
 
 ```sh
 sudo apt purge "nvidia-*" && sudo apt autoremove && sudo apt autoclean
@@ -165,28 +171,7 @@ sudo apt purge "nvidia-*" && sudo apt autoremove && sudo apt autoclean
 
 ## 安装 CUDA (NVCC)
 
-### 通过 apt 安装 nvcc
-
-```sh
-sudo apt install nvidia-cuda-toolkit
-```
-
-::: tip See: How to install CUDA & cuDNN on Ubuntu 22.04
- - https://gist.github.com/denguir/b21aa66ae7fb1089655dd9de8351a202
-:::
-
-### 通过 conda 安装 nvcc
-
-如果想在没有 root 权限的情况下安装 nvcc（比如在 conda 环境），可以运行：
-
-```sh
-conda install nvidia/label/cuda-11.7.0::cuda-toolkit
-```
-
-::: tip See: https://anaconda.org/nvidia/cuda-toolkit
-:::
-
-### 通过 NVIDIA 源安装指定版本 nvcc
+### 【首选】通过 NVIDIA 源安装指定版本 nvcc
 
 ::: tip CUDA Toolkit 12.9 Downloads | NVIDIA Developer
 * https://developer.nvidia.com/cuda-12-9-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&target_version=22.04&target_type=deb_network
@@ -200,12 +185,35 @@ sudo apt-get update
 sudo apt-get -y install cuda-toolkit-12-9
 ```
 
-在 `.zshrc` 中添加：
+在 `.bashrc` 或 `.zshrc` 中添加：
 
 ```sh
 export PATH=/usr/local/cuda/bin:$PATH
 export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
 ```
+
+运行 `bash` 或 `zsh` 使配置生效。
+
+### 【次选】通过 apt 安装 nvcc
+
+```sh
+sudo apt install nvidia-cuda-toolkit
+```
+
+::: tip See: How to install CUDA & cuDNN on Ubuntu 22.04
+ - https://gist.github.com/denguir/b21aa66ae7fb1089655dd9de8351a202
+:::
+
+### 【次选】通过 conda 安装 nvcc
+
+如果想在没有 root 权限的情况下安装 nvcc（比如在 conda 环境），可以运行：
+
+```sh
+conda install nvidia/label/cuda-11.7.0::cuda-toolkit
+```
+
+::: tip See: https://anaconda.org/nvidia/cuda-toolkit
+:::
 
 ### 查看 CUDA 版本
 
