@@ -172,6 +172,20 @@
     * `DNS`：取消勾选 `Automatic`，填入 `192.168.31.1`
     * 点击 `Apply` 保存
     * 重启以使得静态 IP 地址设置生效
+  * 或者在命令行中修改网络：
+    ```sh
+    # 查看连接名称
+    nmcli connection show
+    
+    # 假如输出 Name: Wired connection 2 (DEVICE：enp10s18)
+    CONN_NAME="Wired connection 2"
+    
+    # 设置静态 IP
+    sudo nmcli connection modify "$CONN_NAME" ipv4.addresses 192.168.31.122/24 ipv4.gateway 192.168.31.1 ipv4.dns 192.168.31.1 ipv4.method manual
+    
+    # 重启连接以使设置生效
+    sudo nmcli connection down "$CONN_NAME" && sudo nmcli connection up "$CONN_NAME"
+    ```
 
 ## 一些常用配置
 
@@ -249,10 +263,6 @@ sudo systemctl status ssh
 
 参考：[安装 git](./git.md)
 
-### 安装 NVDIA 驱动和 NVCC+CUDA
-
-参考：[Ubuntu 安装 NVIDIA 驱动和 CUDA (NVCC)](./nvidia-driver.md)
-
 ## 四、在 Ubuntu 内安装 QEMU Guest Agent（建议）
 
 如果在创建 VM 时已经勾了 `QEMU Guest Agent`，现在只需要在 VM 里安装软件。
@@ -267,7 +277,7 @@ sudo systemctl status ssh
    ```
 3. 稍等几秒，在 PVE 中，选择 VM（比如 `ai122`）的 `Summary` 选项卡，就能看到 IP 等信息自动显示
 
-## 五、将显卡直通给 VM
+## 五、启用显卡直通，并将分配给 VM
 
 ### 在 PVE 9 上启用 IOMMU
 
@@ -467,9 +477,18 @@ Kernel driver in use: vfio-pci
   - 如果某几块卡在同一个 IOMMU 组里，PVE 会强制你把整个组都直通过去，这对“全给 ai122”来说是OK的
   - 可以先加 1 块卡，确认没问题后再加剩下的
 
-### 验证是否 VM 中显卡是否已经直通
+### 验证 VM 中显卡是否已经直通
 
-在 PVE 中选择 `AI-122`，点击 `Start`。可能要多等一会。
+在 PVE 中选择 `AI-122`，点击 `Start`。第一次启动需要等个大概10-15分钟。
+
+::: warning 【待解决】启用 IOMMU / Passthrough（直通）后，启动慢似乎是个已知问题
+
+【Windows】PVE直通下的Windows开机巨慢的解决方案之一
+- https://blog.csdn.net/Freesia_2350/article/details/146205627
+
+Extremely slow VM startup when IOMMU/Passthrough is enabled
+- https://www.reddit.com/r/Proxmox/comments/wowj61/extremely_slow_vm_startup_when_iommupassthrough
+:::
 
 运行：
 
@@ -495,9 +514,15 @@ lspci -nn | grep -i audio
 01:00.1 Audio device [0403]: NVIDIA Corporation GA102 High Definition Audio Controller [10de:1aef] (rev a1)
 ```
 
-就表示已经成功直通。
+这就表示已经成功直通了。
 
-## 六、把 20TB HDD 配置成大容量数据存储并挂给 VM（可选，但符合你需求）
+如果要添加新的 GPU，得先关闭 VM，再重复上面的“将显卡全部直通给 VM”的步骤。
+
+### 安装 NVDIA 驱动和 NVCC+CUDA
+
+参考：[Ubuntu 安装 NVIDIA 驱动和 CUDA (NVCC)](./nvidia-driver.md)
+
+## 六、把 20TB HDD 配置成大容量数据存储并挂给 VM
 
 你说想用 `/dev/sda` 这块 20TB HDD 来放大容量数据。典型做法是：
 
