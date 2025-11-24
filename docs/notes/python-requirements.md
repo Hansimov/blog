@@ -8,6 +8,13 @@
 mkdir -p ~/.pip && wget https://raw.staticdn.net/Hansimov/blog/main/docs/notes/configs/pip.conf -O ~/.pip/pip.conf
 ```
 
+或者运行：
+```sh
+mkdir -p ~/.pip && nano ~/.pip/pip.conf
+```
+
+写入下面内容：
+
 ::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/pip.conf
 :::
 
@@ -28,6 +35,16 @@ pip 使用国内镜像源 | 菜鸟教程
 pypi | 镜像站使用帮助 | 清华大学开源软件镜像站 | Tsinghua Open Source Mirror
 * https://mirrors.tuna.tsinghua.edu.cn/help/pypi
 :::
+
+## 临时使用源安装
+
+```sh
+# 中科大源
+pip install -i https://mirrors.ustc.edu.cn/pypi/simple -U pip
+
+# 官方源
+pip install -i https://pypi.org/simple -U pip
+```
 
 ## 安装 pipreqs
 
