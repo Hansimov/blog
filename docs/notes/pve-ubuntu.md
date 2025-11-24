@@ -206,6 +206,7 @@ sudo sed -i 's/security.ubuntu.com/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
 
 # 使用 HTTPS 避免运营商缓存劫持
 sudo sed -i 's/http:/https:/g' /etc/apt/sources.list
+```
 
 更新软件包列表：
 

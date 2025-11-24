@@ -37,6 +37,8 @@ unset __conda_setup
 # <<< conda initialize <<<
 ```
 
+重启终端：`bash` 或 `zsh`。
+
 ## 测试 conda 版本
 
 ```sh
@@ -45,34 +47,56 @@ conda --version
 
 ## 添加国内源
 
-一键下载覆盖：
+::: tip Anaconda - USTC Mirror Help
+- https://mirrors.ustc.edu.cn/help/anaconda.html
 
-```sh
-wget https://raw.staticdn.net/Hansimov/blog/main/docs/notes/configs/.condarc -O ~/.condarc
-```
-
-::: tip See: https://github.com/Hansimov/blog/blob/main/docs/notes/configs/.condarc
-:::
-
-<<< @/notes/configs/.condarc{yml}
-
-::: tip See: anaconda | 镜像站使用帮助 | 清华大学开源软件镜像站 | Tsinghua Open Source Mirror
+anaconda | 镜像站使用帮助 | 清华大学开源软件镜像站 | Tsinghua Open Source Mirror
 - https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/
 :::
 
-## 创建 conda env
+```sh
+# conda config --show-sources
+nano ~/miniconda3/.condarc
+```
+
+修改为如下内容：
+
+```yaml
+channels:
+  - nodefaults
+custom_channels:
+  conda-forge: https://mirrors.ustc.edu.cn/anaconda/cloud
+  bioconda: https://mirrors.ustc.edu.cn/anaconda/cloud
+show_channel_urls: true
+```
+
+清除缓存:
 
 ```sh
-# conda create --name ai python
-# conda create --name ai -c conda-forge python=3.11
-conda create --name ai python=3.11
-conda activate ai
-conda deactivate
+conda clean -i
 ```
+
+测试：
+
+```sh
+# 详见：创建 conda env
+# conda create -n myenv numpy -c conda-forge
+```
+
+## 创建 conda env
 
 ::: tip See: How to pick python 3.11 as a conda environment in vs code - Stack Overflow
 * https://stackoverflow.com/questions/74959226/how-to-pick-python-3-11-as-a-conda-environment-in-vs-code
 :::
+
+
+```sh
+# conda create --name ai python
+# conda create --name ai python=3.11
+conda create --name ai python=3.13.9 -c conda-forge
+conda activate ai
+conda deactivate
+```
 
 ## 删除 conda env
 
@@ -90,7 +114,7 @@ python --version
 
 ## 添加 alias
 
-在 `.bash_aliases` 或 `.zshrc` 中添加：
+在 `~/.bash_aliases` 或 `~/.zshrc` 中添加：
 
 ```sh
 alias cda="conda activate ai"
@@ -99,7 +123,7 @@ alias cdd="conda deactivate"
 
 ## 默认进入 conda env
 
-在 `.bashrc` 或 `.zshrc` 中添加：
+在 `~/.bashrc` 或 `~/.zshrc` 中添加：
 
 ```sh
 conda activate ai
