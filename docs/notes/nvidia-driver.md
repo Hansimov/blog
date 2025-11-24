@@ -13,6 +13,27 @@ lspci | egrep -i "vga|3d|display"
 sudo lshw -C display
 ```
 
+## 【重要】确保 Secure Boot 关闭
+
+```sh
+sudo mokutil --sb-state
+```
+
+输出应为 `SecureBoot disabled`。如果是 `SecureBoot enabled`，需要进入 BIOS 关闭。
+
+运行：
+
+```sh
+sudo systemctl reboot --firmware-setup
+```
+
+会自动进入启动菜单界面，选择 `EFI Setup` （通常在最下面） 进入 BIOS 设置界面：
+- 依次进入 `Device Manager` → `Secure Boot Configuration` → `Attempt Secure Boot`
+- 将其设为 `Disabled`，也即从 `[x]` 改为 `[ ]`
+- F10 保存，Esc 退出，回车确认修改设置，这样就会重启并进入系统
+
+启动后，再在终端运行 `sudo mokutil --sb-state`，应当显示 `SecureBoot disabled`。
+
 ## 安装 NVIDIA 驱动
 
 ::: tip See: NVIDIA drivers installation | Ubuntu
@@ -99,6 +120,7 @@ sudo ubuntu-drivers devices | grep recommended
 ```sh
 # desktop
 sudo ubuntu-drivers list
+
 # server
 # sudo ubuntu-drivers list --gpgpu
 ```
@@ -136,6 +158,12 @@ sudo apt-get update
 sudo apt install nvidia-driver-580   # latest on 2025-11-24
 ```
 
+重装：
+
+```sh
+sudo apt install --reinstall nvidia-driver-580
+```
+
 用这种方式安装可以自动安装依赖的内核模块。
 
 也可用 `ubuntu-drivers` 安装，不过可能会有问题，目前不推荐：
@@ -159,6 +187,49 @@ sudo apt install nvidia-driver-580   # latest on 2025-11-24
 ```sh
 # sudo reboot
 sudo shutdown -r now
+```
+
+### 查看驱动安装是否成功
+
+查看内核模块：
+
+```sh
+dkms status
+```
+
+输出形如：
+
+```sh
+nvidia/580.105.08, 6.8.0-40-generic, x86_64: installed
+nvidia/580.105.08, 6.8.0-87-generic, x86_64: installed
+```
+
+查看模块加载：
+
+```sh
+lsmod | grep -i nvidia
+```
+
+输出形如：
+
+```sh
+nvidia_uvm           2093056  0
+nvidia_drm            139264  6
+nvidia_modeset       1638400  5 nvidia_drm
+nvidia              104091648  71 nvidia_uvm,nvidia_modeset
+video                  77824  1 nvidia_modeset
+```
+
+查看内核驱动占用：
+
+```sh
+lspci -nnk
+```
+
+输出应当包含：
+
+```sh
+kernel driver in use: ....
 ```
 
 ### 卸载驱动
