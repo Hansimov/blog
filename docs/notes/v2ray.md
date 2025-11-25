@@ -151,6 +151,14 @@ See: Install on Linux - v2ray.com
 wget https://raw.staticdn.net/Hansimov/blog/main/docs/notes/scripts/v2ray-install-release.sh -O ./v2ray-install-release.sh && chmod +x ./v2ray-install-release.sh && sudo ./v2ray-install-release.sh
 ```
 
+如果局域网内其他设备有这个安装脚本，可以直接下载：
+
+```sh
+cd ~/downloads
+scp asimov@11.24.11.2:/home/asimov/repos/blog/docs/notes/scripts/v2ray-install-release.sh ./
+chmod +x ./v2ray-install-release.sh && sudo ./v2ray-install-release.sh
+```
+
 #### 下载 geoip 和 geosite
 
 类似上面的，也需要把 `github.com` 替换为 `githubfast.com`：
@@ -244,10 +252,16 @@ v2ray 默认调用的配置文件位于：
 - `inbounds`：`socks` 和 `http` 的 `port`
 - `outbounds`: `vnext` > `address`, `port`, `users` (`id`, `alterId`)
 
+如果局域网内其他设备有这个配置文件，可以直接下载：
+
+```sh
+scp asimov@11.24.11.2:/usr/local/etc/v2ray/config.json /usr/local/etc/v2ray/
+# scp asimov@11.24.11.2:/usr/local/etc/v2ray/new.json /usr/local/etc/v2ray/
+```
+
 ::: tip See: Client Configuration - V2Fly.org
 - https://www.v2fly.org/en_US/guide/start.html#client
 :::
-
 
 ## 运行 client
 
@@ -265,7 +279,7 @@ sudo systemctl status v2ray
 测试代理：
 
 ```sh
-curl --proxy http://127.0.0.1:11111 http://ifconfig.me/ip
+curl --proxy http://127.0.0.1:11111 http://ifconfig.me/ip && echo ""
 ```
 
 查看日志：
@@ -280,7 +294,7 @@ journalctl -u v2ray.service
 
 ## 运行多个 v2ray 服务
 
-假如想要添加的新服务对应的配置文件为 `config_2.json`。同时不想改动原有的 v2ray 的服务，这时可以采用 `v2ray@service` 这个模板单元。
+假如想要添加的新服务对应的配置文件为 `new.json`。同时不想改动原有的 v2ray 的服务，这时可以采用 `v2ray@service` 这个模板单元。
 
 ```sh
 cat /etc/systemd/system/v2ray@.service
@@ -314,21 +328,22 @@ sudo nano /usr/local/etc/v2ray/new.json
 - `inbounds`: `port` (socks + http)
 - `outbounds`: `address`, `port`, `id`
 
+如果局域网内其他设备有这个配置文件，可以直接下载：
+
+```sh
+scp asimov@11.24.11.2:/usr/local/etc/v2ray/new.json /usr/local/etc/v2ray/
+```
+
 重载 systemd 配置：
 
 ```sh
 sudo systemctl daemon-reload
 ```
 
-设置开机自启:
+设置开机自启，并启动：
 
 ```sh
 sudo systemctl enable v2ray@new
-```
-
-启动服务：
-
-```sh
 sudo systemctl start v2ray@new
 ```
 
@@ -341,7 +356,7 @@ sudo systemctl status v2ray@new
 测试新代理：
 
 ```sh
-curl --proxy http://127.0.0.1:11119 http://ifconfig.me/ip
+curl --proxy http://127.0.0.1:11119 http://ifconfig.me/ip && echo ""
 ```
 
 ## 附录
