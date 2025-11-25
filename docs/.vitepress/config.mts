@@ -89,6 +89,10 @@ function sidebarItems() {
             link: "/v2ray"
           },
           {
+            text: "代理转发",
+            link: "/proxy-forward"
+          },
+          {
             text: "网站搭建和域名解析",
             link: "/website-dns"
           },
