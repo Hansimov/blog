@@ -6,6 +6,8 @@
 
 ## 安装
 
+### 安装流程
+
 添加 Docker 官方 GPG key：
 
 ```sh{4}
@@ -34,90 +36,41 @@ sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
-检查是否安装成功：
+### 一键安装
 
-```sh
-sudo docker run hello-world
+```
+wget https://raw.staticdn.net/Hansimov/blog/main/docs/notes/scripts/docker_install.sh -O ~/docker_install.sh && chmod +x ~/docker_install.sh && ~/docker_install.sh
 ```
 
-如果该命令未能成功运行，大概率是网络问题，参见 [添加镜像](#添加镜像) 或 [配置代理](#配置代理)。
-
-若运行成功，输出应形如：
-
-```sh
-Unable to find image 'hello-world:latest' locally
-latest: Pulling from library/hello-world
-c1ec31eb5944: Pull complete
-Digest: sha256:94323f3e5e09a8b9515d74337010375a456c909543e1ff1538f5116d38ab3989
-Status: Downloaded newer image for hello-world:latest
-
-Hello from Docker!
-This message shows that your installation appears to be working correctly.
-
-To generate this message, Docker took the following steps:
- 1. The Docker client contacted the Docker daemon.
- 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
-    (amd64)
- 3. The Docker daemon created a new container from that image which runs the
-    executable that produces the output you are currently reading.
- 4. The Docker daemon streamed that output to the Docker client, which sent it
-    to your terminal.
-
-To try something more ambitious, you can run an Ubuntu container with:
- $ docker run -it ubuntu bash
-
-Share images, automate workflows, and more with a free Docker ID:
- https://hub.docker.com/
-
-For more examples and ideas, visit:
- https://docs.docker.com/get-started/
-```
-
-
-## 【推荐】命令行指定镜像源 dock pull 
-
-::: tip See: dongyubin/DockerHub: 2025年5月更新，目前国内可用Docker镜像源汇总，DockerHub国内镜像加速列表
-* https://github.com/dongyubin/DockerHub
+::: info 脚本: https://github.com/Hansimov/blog/blob/main/docs/notes/scripts/docker_install.sh
 :::
 
-样例：
-
-```sh
-docker pull docker.mybacc.com/nicolas/webdis
-```
+<<< @/notes/scripts/docker_install.sh{sh}
 
 ## 添加镜像
 
-创建 `/etc/docker/daemon.json`，并添加镜像：
+### 修改 daemon.json 添加镜像源
+
+::: tip See: dongyubin/DockerHub: 2025年11月更新，目前国内可用Docker镜像源汇总，DockerHub国内镜像加速列表
+* https://github.com/dongyubin/DockerHub
+:::
+
+```sh
+sudo nano /etc/docker/daemon.json
+```
+
+添加下面的内容：
+
+- 可用时间：2025.11.25
 
 ```json
 {
     "registry-mirrors": [
-      "https://docker.m.daocloud.io", 
-      "https://docker.jianmuhub.com",
-      "https://huecker.io",
-      "https://dockerhub.timeweb.cloud",
-      "https://dockerhub1.beget.com",
-      "https://noohub.ru"
+      "https://docker.1ms.run",
+      "https://docker.1panel.live",
+      "https://docker.m.daocloud.io"
   ]
 }
-```
-
-命令行如下：
-
-```sh
-sudo mkdir -p /etc/docker
-sudo touch /etc/docker/daemon.json
-sudo bash -c "echo '{
-    \"registry-mirrors\": [
-      \"https://docker.m.daocloud.io\", 
-      \"https://docker.jianmuhub.com\",
-      \"https://huecker.io\",
-      \"https://dockerhub.timeweb.cloud\",
-      \"https://dockerhub1.beget.com\",
-      \"https://noohub.ru\"
-  ]
-}' > /etc/docker/daemon.json"
 ```
 
 重启 Docker 服务：
@@ -129,6 +82,14 @@ sudo systemctl daemon-reload && sudo systemctl restart docker
 ::: tip 总结国内还能用的 [Docker.io🐳 & Podman mirrors]镜像 6.13更新：国内源+1 & 国外源+1 - 配置调优 - LINUX DO
 * https://linux.do/t/topic/108170
 :::
+
+### 命令行指定镜像源 dock pull 
+
+样例：
+
+```sh
+docker pull docker.mybacc.com/nicolas/webdis
+```
 
 ## 配置代理
 
@@ -167,13 +128,47 @@ sudo usermod -aG docker $USER && newgrp docker
 * https://stackoverflow.com/questions/48568172/docker-sock-permission-denied
 :::
 
-## 一键安装
 
+## 检查是否配置成功
+
+```sh
+sudo docker run hello-world
 ```
-wget https://raw.staticdn.net/Hansimov/blog/main/docs/notes/scripts/docker_install.sh -O ~/docker_install.sh && chmod +x ~/docker_install.sh && ~/docker_install.sh
+
+如果该命令未能成功运行，大概率是网络问题，参见 [添加镜像](#添加镜像) 或 [配置代理](#配置代理)。
+
+若运行成功，输出应形如：
+
+<details> <summary> <code>Hello from Docker!</code> </summary>
+
+```sh{7}
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+c1ec31eb5944: Pull complete
+Digest: sha256:94323f3e5e09a8b9515d74337010375a456c909543e1ff1538f5116d38ab3989
+Status: Downloaded newer image for hello-world:latest
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
 ```
 
-::: info 脚本: https://github.com/Hansimov/blog/blob/main/docs/notes/scripts/docker_install.sh
-:::
 
-<<< @/notes/scripts/docker_install.sh{sh}
+</details>

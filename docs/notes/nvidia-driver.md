@@ -246,6 +246,7 @@ sudo apt purge "nvidia-*" && sudo apt autoremove && sudo apt autoclean
 
 ::: tip CUDA Toolkit 12.9 Downloads | NVIDIA Developer
 * https://developer.nvidia.com/cuda-12-9-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&target_version=22.04&target_type=deb_network
+* https://developer.nvidia.com/cuda-13-0-1-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&target_version=22.04&target_type=deb_local
 :::
 
 ```sh
@@ -253,7 +254,8 @@ cd ~/downloads
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
 sudo dpkg -i cuda-keyring_1.1-1_all.deb
 sudo apt-get update
-sudo apt-get -y install cuda-toolkit-12-9
+# sudo apt-get -y install cuda-toolkit-12-9
+sudo apt-get -y install cuda-toolkit-13-0
 ```
 
 在 `.bashrc` 或 `.zshrc` 中添加：
