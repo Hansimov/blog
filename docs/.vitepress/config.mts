@@ -380,8 +380,16 @@ function sidebarItems() {
             "link": "/nvidia-driver"
           },
           {
+            text: "安装 NVIDIA Container Toolkit",
+            link: "/nvidia-container"
+          },
+          {
             text: "Ubuntu 设置 GPU 风扇速度",
             "link": "/gpu-fan"
+          },
+          {
+            text: "IPMI 访问、设置和常用命令",
+            link: "/ipmi"
           },
           {
             text: "安装 PVE",
