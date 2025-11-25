@@ -37,6 +37,32 @@ sudo systemctl stop ssh
 sudo systemctl status ssh
 ```
 
+### 查看和关闭 SSH 会话
+
+查看所有会话：
+
+```sh
+w
+```
+
+查看当前会话：
+
+```sh
+tty
+```
+
+停掉用户的会话：
+
+```sh
+sudo pkill -u <USERNAME> sshd
+```
+
+停掉某个 TTY 会话：
+
+```sh
+sudo pkill -t <TTY_ID>
+```
+
 ### 检查防火墙状态
 
 ```sh

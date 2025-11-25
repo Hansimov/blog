@@ -172,7 +172,7 @@
     * `DNS`：取消勾选 `Automatic`，填入 `192.168.31.1`
     * 点击 `Apply` 保存
     * 重启以使得静态 IP 地址设置生效
-  * 或者在命令行中修改网络：
+  * 或者在命令行中修改网络：参考 [Ubuntu 设置静态 IP](./ip-static.md)
     ```sh
     # 查看连接名称
     nmcli connection show

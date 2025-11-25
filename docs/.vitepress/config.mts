@@ -113,6 +113,10 @@ function sidebarItems() {
             link: "/ipv6-interface"
           },
           {
+            text: "设置静态 IP",
+            link: "/ip-static"
+          },
+          {
             text: "交换机和路由器互连",
             link: "/switch"
           }
