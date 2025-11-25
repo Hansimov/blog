@@ -89,7 +89,7 @@ function sidebarItems() {
             link: "/v2ray"
           },
           {
-            text: "代理转发",
+            text: "PVE 代理转发到 VM",
             link: "/proxy-forward"
           },
           {
