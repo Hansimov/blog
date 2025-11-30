@@ -233,6 +233,10 @@ function sidebarItems() {
           {
             text: "允许新版 Chrome 使用旧版插件",
             link: "/chrome-extensions"
+          },
+          {
+            text: "使用 tmpfs 加速文件读写",
+            link: "/tmpfs"
           }
         ]
       },
