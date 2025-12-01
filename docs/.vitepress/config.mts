@@ -237,6 +237,10 @@ function sidebarItems() {
           {
             text: "使用 tmpfs 加速文件读写",
             link: "/tmpfs"
+          },
+          {
+            text: "Windows 安装支持 GPU 的 opencv-python",
+            link: "/opencv-python-windows"
           }
         ]
       },
