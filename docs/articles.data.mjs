@@ -6,6 +6,41 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+// 从 config.mts 读取 sidebar 配置来构建分类映射
+function buildCategoryMap() {
+    const configPath = path.resolve(__dirname, '.vitepress/config.mts')
+    const configContent = fs.readFileSync(configPath, 'utf-8')
+
+    const categoryMap = {}
+
+    // 匹配 sidebar 中的分类块
+    // 格式: { text: "CategoryName", base: "/notes", ... items: [ { link: "/xxx" }, ... ] }
+    const categoryRegex = /\{\s*text:\s*["']([^"']+)["'],\s*(?:base:\s*["'][^"']*["'],\s*)?(?:collapsed:\s*(?:true|false),\s*)?(?:base:\s*["'][^"']*["'],\s*)?items:\s*\[([\s\S]*?)\]\s*\}/g
+
+    let match
+    while ((match = categoryRegex.exec(configContent)) !== null) {
+        const categoryName = match[1]
+        const itemsBlock = match[2]
+
+        // 从 items 块中提取所有 link
+        const linkRegex = /link:\s*["']([^"']+)["']/g
+        let linkMatch
+        while ((linkMatch = linkRegex.exec(itemsBlock)) !== null) {
+            const link = linkMatch[1].replace(/^\//, '') // 去掉开头的 /
+            categoryMap[link] = categoryName
+        }
+    }
+
+    return categoryMap
+}
+
+const categoryMap = buildCategoryMap()
+
+function getCategory(url) {
+    const slug = url.split('/').pop()?.replace('.html', '') || ''
+    return categoryMap[slug] || 'Other'
+}
+
 function getGitTimestamps(filePath) {
     if (!filePath || !fs.existsSync(filePath)) {
         return { created: Date.now(), modified: Date.now() }
@@ -69,9 +104,13 @@ export default createContentLoader('notes/*.md', {
                 // 从 frontmatter 获取标题，或从文件内容提取，或从 URL 生成
                 const title = page.frontmatter?.title || extractTitle(filePath, page.url)
 
+                // 获取分类
+                const category = getCategory(page.url)
+
                 return {
                     title,
                     url: page.url,
+                    category,
                     created,
                     modified
                 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { withBase } from "vitepress";
 // @ts-ignore
 import { data as articlesData } from "../../../articles.data.mjs";
 
@@ -25,9 +26,10 @@ function formatDate(timestamp: number): string {
 <template>
   <div class="recent-articles">
     <div class="articles-section">
-      <h3 class="section-title">📅 最新发布</h3>
+      <h3 class="section-title">最新发布</h3>
       <div class="article-header">
         <span class="header-title">标题</span>
+        <span class="header-category">分类</span>
         <span class="header-date">发布时间</span>
       </div>
       <ul class="article-list">
@@ -36,8 +38,11 @@ function formatDate(timestamp: number): string {
           :key="article.url"
           class="article-item"
         >
-          <a :href="article.url" class="article-link">
-            <span class="article-title">{{ article.title }}</span>
+          <a :href="withBase(article.url)" class="article-link">
+            <span class="article-title" :title="article.title">{{
+              article.title
+            }}</span>
+            <span class="article-category">{{ article.category }}</span>
             <span class="article-date">{{ formatDate(article.created) }}</span>
           </a>
         </li>
@@ -45,9 +50,10 @@ function formatDate(timestamp: number): string {
     </div>
 
     <div class="articles-section">
-      <h3 class="section-title">🔄 最近修改</h3>
+      <h3 class="section-title">最近修改</h3>
       <div class="article-header">
         <span class="header-title">标题</span>
+        <span class="header-category">分类</span>
         <span class="header-date">修改时间</span>
       </div>
       <ul class="article-list">
@@ -56,8 +62,11 @@ function formatDate(timestamp: number): string {
           :key="article.url"
           class="article-item"
         >
-          <a :href="article.url" class="article-link">
-            <span class="article-title">{{ article.title }}</span>
+          <a :href="withBase(article.url)" class="article-link">
+            <span class="article-title" :title="article.title">{{
+              article.title
+            }}</span>
+            <span class="article-category">{{ article.category }}</span>
             <span class="article-date">{{ formatDate(article.modified) }}</span>
           </a>
         </li>
@@ -68,18 +77,19 @@ function formatDate(timestamp: number): string {
 
 <style scoped>
 .recent-articles {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 40px;
-  max-width: 900px;
-  margin: 20px auto;
-  padding: 0 20px;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  max-width: 100%;
+  padding: 0 20px 30px;
+  box-sizing: border-box;
 }
 
 @media (max-width: 768px) {
   .recent-articles {
-    grid-template-columns: 1fr;
-    gap: 30px;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
   }
 }
 
@@ -87,33 +97,51 @@ function formatDate(timestamp: number): string {
   background: var(--vp-c-bg-soft);
   border-radius: 12px;
   padding: 20px 24px;
+  width: 450px;
+  max-width: calc(50% - 15px);
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .articles-section {
+    width: 100%;
+    max-width: 500px;
+  }
 }
 
 .section-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
-  margin: 0 0 12px 0;
+  margin: 0 0 16px 0;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--vp-c-divider);
+  border-bottom: 2px solid var(--vp-c-brand-1);
   color: var(--vp-c-text-1);
 }
 
 .article-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 8px 0;
   margin-bottom: 4px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--vp-c-text-2);
 }
 
 .header-title {
   flex: 1;
+  min-width: 0;
+}
+
+.header-category {
+  width: 70px;
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .header-date {
+  width: 145px;
+  text-align: right;
   flex-shrink: 0;
 }
 
@@ -130,7 +158,6 @@ function formatDate(timestamp: number): string {
 
 .article-link {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 10px 0;
   border-bottom: 1px dashed var(--vp-c-divider);
@@ -154,16 +181,33 @@ function formatDate(timestamp: number): string {
   font-size: 14px;
   color: var(--vp-c-text-1);
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin-right: 12px;
+  margin-right: 8px;
   transition: color 0.2s ease;
 }
 
+.article-category {
+  width: 70px;
+  font-size: 11px;
+  color: var(--vp-c-text-2);
+  text-align: center;
+  flex-shrink: 0;
+  background: var(--vp-c-default-soft);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-right: 8px;
+}
+
 .article-date {
+  width: 145px;
   font-size: 12px;
   color: var(--vp-c-text-3);
+  text-align: right;
   flex-shrink: 0;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
 }
 </style>
