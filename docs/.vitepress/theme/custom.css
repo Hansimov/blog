@@ -35,3 +35,9 @@ tip {
 h3 {
   padding-bottom: 10px;
 }
+
+/* 首页禁用全局滚动 */
+html:has(.is-home),
+html:has(.is-home) body {
+  overflow: hidden !important;
+}

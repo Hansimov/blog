@@ -81,7 +81,7 @@ function formatDate(timestamp: number): string {
   justify-content: center;
   gap: 30px;
   max-width: 100%;
-  padding: 0 20px 30px;
+  padding: 0 20px 20px;
   box-sizing: border-box;
 }
 
@@ -97,9 +97,8 @@ function formatDate(timestamp: number): string {
   background: var(--vp-c-bg-soft);
   border-radius: 12px;
   padding: 20px 24px;
-  width: 450px;
+  width: 560px;
   max-width: calc(50% - 15px);
-  flex-shrink: 0;
 }
 
 @media (max-width: 768px) {
@@ -110,6 +109,7 @@ function formatDate(timestamp: number): string {
 }
 
 .section-title {
+  flex-shrink: 0;
   font-size: 18px;
   font-weight: 600;
   margin: 0 0 16px 0;
@@ -126,6 +126,7 @@ function formatDate(timestamp: number): string {
   font-size: 12px;
   font-weight: 600;
   color: var(--vp-c-text-2);
+  flex-shrink: 0;
 }
 
 .header-title {
@@ -149,6 +150,23 @@ function formatDate(timestamp: number): string {
   list-style: none;
   padding: 0;
   margin: 0;
+}
+
+.article-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.article-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.article-list::-webkit-scrollbar-thumb {
+  background: var(--vp-c-divider);
+  border-radius: 3px;
+}
+
+.article-list::-webkit-scrollbar-thumb:hover {
+  background: var(--vp-c-text-3);
 }
 
 .article-item {

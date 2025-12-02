@@ -15,25 +15,35 @@ layout: home
 ---
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 import RecentArticles from './.vitepress/theme/components/RecentArticles.vue'
+import CategoryNav from './.vitepress/theme/components/CategoryNav.vue'
+
+const showHeader = ref(true)
+const heightThreshold = 600
+const widthThreshold = 768
+
+function checkSize() {
+  showHeader.value = window.innerHeight >= heightThreshold && window.innerWidth >= widthThreshold
+}
+
+onMounted(() => {
+  checkSize()
+  window.addEventListener('resize', checkSize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkSize)
+})
 </script>
 
-<div class="hero-section">
+<div v-if="showHeader" class="hero-section">
   <p class="tagline">It's never too late. Just do it better.</p>
 </div>
 
 <!-- <img class="ghchart" src="https://ghchart.rshah.org/Hansimov" alt="GitHub Contributions"> -->
 
-<div class="categories">
-  <a href="./notes/frp-proxy" class="category-link">Networks</a>
-  <a href="./notes/remote-ssh" class="category-link">Tools</a>
-  <a href="./notes/conda" class="category-link">Softwares</a>
-  <a href="./notes/postgresql" class="category-link">Databases</a>
-  <a href="./notes/vitepress-init" class="category-link">Workflows</a>
-  <a href="./notes/ubuntu-config" class="category-link">Ubuntu</a>
-  <a href="./notes/llama-cpp" class="category-link">LLMs</a>
-  <a href="./notes/bash-aliases" class="category-link">Configs</a>
-</div>
+<CategoryNav v-if="showHeader" />
 
 <RecentArticles />
 
@@ -41,7 +51,8 @@ import RecentArticles from './.vitepress/theme/components/RecentArticles.vue'
 .hero-section {
   display: flex;
   justify-content: center;
-  padding: 40px 20px 20px;
+  padding: 30px 20px 5px;
+  flex-shrink: 0;
 }
 
 .tagline {
@@ -52,48 +63,9 @@ import RecentArticles from './.vitepress/theme/components/RecentArticles.vue'
   text-align: center;
 }
 
-.categories {
-  display: flex;
-  justify-content: center;
-  flex-wrap: nowrap;
-  gap: 12px;
-  padding: 0 20px 30px;
-  margin: 0 auto;
-}
-
-.category-link {
-  display: inline-block;
-  padding: 8px 20px;
-  background: var(--vp-c-bg-soft);
-  color: var(--vp-c-text-1);
-  border-radius: 20px;
-  text-decoration: none;
-  font-size: 15px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  border: 1px solid var(--vp-c-divider);
-}
-
-.category-link:hover {
-  background: var(--vp-c-brand-soft);
-  color: var(--vp-c-brand-1);
-  border-color: var(--vp-c-brand-1);
-  transform: translateY(-2px);
-}
-
 @media (max-width: 640px) {
   .tagline {
     font-size: 24px;
-  }
-  
-  .categories {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  
-  .category-link {
-    padding: 6px 14px;
-    font-size: 14px;
   }
 }
 </style>
