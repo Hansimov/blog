@@ -82,3 +82,35 @@ code --reuse-window --folder-uri "file:///E:\*****\todos.txt"
 ```sh
 code --new-window --folder-uri "vscode-remote://ssh-remote+asimov@xeon/home/asimov/repos/blog/"
 ```
+
+## 修改 Windows 下的默认终端为 Cmder
+
+在 `settings.json` 中添加：
+
+```json
+{
+    // "terminal.integrated.inheritEnv": false,
+    // "terminal.integrated.shellIntegration.enabled": false,
+    "terminal.integrated.profiles.windows": {
+        "Cmder": {
+            "path": "C:\\Windows\\System32\\cmd.exe",
+            "args": [
+                "/K",
+                "D:\\cmder\\vendor\\bin\\vscode_init.cmd"
+            ]
+        }
+    },
+    "chat.tools.terminal.terminalProfile.windows": {
+        "path": "C:\\Windows\\System32\\cmd.exe",
+        "args": [
+            "/K",
+            "D:\\cmder\\vendor\\bin\\vscode_init.cmd"
+        ]
+    },
+    "terminal.integrated.defaultProfile.windows": "Cmder"
+}
+```
+
+## 新的系统环境变量无法在 cmd 中生效
+
+关闭所有 VSCode 进程，重新打开即可。
