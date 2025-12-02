@@ -14,6 +14,10 @@ layout: home
 
 ---
 
+<script setup>
+import RecentArticles from './.vitepress/theme/components/RecentArticles.vue'
+</script>
+
 <div align="center" style="font-size:40px; font-weight:bold; line-height:40px; padding:50px 0px 50px 0px; color:gray;">
 It's never too late. Just do it better.
 </div>
@@ -24,20 +28,9 @@ It's never too late. Just do it better.
 
 <hr>
 
-<div align="center" style="font-size:25px; line-height:35px;">
+<RecentArticles />
 
-<b>GitHub Repos</b>
-
-<a href="https://github.com/Hansimov/blog" title="Hansimov's blog site"><u>blog</u></a>
- · <a href="https://github.com/Hansimov/csapp" title="个人整理的《深入理解计算机系统》中文电子版（原书第 3 版）与实验材料：https://hansimov.gitbook.io/csapp"><u>csapp</u></a>
- · <a href="https://github.com/Hansimov/tclogger" title="Python terminal colored logger"><u>tclogger</u></a>
- · <a href="https://github.com/Hansimov/sedb" title="Search Engine DataBase utils"><u>sedb</u></a>
- · <a href="https://github.com/Hansimov/ai-read" title="An AI-assisted reading script in browsers."><u>ai-read</u></a>
- · <a href="https://github.com/Hansimov/bili-search" title="Backend of Bili Search Engine (blbl.top)"><u>bili-search</u></a>
-
-</div>
-
-<br>
+<hr>
 
 <div align="center" style="font-size:25px; line-height:35px;">
 
