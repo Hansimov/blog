@@ -4,7 +4,7 @@
 
 export const notesCategories = {
     "Networks": {
-        collapsed: true,
+        collapsed: false,
         items: [
             { text: "Use FRP proxy to forward network traffic", link: "frp-proxy" },
             { text: "使用 FRP 反向代理", link: "frp-reverse-proxy" },
@@ -22,7 +22,7 @@ export const notesCategories = {
         ]
     },
     "Tools": {
-        collapsed: true,
+        collapsed: false,
         items: [
             { text: "在 VSCode 使用 Remote SSH", link: "remote-ssh" },
             { text: "VSCode 常见问题", link: "vscode" },
@@ -36,7 +36,7 @@ export const notesCategories = {
         ]
     },
     "Softwares": {
-        collapsed: true,
+        collapsed: false,
         items: [
             { text: "Linux 常用命令", link: "linux-cmds" },
             { text: "安装 conda", link: "conda" },
@@ -109,7 +109,7 @@ export const notesCategories = {
         ]
     },
     "LLMs": {
-        collapsed: true,
+        collapsed: false,
         items: [
             { text: "本地运行 vllm", link: "vllm" },
             { text: "Docker 运行 vllm", link: "vllm-docker" },
@@ -120,7 +120,7 @@ export const notesCategories = {
         ]
     },
     "Configs": {
-        collapsed: true,
+        collapsed: false,
         items: [
             { text: "配置 bash aliases", link: "bash-aliases" },
             { text: "(Windows) Git aliases", link: "git-bash-aliases" }
@@ -175,11 +175,12 @@ type CategoryData = {
 type Categories = Record<string, CategoryData>
 
 // 转换为 VitePress sidebar 格式
+// collapsed 设为 undefined 让 VitePress 自动根据当前路由展开包含活动链接的分组
 function toSidebarFormat(categories: Categories, base: string) {
     return Object.entries(categories).map(([name, category]) => ({
         text: name,
         base,
-        collapsed: category.collapsed,
+        collapsed: undefined as boolean | undefined,
         items: category.items.map(item => ({
             text: item.text,
             link: `/${item.link}`
