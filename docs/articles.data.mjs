@@ -9,9 +9,58 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const categoryMap = getCategoryMap()
 
+// 缓存 Git 时间戳，避免重复执行 Git 命令
+let gitTimestampsCache = null
+let cacheTime = 0
+const CACHE_TTL = 90000 // 90秒缓存，开发时避免频繁调用 Git
+
 function getCategory(url) {
     const slug = url.split('/').pop()?.replace('.html', '') || ''
     return categoryMap[slug] || 'Other'
+}
+
+// 批量获取所有文件的 Git 时间戳
+function getAllGitTimestamps() {
+    const now = Date.now()
+    if (gitTimestampsCache && (now - cacheTime) < CACHE_TTL) {
+        return gitTimestampsCache
+    }
+
+    const timestamps = {}
+
+    try {
+        // 使用单次 git log 命令获取所有文件的最后修改时间
+        const modifiedOutput = execSync(
+            'git log --format="%at %H" --name-only --diff-filter=ACMR',
+            { cwd: __dirname, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], maxBuffer: 10 * 1024 * 1024 }
+        )
+
+        let currentTimestamp = null
+        for (const line of modifiedOutput.split('\n')) {
+            if (!line.trim()) continue
+
+            // 检查是否是时间戳行（格式：timestamp hash）
+            const match = line.match(/^(\d+)\s+[a-f0-9]+$/)
+            if (match) {
+                currentTimestamp = parseInt(match[1]) * 1000
+            } else if (currentTimestamp && (line.startsWith('notes/') || line.startsWith('research/'))) {
+                const filePath = path.resolve(__dirname, line)
+                if (!timestamps[filePath]) {
+                    // 第一次遇到的是最新的修改时间
+                    timestamps[filePath] = { modified: currentTimestamp, created: currentTimestamp }
+                } else {
+                    // 后续遇到的更新创建时间（更早的提交）
+                    timestamps[filePath].created = currentTimestamp
+                }
+            }
+        }
+    } catch (e) {
+        // Git 命令失败时返回空对象
+    }
+
+    gitTimestampsCache = timestamps
+    cacheTime = now
+    return timestamps
 }
 
 function getGitTimestamps(filePath) {
@@ -19,29 +68,8 @@ function getGitTimestamps(filePath) {
         return { created: Date.now(), modified: Date.now() }
     }
 
-    try {
-        const cwd = path.dirname(filePath)
-
-        // 获取文件首次提交时间（创建时间）
-        const createdOutput = execSync(
-            `git log --follow --format=%at --reverse -- "${path.basename(filePath)}" | head -1`,
-            { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
-        ).trim()
-
-        // 获取文件最后修改时间
-        const modifiedOutput = execSync(
-            `git log -1 --format=%at -- "${path.basename(filePath)}"`,
-            { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
-        ).trim()
-
-        const created = createdOutput ? parseInt(createdOutput) * 1000 : Date.now()
-        const modified = modifiedOutput ? parseInt(modifiedOutput) * 1000 : Date.now()
-
-        return { created, modified }
-    } catch (e) {
-        // 如果 git 命令失败，返回当前时间
-        return { created: Date.now(), modified: Date.now() }
-    }
+    const allTimestamps = getAllGitTimestamps()
+    return allTimestamps[filePath] || { created: Date.now(), modified: Date.now() }
 }
 
 function extractTitle(filePath, url) {
