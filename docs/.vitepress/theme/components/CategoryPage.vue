@@ -3,8 +3,9 @@ import { ref, computed } from "vue";
 import { withBase } from "vitepress";
 // @ts-ignore
 import { data as articlesData } from "../../../articles.data.mjs";
-// @ts-ignore
-import { data as sidebarOrder } from "../../../sidebarOrder.data.mjs";
+import { getSidebarOrder } from "../../sidebarData";
+
+const sidebarOrder = getSidebarOrder();
 
 const props = defineProps<{
   categoryName: string;
@@ -58,17 +59,17 @@ function toggleSort(field: "created" | "modified") {
   const currentDir = sortBy.value.split("-")[1];
 
   if (currentField === field) {
-    // 同一字段：asc -> desc -> default
-    if (currentDir === "asc") {
-      sortBy.value = `${field}-desc`;
-    } else if (currentDir === "desc") {
+    // 同一字段：desc -> asc -> default
+    if (currentDir === "desc") {
+      sortBy.value = `${field}-asc`;
+    } else if (currentDir === "asc") {
       sortBy.value = "default";
     } else {
-      sortBy.value = `${field}-asc`;
+      sortBy.value = `${field}-desc`;
     }
   } else {
-    // 切换字段，从升序开始
-    sortBy.value = `${field}-asc`;
+    // 切换字段，从降序开始（最新/最近的在前）
+    sortBy.value = `${field}-desc`;
   }
 }
 

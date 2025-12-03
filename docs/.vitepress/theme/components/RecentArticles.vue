@@ -226,4 +226,12 @@ function formatDate(timestamp: number): string {
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", monospace;
 }
+
+/* 窄屏时隐藏分类列 */
+@media (max-width: 900px) {
+  .header-category,
+  .article-category {
+    display: none;
+  }
+}
 </style>
