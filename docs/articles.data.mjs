@@ -27,12 +27,13 @@ function getAllGitTimestamps() {
     }
 
     const timestamps = {}
+    const repoRoot = path.resolve(__dirname, '..')
 
     try {
         // 使用单次 git log 命令获取所有文件的最后修改时间
         const modifiedOutput = execSync(
             'git log --format="%at %H" --name-only --diff-filter=ACMR',
-            { cwd: __dirname, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], maxBuffer: 10 * 1024 * 1024 }
+            { cwd: repoRoot, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'], maxBuffer: 10 * 1024 * 1024 }
         )
 
         let currentTimestamp = null
@@ -43,8 +44,9 @@ function getAllGitTimestamps() {
             const match = line.match(/^(\d+)\s+[a-f0-9]+$/)
             if (match) {
                 currentTimestamp = parseInt(match[1]) * 1000
-            } else if (currentTimestamp && (line.startsWith('notes/') || line.startsWith('research/'))) {
-                const filePath = path.resolve(__dirname, line)
+            } else if (currentTimestamp && (line.startsWith('docs/notes/') || line.startsWith('docs/research/'))) {
+                // Git 输出的路径是相对于仓库根目录的，如 docs/notes/xxx.md
+                const filePath = path.resolve(repoRoot, line)
                 if (!timestamps[filePath]) {
                     // 第一次遇到的是最新的修改时间
                     timestamps[filePath] = { modified: currentTimestamp, created: currentTimestamp }
