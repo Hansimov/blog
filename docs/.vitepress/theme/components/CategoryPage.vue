@@ -4,7 +4,7 @@ import { withBase } from "vitepress";
 // @ts-ignore
 import { data as articlesData } from "../../../articles.data.mjs";
 // @ts-ignore
-import { sidebarOrder } from "../../categories";
+import { data as sidebarOrder } from "../../../sidebarOrder.data.mjs";
 
 const props = defineProps<{
   categoryName: string;

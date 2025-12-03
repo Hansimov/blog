@@ -1,6 +1,6 @@
 import { defineConfig, type DefaultTheme } from "vitepress"
 import timeline from "vitepress-markdown-timeline"
-import { categoryItems } from "./categories"
+import { notesCategoryItems, researchCategoryItems } from "./categories"
 
 // https://vitepress.dev/reference/site-config
 // https://github.com/vuejs/vitepress/blob/main/docs/.vitepress/config/en.ts
@@ -47,10 +47,10 @@ function navItems(): DefaultTheme.NavItem[] {
       text: "Home", link: "/"
     },
     {
-      text: "Notes", items: categoryItems
+      text: "Notes", items: notesCategoryItems
     },
     {
-      text: "Research", link: "/research/faq"
+      text: "Research", items: researchCategoryItems
     }
   ]
 }

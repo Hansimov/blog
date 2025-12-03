@@ -4,9 +4,9 @@ import { withBase } from "vitepress";
 // @ts-ignore
 import { data as articlesData } from "../../../articles.data.mjs";
 // @ts-ignore
-import { categoryItems } from "../../categories";
+import { homeCategoryItems } from "../../categories";
 
-const categories = categoryItems.map((item: { text: string }) => item.text);
+const categories = homeCategoryItems.map((item: { text: string }) => item.text);
 
 const articlesByCategory = computed(() => {
   const grouped: Record<string, typeof articlesData> = {};

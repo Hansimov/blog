@@ -13,17 +13,27 @@ function buildCategoryMap() {
 
     const categoryMap = {}
 
-    // 匹配 sidebar 中的分类块
-    // 格式: { text: "CategoryName", base: "/notes", ... items: [ { link: "/xxx" }, ... ] }
-    const categoryRegex = /\{\s*text:\s*["']([^"']+)["'],\s*(?:base:\s*["'][^"']*["'],\s*)?(?:collapsed:\s*(?:true|false),\s*)?(?:base:\s*["'][^"']*["'],\s*)?items:\s*\[([\s\S]*?)\]\s*\}/g
+    // 使用更灵活的方式解析 sidebar 配置
+    // 首先找到所有包含 text 和 items 的分类块
+    // 格式可能是: { text: "CategoryName", base: "/notes", collapsed: true, items: [...] }
+    // 或者: { text: "CategoryName", collapsed: true, base: "/notes", items: [...] }
+
+    // 匹配包含 items 数组的分类块（带有嵌套的 items）
+    const categoryRegex = /\{\s*(?:[^{}]*?)text:\s*["']([^"']+)["'](?:[^{}]*?)items:\s*\[([\s\S]*?)\]\s*\}/g
 
     let match
     while ((match = categoryRegex.exec(configContent)) !== null) {
         const categoryName = match[1]
         const itemsBlock = match[2]
 
-        // 从 items 块中提取所有 link
-        const linkRegex = /link:\s*["']([^"']+)["']/g
+        // 检查这是否是一个带有嵌套项目的分类块（而不是简单的导航项）
+        // 通过检查 itemsBlock 中是否有 link 属性来判断
+        if (!itemsBlock.includes('link')) {
+            continue
+        }
+
+        // 从 items 块中提取所有 link（支持 link: 和 "link": 两种格式）
+        const linkRegex = /"?link"?:\s*["']([^"']+)["']/g
         let linkMatch
         while ((linkMatch = linkRegex.exec(itemsBlock)) !== null) {
             const link = linkMatch[1].replace(/^\//, '') // 去掉开头的 /
@@ -88,14 +98,15 @@ function extractTitle(filePath, url) {
     return url.split('/').pop()?.replace('.html', '').replace(/-/g, ' ') || 'Untitled'
 }
 
-export default createContentLoader('notes/*.md', {
+export default createContentLoader(['notes/*.md', 'research/*.md'], {
     includeSrc: false,
     transform(rawData) {
         return rawData
-            .filter(page => page.url !== '/notes/') // 排除索引页
+            .filter(page => page.url !== '/notes/' && page.url !== '/research/') // 排除索引页
             .map(page => {
                 // 构建完整文件路径：从 URL 推导出文件路径
                 // URL 格式: /notes/xxx.html -> 文件: notes/xxx.md
+                // URL 格式: /research/xxx.html -> 文件: research/xxx.md
                 const urlPath = page.url.replace(/\.html$/, '.md').replace(/^\//, '')
                 const filePath = path.resolve(__dirname, urlPath)
 
