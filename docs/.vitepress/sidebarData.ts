@@ -44,6 +44,7 @@ export const notesCategories = {
             { text: "安装 Git", link: "git" },
             { text: "Git 常用命令", link: "git-cmds" },
             { text: "Git 国内镜像", link: "git-mirror" },
+            { text: "rsync 常用命令", link: "rsync" },
             { text: "安装 GO", link: "go" },
             { text: "安装 Docker", link: "docker" },
             { text: "安装 node.js 和 npm", link: "nodejs" },
