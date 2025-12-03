@@ -1,52 +1,94 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { ref, computed } from "vue";
 import { withBase } from "vitepress";
 // @ts-ignore
 import { data as articlesData } from "../../../articles.data.mjs";
+// @ts-ignore
+import { categoryItems } from "../../categories";
 
-const categories = [
-  { name: "Networks", link: "/notes/frp-proxy" },
-  { name: "Tools", link: "/notes/remote-ssh" },
-  { name: "Softwares", link: "/notes/conda" },
-  { name: "Databases", link: "/notes/postgresql" },
-  { name: "Workflows", link: "/notes/vitepress-init" },
-  { name: "Ubuntu", link: "/notes/ubuntu-config" },
-  { name: "LLMs", link: "/notes/llama-cpp" },
-  { name: "Configs", link: "/notes/bash-aliases" },
-];
+const categories = categoryItems.map((item: { text: string }) => item.text);
 
 const articlesByCategory = computed(() => {
   const grouped: Record<string, typeof articlesData> = {};
   for (const cat of categories) {
-    grouped[cat.name] = articlesData.filter(
-      (article: any) => article.category === cat.name
+    grouped[cat] = articlesData.filter(
+      (article: any) => article.category === cat
     );
   }
   return grouped;
 });
+
+function getCategoryLink(name: string): string {
+  return `/categories/${name.toLowerCase()}`;
+}
+
+// 用于延迟展开/收起的状态管理
+const hoveredCategory = ref<string | null>(null);
+const showDropdown = ref<string | null>(null);
+let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
+let leaveTimeout: ReturnType<typeof setTimeout> | null = null;
+
+function handleMouseEnter(catName: string) {
+  // 清除离开定时器
+  if (leaveTimeout) {
+    clearTimeout(leaveTimeout);
+    leaveTimeout = null;
+  }
+  hoveredCategory.value = catName;
+  // 延迟展开
+  hoverTimeout = setTimeout(() => {
+    showDropdown.value = catName;
+  }, 150);
+}
+
+function handleMouseLeave() {
+  // 清除进入定时器
+  if (hoverTimeout) {
+    clearTimeout(hoverTimeout);
+    hoverTimeout = null;
+  }
+  hoveredCategory.value = null;
+  // 延迟收起
+  leaveTimeout = setTimeout(() => {
+    showDropdown.value = null;
+  }, 200);
+}
 </script>
 
 <template>
   <div class="categories">
-    <div v-for="cat in categories" :key="cat.name" class="category-wrapper">
-      <a :href="withBase(cat.link)" class="category-link">{{ cat.name }}</a>
-      <div class="dropdown">
-        <a
-          v-for="article in articlesByCategory[cat.name]"
-          :key="article.url"
-          :href="withBase(article.url)"
-          class="dropdown-item"
-          :title="article.title"
-        >
-          {{ article.title }}
-        </a>
-        <div
-          v-if="articlesByCategory[cat.name]?.length === 0"
-          class="dropdown-empty"
-        >
-          暂无文章
+    <div
+      v-for="cat in categories"
+      :key="cat"
+      class="category-wrapper"
+      @mouseenter="handleMouseEnter(cat)"
+      @mouseleave="handleMouseLeave"
+    >
+      <a
+        :href="withBase(getCategoryLink(cat))"
+        class="category-link"
+        :class="{ active: hoveredCategory === cat }"
+        >{{ cat }}</a
+      >
+      <transition name="dropdown-fade">
+        <div v-show="showDropdown === cat" class="dropdown">
+          <a
+            v-for="article in articlesByCategory[cat]"
+            :key="article.url"
+            :href="withBase(article.url)"
+            class="dropdown-item"
+            :title="article.title"
+          >
+            {{ article.title }}
+          </a>
+          <div
+            v-if="articlesByCategory[cat]?.length === 0"
+            class="dropdown-empty"
+          >
+            暂无文章
+          </div>
         </div>
-      </div>
+      </transition>
     </div>
   </div>
 </template>
@@ -75,10 +117,11 @@ const articlesByCategory = computed(() => {
   text-decoration: none;
   font-size: 15px;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   border: 1px solid var(--vp-c-divider);
 }
 
+.category-link.active,
 .category-wrapper:hover .category-link {
   background: var(--vp-c-brand-soft);
   color: var(--vp-c-brand-1);
@@ -101,15 +144,25 @@ const articlesByCategory = computed(() => {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   padding: 8px 0;
   margin-top: 8px;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s ease;
   z-index: 100;
 }
 
-.category-wrapper:hover .dropdown {
+/* 下拉菜单过渡动画 */
+.dropdown-fade-enter-active,
+.dropdown-fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.dropdown-fade-enter-from,
+.dropdown-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-8px);
+}
+
+.dropdown-fade-enter-to,
+.dropdown-fade-leave-from {
   opacity: 1;
-  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
 
 .dropdown-item {
@@ -153,6 +206,16 @@ const articlesByCategory = computed(() => {
     max-width: 280px;
     left: 0;
     transform: none;
+  }
+
+  .dropdown-fade-enter-from,
+  .dropdown-fade-leave-to {
+    transform: translateY(-8px);
+  }
+
+  .dropdown-fade-enter-to,
+  .dropdown-fade-leave-from {
+    transform: translateY(0);
   }
 }
 </style>

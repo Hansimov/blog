@@ -1,5 +1,6 @@
 import { defineConfig, type DefaultTheme } from "vitepress"
 import timeline from "vitepress-markdown-timeline"
+import { categoryItems } from "./categories"
 
 // https://vitepress.dev/reference/site-config
 // https://github.com/vuejs/vitepress/blob/main/docs/.vitepress/config/en.ts
@@ -46,16 +47,7 @@ function navItems(): DefaultTheme.NavItem[] {
       text: "Home", link: "/"
     },
     {
-      text: "Notes", items: [
-        { text: "Networks", link: "/notes/frp-proxy" },
-        { text: "Tools", link: "/notes/remote-ssh" },
-        { text: "Softwares", link: "/notes/linux-cmds" },
-        { text: "Databases", link: "/notes/postgresql" },
-        { text: "Workflows", link: "/notes/vitepress-init" },
-        { text: "Ubuntu", link: "/notes/ubuntu-config" },
-        { text: "LLMs", link: "/notes/vllm" },
-        { text: "Configs", link: "/notes/bash-aliases" }
-      ]
+      text: "Notes", items: categoryItems
     },
     {
       text: "Research", link: "/research/faq"
