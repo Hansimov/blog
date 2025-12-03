@@ -38,7 +38,12 @@ export default defineConfig({
     }
   },
   lastUpdated: true,
-  ignoreDeadLinks: true
+  ignoreDeadLinks: true,
+  vite: {
+    server: {
+      allowedHosts: true
+    }
+  }
 })
 
 
