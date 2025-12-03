@@ -3,48 +3,11 @@ import { execSync } from 'child_process'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
+import { getCategoryMap } from './.vitepress/sidebarData'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// 从 config.mts 读取 sidebar 配置来构建分类映射
-function buildCategoryMap() {
-    const configPath = path.resolve(__dirname, '.vitepress/config.mts')
-    const configContent = fs.readFileSync(configPath, 'utf-8')
-
-    const categoryMap = {}
-
-    // 使用更灵活的方式解析 sidebar 配置
-    // 首先找到所有包含 text 和 items 的分类块
-    // 格式可能是: { text: "CategoryName", base: "/notes", collapsed: true, items: [...] }
-    // 或者: { text: "CategoryName", collapsed: true, base: "/notes", items: [...] }
-
-    // 匹配包含 items 数组的分类块（带有嵌套的 items）
-    const categoryRegex = /\{\s*(?:[^{}]*?)text:\s*["']([^"']+)["'](?:[^{}]*?)items:\s*\[([\s\S]*?)\]\s*\}/g
-
-    let match
-    while ((match = categoryRegex.exec(configContent)) !== null) {
-        const categoryName = match[1]
-        const itemsBlock = match[2]
-
-        // 检查这是否是一个带有嵌套项目的分类块（而不是简单的导航项）
-        // 通过检查 itemsBlock 中是否有 link 属性来判断
-        if (!itemsBlock.includes('link')) {
-            continue
-        }
-
-        // 从 items 块中提取所有 link（支持 link: 和 "link": 两种格式）
-        const linkRegex = /"?link"?:\s*["']([^"']+)["']/g
-        let linkMatch
-        while ((linkMatch = linkRegex.exec(itemsBlock)) !== null) {
-            const link = linkMatch[1].replace(/^\//, '') // 去掉开头的 /
-            categoryMap[link] = categoryName
-        }
-    }
-
-    return categoryMap
-}
-
-const categoryMap = buildCategoryMap()
+const categoryMap = getCategoryMap()
 
 function getCategory(url) {
     const slug = url.split('/').pop()?.replace('.html', '') || ''
