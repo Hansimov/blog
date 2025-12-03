@@ -106,6 +106,8 @@ function handleMouseLeave() {
 
 .category-wrapper {
   position: relative;
+  padding-bottom: 12px;
+  margin-bottom: -12px;
 }
 
 .category-link {
@@ -136,14 +138,13 @@ function handleMouseLeave() {
   transform: translateX(-50%);
   min-width: 240px;
   max-width: 320px;
-  max-height: 400px;
+  max-height: 540px;
   overflow-y: auto;
   background: var(--vp-c-bg-elv);
   border: 1px solid var(--vp-c-divider);
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   padding: 8px 0;
-  margin-top: 8px;
   z-index: 100;
 }
 
