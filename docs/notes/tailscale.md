@@ -109,7 +109,7 @@ tailscale status
 
 ## 确保 ipv6 走物理网卡
 
-### 测试：阻断其他 VPN 在 tailscale 链路上的 UDP 流量
+### 当前方案：阻断其他 VPN 在 tailscale 链路上的 UDP 流量
 
 ```sh
 # ipv4
@@ -156,6 +156,54 @@ active; direct [240e:...]:41641, tx 904 rx 1096
 ```
 
 意味着 Tailscale 成功通过物理网卡建立了直连。
+
+### 使用 `iptables-persistent` 持久化规则
+
+```sh
+sudo apt install iptables-persistent -y
+```
+
+- 安装过程中会提示是否保存当前的 IPv4/IPv6 规则，选择 Yes 即可
+
+确保这几条规则确实在表中：
+
+```sh
+sudo iptables  -L OUTPUT -n -v | grep merak
+sudo iptables  -L INPUT  -n -v | grep merak
+sudo ip6tables -L OUTPUT -n -v | grep merak
+sudo ip6tables -L INPUT  -n -v | grep merak
+```
+
+删除重复规则：
+
+- `-D` 每执行一次，就删除一条符合条件的规则
+
+```sh
+# ipv4
+sudo iptables  -D OUTPUT -o merak -p udp --dport 41641 -j REJECT
+sudo iptables  -D INPUT  -i merak -p udp --sport 41641 -j REJECT
+# ipv6
+sudo ip6tables -D OUTPUT -o merak -p udp --dport 41641 -j REJECT
+sudo ip6tables -D INPUT  -i merak -p udp --sport 41641 -j REJECT
+```
+
+保存当前规则：
+
+```sh
+# ipv4
+sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
+# ipv6
+sudo sh -c 'ip6tables-save > /etc/iptables/rules.v6'
+```
+
+这样，在开机启动时，iptables-persistent 就会自动从这两个文件里 restore 规则。
+
+可以查看是否包含刚刚的规则：
+
+```sh
+cat /etc/iptables/rules.v4 | grep merak
+cat /etc/iptables/rules.v6 | grep merak
+```
 
 ### 未来方案：修改 tailscaled 配置
 
