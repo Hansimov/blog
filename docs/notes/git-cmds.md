@@ -224,3 +224,20 @@ git checkout -b dev   # 或 feature/xxx
 ```sh
 git push -u origin dev
 ```
+
+
+## sync with upstream, in both local and remote of forked repo
+
+```sh
+# git remote -v
+# git remote add upstream https://github.com/<OLD_OWNER>/<OLD_REPO>.git
+git fetch upstream
+git pull upstream main
+git push origin main
+```
+
+或者一行：
+
+```sh
+git fetch upstream && git pull upstream main && git push origin main
+```
