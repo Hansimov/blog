@@ -30,7 +30,22 @@ ffmpeg - Wav audio file compression not working - Stack Overflow
 
 ## 从 mp4 中提取 mp3
 
-
 ```sh
 ffmpeg -y -i "BV1hZ421g7xC.mp4" -vn "BV1hZ421g7xC.mp3"
 ```
+
+## 将 mkv 转成 mp4
+
+```sh
+ffmpeg -y -ss 5 -i "2025-12-08 19-35-22.mkv" -an -vf "scale=-2:720" -c:v libx264 -crf 20 -r 60 -preset medium "2025-12-08_19-35-22_720p.mp4"
+```
+
+- `-y`：覆盖输出文件而不提示
+- `-ss 5`：从第 5 秒开始读取，也即去掉前 5 秒
+- `-an`：不包含音频流
+- `-vf "scale=-2:720"`：将视频高度缩放到 720p，宽度按比例缩放且为偶数
+- `-c:v`：使用 H.264 编码输出 MP4
+- `-crf 20`：指定视频质量，范围为 `0-51`，值越小质量越高，`18-28` 是常用范围
+- `-r 60`：设置输出视频的帧率为 60 FPS
+- `-preset medium`：编码速度与压缩率的平衡，默认是 `medium`
+  - 常用值有 `ultrafast`, `superfast`, `veryfast`, `faster`, `fast`, `medium`, `slow`, `slower`, `veryslow`
