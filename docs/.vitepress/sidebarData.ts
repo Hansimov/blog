@@ -109,7 +109,8 @@ export const notesCategories = {
             { text: "IPMI 访问、设置和常用命令", link: "ipmi" },
             { text: "安装 PVE", link: "pve" },
             { text: "PVE 创建 Ubuntu 虚拟机", link: "pve-ubuntu" },
-            { text: "PVE 创建 Windows 10 虚拟机", link: "pve-windows" }
+            { text: "PVE 创建 Windows 10 虚拟机", link: "pve-windows" },
+            { text: "激活 Windows", link: "windows-activate" },
         ]
     },
     "LLMs": {

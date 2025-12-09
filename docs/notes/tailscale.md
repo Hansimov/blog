@@ -8,6 +8,8 @@
 
 下载：https://tailscale.com/download/windows
 
+被远程访问的 Windows 设备需要打开 `远程桌面设置`，将 `启用远程桌面` 打开。
+
 ## Ubuntu 安装 Tailscale
 
 ### 安装脚本
