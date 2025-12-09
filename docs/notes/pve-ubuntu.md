@@ -18,7 +18,7 @@
    - 点击 `Upload`，等待上传完成
    - 传完后在 `ISO Images` 列表里可以看到这个 ISO 文件
    * 也可以用 `Download from URL`，但现在有 ISO 可以直接用 Upload
-
+   * iso 文件默认存储在：`/var/lib/vz/template/iso`
 
 ## 二、创建 Ubuntu 22.04 虚拟机
 
