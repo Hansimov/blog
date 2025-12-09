@@ -224,13 +224,50 @@
    * 在 Proxmox Web UI 的 VM 概览页面会自动显示 Guest IP
    * 关机/重启会触发正常的系统关机命令等
 
-## 六、Windows 中的一些个性化配置
+## 六、PVE 收尾
+
+### 6.1 卸载虚拟光驱
+
+* 在 `301 (win10)` 的 `Hardware` 选项卡里，分别点击两个 `CD/DVD Drive`，选择 `Do not use any media`
+* 这样默认直接从系统盘启动
+
+### 6.2 添加显卡
+
+* 确认 `Display` 的类型为 `Default`
+* 确认 `Machine` 为 `pc-q35-10.1`
+* 添加 `PCI Device`，在 `Raw Device` 列表中选择未被其他 VM 占用的物理显卡
+* 勾选 `All Functions`，勾选 `PCI-Express`
+* 不要勾选 `Primary GPU`，否则启动时可能会报错：
+
+  ```sh
+  kvm: ../hw/pci/pci.c:1815: pci_irq_handler: Assertion `0 <= irq_num && irq_num < PCI_NUM_PINS' failed.
+  TASK ERROR: start failed: QEMU exited with code 1
+  ```
+
+## 七、Windows 中的一些个性化配置
 
 * `远程桌面设置`：将 `启用远程桌面` 打开
 * `电源和睡眠`：将 `在接通电源的情况下，经过以下时间后关闭` 设为 `从不`
 * `更改用户账户控制设置`：将滑块调到最底部 `从不通知`
 * 参考：[安装V2ray](./v2ray.md#windows-安装-v2ray)
 * 参考：[激活 Windows](./windows-activate.md)
+* 如果想取消开机密码：
+  * `控制面板` → `用户账户` → `更改账户类型` → 双击用户 → `更改密码` → 留空新密码，点击 `更改密码`
+  * 允许远程无密码访问：
+    * 右键开始菜单，点击 `运行`（或者 Win + R）→ 输入 `secpol.msc` → `本地策略` → 点击 `安全选项`
+    * 找到 `账户：使用空白密码的本地账户只允许进行控制台登录`
+    * 双击打开，选择 `已禁用`，点击确定
+
+## 总结
+
+此时，Windows 10 虚拟机的状态是：
+
+* 在 `vmdata (LVM-Thinpool)` 上创建好了一个 Windows 10 虚拟机系统盘
+* 使用官方推荐的 q35 + UEFI + VirtIO SCSI + VirtIO 网卡 + QEMU Agent 组合
+* 安装好了 VirtIO 驱动和 Guest Tools，性能和管理体验都比较理想
+* 添加了物理显卡直通
+* 优化了一些 Windows 设置
+* 可以远程桌面连接
 
 ## 附1：Proxmox 侧的一些推荐优化（可选）
 
@@ -272,10 +309,6 @@ qm set 100 --agent enabled=1
 
 之后再在 Web 界面或 `qm start 100` 启动安装即可。
 
-此时，状态是：
 
-* 在 `vmdata (LVM-Thinpool)` 上创建好了一个 Windows 10 虚拟机系统盘
-* 使用官方推荐的 q35 + UEFI + VirtIO SCSI + VirtIO 网卡 + QEMU Agent 组合
-* 安装好了 VirtIO 驱动和 Guest Tools，性能和管理体验都比较理想
 
 
