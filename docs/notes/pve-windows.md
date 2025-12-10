@@ -135,8 +135,6 @@
 * 有两个虚拟光驱（一个挂 Windows 10 ISO，一个挂 virtio-win.iso）
 * 使用 VirtIO SCSI + VirtIO 网卡 的 Windows 10 VM
 
----
-
 ## 四、在 VM 中安装 Windows 10：加载 VirtIO 磁盘驱动
 
 ### 4.1 通过控制台启动 VM
@@ -200,7 +198,7 @@
 
 安装结束后，就可以登录到 Windows 10 桌面了。
 
-## 五、在 Windows 里安装 VirtIO 全套驱动 + Guest Tools
+## 五、在 Windows 里安装 VirtIO 驱动
 
 此时系统盘和基本显卡驱动已 OK，但：
 
@@ -211,7 +209,7 @@
 
 1. 登录 Windows 10 后，打开“此电脑”
 2. 可以看到挂载的 VirtIO 驱动光盘，`CD 驱动器(D:) virtio-win-0.1.285`
-3. 进入该光盘，点击运行 `virtio-win-gt-x64.msi`（有的版本叫 `virtio-win-guest-tools.exe`）
+3. 进入该光盘，点击运行 `virtio-win-gt-x64.msi`
 4. 按照向导一路 Next：
    * 会安装存储、网卡、balloon、串口等驱动
    * 会一并安装 QEMU Guest Agent
@@ -224,16 +222,17 @@
    * 在 Proxmox Web UI 的 VM 概览页面会自动显示 Guest IP
    * 关机/重启会触发正常的系统关机命令等
 
-## 六、PVE 收尾
+## 六、显卡、显示、远程桌面、音频
 
-### 6.1 卸载虚拟光驱
+### 卸载虚拟光驱
 
 * 在 `301 (win10)` 的 `Hardware` 选项卡里，分别点击两个 `CD/DVD Drive`，选择 `Do not use any media`
 * 这样默认直接从系统盘启动
 
-### 6.2 添加显卡
+### 添加显卡
 
 * 确认 `Display` 的类型为 `Default`
+  * 如果后续要装 SPICE Guest Tools，可以设为 `VirtIO-GPU`
 * 确认 `Machine` 为 `pc-q35-10.1`
 * 添加 `PCI Device`，在 `Raw Device` 列表中选择未被其他 VM 占用的物理显卡
 * 勾选 `All Functions`，勾选 `PCI-Express`
@@ -243,6 +242,100 @@
   kvm: ../hw/pci/pci.c:1815: pci_irq_handler: Assertion `0 <= irq_num && irq_num < PCI_NUM_PINS' failed.
   TASK ERROR: start failed: QEMU exited with code 1
   ```
+
+右键开始菜单，点击 `设备管理器`，选择 `显示适配器`：
+* 如果有 `NVIDIA GeForce RTX 3080`，就表示显卡直通成功了
+
+### 安装 NVIDIA 显卡驱动
+
+不要用 NVIDIA App 来下载安装最新驱动：
+* https://www.nvidia.cn/software/nvidia-app
+* 默认会按照最新的 `591.44`，这个会把各种 N 卡的硬件编码搞炸
+
+推荐手动选择稳定版驱动下载安装：
+* https://www.nvidia.com/en-us/geforce/drivers/
+* 展开 `Manual Driver Search`
+  * 选择对应显卡型号
+  * 系统选择 `Windows 10 64-bit`
+  * 语言选择 `Chinese (Simplified)`
+  * `Downlaod Type` 选择 `Game Ready Driver`
+* 点击 `Start Search`
+
+选择 `581.80` 版本下载安装：
+* https://cn.download.nvidia.com/Windows/581.80/581.80-desktop-win10-win11-64bit-international-dch-whql.exe
+* 双击 exe，同意协议
+* 选择 `自定义安装`，勾选 `执行清洁安装`，这个会卸载之前已经安装的驱动
+* 等待安装完成，重启 VM
+
+右键开始菜单，点击 `设备管理器`，选择 `显示适配器`：
+* 选择 `NVIDIA GeForce RTX 3080`，右键选择 `属性`
+* 查看驱动程序版本，如果是 `32.0.15.8180`，也即 `581.80`，说明驱动安装成功
+
+### 【可选】安装 Spice Guest Tools
+
+确认 `Display` 的类型为 `VirtIO-GPU`，重启 Windows。
+
+为了获得更好的显示效果和分辨率自适应，可以安装 Spice Guest Tools：
+* https://www.spice-space.org/download.html
+* https://www.spice-space.org/download/windows/spice-guest-tools/spice-guest-tools-latest.exe
+
+双击 exe 安装，一路点击 Next 即可。确认是否安装成功：
+
+* 右键开始菜单，点击 `设备管理器`，选择 `显示适配器`
+* 如果出现 `Red Hat VirtIO GPU DOD controller`，说明安装成功
+* (对比之前 `Default` 的是 `Microsoft 基本显示适配器`)
+
+### 【可选】本机安装 virt-viewer
+
+如果使用 Windows 自带的 `远程桌面连接` (mstsc) 连接远程的 Windows VM，是无法调整分辨率的：
+* 屏幕设置选项会提示 `无法从远程会话更改显示设置`
+* 进游戏会发现只有一个固定分辨率
+
+因此需要在本机（而不是 VM 中）安装 `virt-viewer` 客户端，支持调整分辨率：
+* https://virt-manager.org/download
+* https://releases.pagure.org/virt-viewer/virt-viewer-x64-11.0-1.0.msi
+
+双击 msi 安装，一路点击 Next 即可：
+* 安装好后，在电脑中的程序名为 `Remote Viewer`
+
+在 PVE 的 VM 界面，点击右上角的 Console，下拉选择 `SPICE`，会下载 `.vv` 文件，双击用 `virt-viewer` 打开：
+* 双击打开后，.vv 文件会自动删除，这是正常的
+* 如果直接双击无法正常打开会话，可以通过右键 .vv 文件，选择“打开方式”，选择 `remote-viewer.exe` 来打开
+
+但是这种方案有个问题，就是如果 PVE 主机网络不好，那么通过 `virt-viewer` 连接 VM 就会非常卡。
+
+### 【推荐】安装 Parsec
+
+注册 Parsec 账号：
+* https://dash.parsec.app/signup
+
+本地电脑和远程 VM 都下载 Parsec 客户端，并登录：
+* https://parsec.app/downloads
+* https://builds.parsec.app/package/parsec-windows.exe
+
+然后查看两台设备的设置：
+- 主机端（VM）的 `Host` -> `Hosting Enabled` 设置为 `Enabled`（默认）
+- 客户端（本机）的 `Client` -> `Window mode` 设置为 `Windowed`
+
+在客户端（本机），点击 `Connect`，即可连接到主机端（VM）。
+* 可能会出现无法截屏的 `-14003` 报错，一般是驱动的问题，如果重点 connect 又能连上，就不用管
+
+### 安装 VB-Cable
+
+VM 中默认是没有音频设备的，这个会导致游戏无法正常启动，可以在 VM 中下载安装 VB-Cable：
+* https://vb-audio.com/Cable
+* https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack45.zip
+
+右键 `VBCABLE_Setup_x64.exe`，选择 `以管理员身份运行`，一路 Next 安装即可：
+* 重启 VM 以保证生效
+* 可以看到右下角已经有音量图标了，名称为 `CABLE Input (VB-Audio Virtual Cable)`
+
+右键开始菜单，点击 `运行`，输入 `mmsys.cpl` 打开声音设置：
+* 在 `播放` 选项卡，选择 `CABLE Input`，点击 `设为默认值`（正常情况下应该已经设了）
+
+打开 VM 中 Parsec 的 Host 设置，将 Audio 选为 `CABLE Input (VB-Audio Virtual Cable)`
+* 右键右下角的 Parsec 图标，点击 `Restart`，以保证生效
+* 可以随便播放一个视频，测试音频是否正常
 
 ## 七、Windows 中的一些个性化配置
 
