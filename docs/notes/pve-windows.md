@@ -145,7 +145,7 @@
 4. 在黑屏上出现 `Press any key to enter the Boot Manager Menu` 时按任意键，从 Windows 安装 ISO 启动
 5. 此时界面中会出现下面的选项：
 
-   ```sh{3}
+   ```sh{2}
    UEFI QEMU QEMU HARDDISK
    UEFI QEMU DVD-ROM QM00003
    UEFI QEMU DVD-ROM QM00001
@@ -336,6 +336,20 @@ VM 中默认是没有音频设备的，这个会导致游戏无法正常启动�
 打开 VM 中 Parsec 的 Host 设置，将 Audio 选为 `CABLE Input (VB-Audio Virtual Cable)`
 * 右键右下角的 Parsec 图标，点击 `Restart`，以保证生效
 * 可以随便播放一个视频，测试音频是否正常
+
+### 解决软件编码问题
+
+使用 Parsec 连接时，一直提示 `The host is using software encoding. Expect degraded performance and quality.`
+* 将显卡驱动降到低版本，比如 `581.80`
+* PVE 中打开 VM 的 `Hardware` 选项卡，将 `Display` 改成 `none`，重启 VM
+* 如果 `设备管理器` 中的 `显示适配器` 中的 `Microsoft 基本显示适配器` 不见了，那么就说明 OK 了
+* 不过之后就不能用 `noVNC` 连接，只能用 Parsec 或 `远程桌面连接` 了
+
+### 网络问题
+
+如果用 `远程桌面连接`（mstsc）、Parsec、`virt-viewer` 都出现延迟高或者不稳定，那么大概率不是远程软件的问题，而是网络的问题。
+
+可以试试试 笔记本+手机热点 连接，看看网络是否变得稳定。
 
 ## 七、Windows 中的一些个性化配置
 
