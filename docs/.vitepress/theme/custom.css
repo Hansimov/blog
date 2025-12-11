@@ -41,3 +41,7 @@ html:has(.is-home),
 html:has(.is-home) body {
   overflow: hidden !important;
 }
+
+html.raw-text-mode .VPNavBar .VPSocialLinks {
+  display: none !important;
+}
