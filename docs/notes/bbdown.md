@@ -41,7 +41,7 @@ BBDown [bvid] --config-file "BBDown.config"
 
 `BBDown.config`:
 
-```conf
+```sh
 --cookie
 "SESSDATA=..."
 
