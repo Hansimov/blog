@@ -89,6 +89,10 @@ source ~/.zsh/zsh-autosuggestions.zsh
 source ~/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh
 # style of auto complete
 zstyle ':completion:*'  list-colors '=*=96'
+# zstyle ':autocomplete:*' append-semicolon no
+bindkey -M emacs \
+    "^[OA"  .up-line-or-history \
+    "^[OB"  .down-line-or-history
 
 # # >>> conda initialize >>>
 # # !! Contents within this block are managed by 'conda init' !!
