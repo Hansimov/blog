@@ -17,6 +17,7 @@ export const notesCategories = {
             { text: "使用 ZeroTier 组网", link: "zerotier" },
             { text: "使用 Merak 组网", link: "merak" },
             { text: "使用 Tailscale 组网", link: "tailscale" },
+            { text: "远程网络中转", link: "remote-relay" },
             { text: "指定任意 IPv6 地址作为出口 IP", link: "ipv6-interface" },
             { text: "设置静态 IP", link: "ip-static" },
             { text: "交换机和路由器互连", link: "switch" }
