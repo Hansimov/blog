@@ -109,6 +109,54 @@ tailscale status
 100.99.x.x  machine_x <username>@  linux  -
 ```
 
+## 查看 tailscale 网卡的 ipv6 地址
+
+查看是否都是 `disable_ipv6=0`：
+
+```sh
+sysctl net.ipv6.conf.all.disable_ipv6
+sysctl net.ipv6.conf.default.disable_ipv6
+sysctl net.ipv6.conf.tailscale0.disable_ipv6
+```
+
+查看 tailscale0 网卡信息：
+
+```sh
+ip link show tailscale0
+```
+
+查看 tailscale 的 ipv6 地址：
+
+```sh
+tailscale ip -6
+```
+
+输出形如：
+
+```sh
+fd7a:****:****::****:****
+```
+
+```sh
+ip -6 route show table 52 | sed -n '1,80p'
+```
+
+输出形如：
+
+```sh
+fd7a:****:****:53 dev tailscale0 metric 1024 pref medium
+fd7a:****:****::/48 dev tailscale0 metric 1024 pref medium
+```
+
+如果没有输出，可以重启服务：
+
+```sh
+sudo systemctl restart tailscaled && sudo tailscale up
+```
+
+一般都可以的。
+
+
 ## 确保 ipv6 走物理网卡
 
 ### 当前方案：阻断其他 VPN 在 tailscale 链路上的 UDP 流量
@@ -445,6 +493,18 @@ sudo ip6tables -t mangle -L OUTPUT -n --line-numbers
 ## 高带宽优化
 
 在两台服务器中均做如下配置。
+
+### 安装 speedtest
+
+```sh
+sudo snap install speedtest
+```
+
+测试带宽上限：
+
+```sh
+speedtest
+```
 
 ### 启用 BBR 拥塞控制
 
