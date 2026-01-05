@@ -16,6 +16,8 @@
 
 ## 【可选】创建账户级别 API token
 
+<details> <summary>点击展开</summary>
+
 ::: tip Create API token · Cloudflare Fundamentals docs
 * https://developers.cloudflare.com/fundamentals/api/get-started/create-token/
 
@@ -55,6 +57,8 @@ curl "https://api.cloudflare.com/client/v4/accounts/<your-account-id>/tokens/ver
 ```json
 {"result":{"id":"...","status":"active"},"success":true,"errors":[],"messages":[{"code":10000,"message":"This API Token is valid and active","type":null}]}
 ```
+
+</details>
 
 ## 安装 WARP 客户端
 
@@ -139,6 +143,8 @@ lrwxrwxrwx 1 root root   49  1月  5 16:41 managed-warp.crt -> /usr/local/share/
 
 ## 【可选】设置设备注册权限
 
+<details> <summary>点击展开</summary>
+
 ::: tip Device enrollment permissions · Cloudflare One docs
 https://developers.cloudflare.com/cloudflare-one/team-and-resources/devices/warp/deployment/device-enrollment/
 :::
@@ -161,8 +167,10 @@ https://developers.cloudflare.com/cloudflare-one/team-and-resources/devices/warp
 禁用策略：
 * 点击 `Select existing policy`，取消勾选这个新策略，点击 `Confirm`
 
-::: tip 为了避免后续的一些潜在的权限问题，可以先不启用策略。
+::: warning 为了避免后续的一些潜在的权限问题，可以先不启用策略。如果出现连接问题，比如无法 ping 通，可以尝试删除策略。
 :::
+
+</details>
 
 ## 注册设备到 Team
 
@@ -274,10 +282,18 @@ Status update: Connected
 Network: healthy
 ```
 
+## 查看 IP 地址
+
 查看本机 IP 地址：
 
 ```sh
 ip -br a | grep -E '100\.96\.'
+```
+
+或者是：
+
+```sh
+ip -br a | grep CloudflareWARP
 ```
 
 在机器 X 中输出形如：
@@ -310,12 +326,28 @@ sudo nano /etc/hosts
 100.96.0.1  X-warp
 ```
 
-## 配置 connector (cloudflare tunnel)
+（可选）同时添加规则：
+
+```sh
+sudo iptables -I INPUT -i CloudflareWARP -p icmp -j ACCEPT
+```
+
+::: warning 注意
+
+1. 如果 `warp-cli registration delete` 后再 `warp-cli registration new`，可能会导致 IP 地址变更。
+2. 如果其中有一台机器在防火墙后，比如 PVE 中的 VM，需要将 pve 和 VM 的防火墙均关闭。
+:::
+
+
+## 【可选】配置 connector 和 route
+
+<details> <summary>点击展开</summary>
 
 Cloudflare One > `Networkds` > `Connectors`：
 * 在右边的选项卡中选择 `Cloudflare Tunnels`
 * 点击 `Create a tunnel`
 * 在 Select your tunnel type 中，选择 `WARP Connector`，点击 `Select WARP Connector`
+* 开启 `Allow WARP to WARP connection` 右侧的按钮
 * 开启 `Assign a unique IP address to each device` 右侧的按钮
 * 点击 `Next step`
 * 填写 `Tunnel name`，点击 `Create tunnel`
@@ -359,3 +391,20 @@ Cloudflare One > `Networkds` > `Connectors`：
 ```sh
 ip -br a | grep CloudflareWARP
 ```
+
+::: warning 注意，两台机器需要创建两个 tunnel。
+:::
+
+Cloudflare One > `Networkds` > `Routes`：
+* 在右边的选项卡中选择 `CIDR`
+* 点击 `Add CIDR route`
+* `CIDR` 选择 `10.250.0.1/32`，`Tunnel` 选择机器 X 的 Tunnel，点击 `Create`
+* `CIDR` 选择 `10.250.0.2/32`，`Tunnel` 选择机器 A 的 Tunnel，点击 `Create`
+
+查看配置的 Include 的规则：
+
+```sh
+warp-cli settings | sed -n '/Include mode/,/Fallback domains/p'
+```
+
+</details>
