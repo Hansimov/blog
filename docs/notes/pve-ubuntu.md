@@ -478,6 +478,53 @@ Kernel driver in use: vfio-pci
   - 如果某几块卡在同一个 IOMMU 组里，PVE 会强制你把整个组都直通过去，这对“全给 ai122”来说是OK的
   - 可以先加 1 块卡，确认没问题后再加剩下的
 
+### 常见问题：`0 <= irq_num && irq_num < PCI_NUM_PINS`
+
+问题详情：
+
+```sh
+kvm: ../hw/pci/pci.c:1815: pci_irq_handler: Assertion `0 <= irq_num && irq_num < PCI_NUM_PINS' failed.
+TASK ERROR: start failed: QEMU exited with code 1
+```
+
+原因：掉卡 / 上游端口省电 / VFIO 设备出于 D3 状态
+
+临时方案：不启用掉卡的显卡。
+
+<details> <summary>解决方法（暂时无效）</summary>
+
+解决方法：禁用上游端口省电。
+
+```sh
+nano /etc/kernel/cmdline
+```
+
+添加如下内容：
+
+```sh
+pcie_port_pm=off pcie_aspm=off vfio-pci.disable_idle_d3=1
+```
+
+- `pcie_port_pm=off`: 禁止 PCIe ports runtime PM（一般用于解决 device inaccessible）
+- `pcie_aspm=off`: 关闭链路 ASPM（PLX/switch/riser 很多时需要该参数保证稳定）
+- `vfio-pci.disable_idle_d3=1`: 不让 VFIO 管的设备在 idle 时进入 D3（避免 D3hot/D3cold → D0 失败）
+
+也即修改后是：
+
+```sh
+intel_iommu=on iommu=pt pcie_port_pm=off pcie_aspm=off vfio-pci.disable_idle_d3=1
+```
+
+然后运行：
+
+```sh
+# proxmox-boot-tool refresh
+# update-initramfs -u -k all
+reboot
+```
+
+</details>
+
 ### 验证 VM 中显卡是否已经直通
 
 在 PVE 中选择 `AI-122`，点击 `Start`。
