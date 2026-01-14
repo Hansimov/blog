@@ -90,9 +90,9 @@ source ~/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh
 # style of auto complete
 zstyle ':completion:*'  list-colors '=*=96'
 # zstyle ':autocomplete:*' append-semicolon no
-bindkey -M emacs \
-    "^[OA"  .up-line-or-history \
-    "^[OB"  .down-line-or-history
+# bindkey -M emacs \
+#     "^[OA"  .up-line-or-history \
+#     "^[OB"  .down-line-or-history
 
 # # >>> conda initialize >>>
 # # !! Contents within this block are managed by 'conda init' !!
@@ -111,7 +111,7 @@ bindkey -M emacs \
 
 # alias cda="conda activate ai"
 # alias cdd="conda deactivate"
-# alias nu="gpustat -cpu -i"
+# alias nu="gpustat -cpu -i -F -P"
 # # alias cu='cat /sys/class/thermal/thermal_zone*/temp | awk '\''{ print ($1 / 1000) "°C" }'\'''
 # alias cu='sensors | grep Tctl | head -1'
 # alias ct="gh copilot"
