@@ -106,6 +106,7 @@ export const notesCategories = {
             { text: "Ubuntu 安装新硬盘", link: "ubuntu-disk" },
             { text: "Ubuntu 安装 NVIDIA 驱动和 CUDA (NVCC)", link: "nvidia-driver" },
             { text: "安装 NVIDIA Container Toolkit", link: "nvidia-container" },
+            { text: "查看 NVIDIA 显卡状态", link: "nvidia-gpus" },
             { text: "Ubuntu 设置 GPU 风扇速度", link: "gpu-fan" },
             { text: "IPMI 访问、设置和常用命令", link: "ipmi" },
             { text: "安装 PVE", link: "pve" },
