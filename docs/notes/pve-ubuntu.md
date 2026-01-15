@@ -478,6 +478,30 @@ Kernel driver in use: vfio-pci
   - 如果某几块卡在同一个 IOMMU 组里，PVE 会强制你把整个组都直通过去，这对“全给 ai122”来说是OK的
   - 可以先加 1 块卡，确认没问题后再加剩下的
 
+### 命令行一键直通
+
+参考：[SLOT 和 GPU 对应关系](./nvidia-gpus.md#slot-和-gpu-对应关系)
+
+清空旧的 hostpci 0-7：
+
+```sh
+for i in {0..7}; do qm set 101 -delete hostpci$i; done
+```
+
+设置新的 hostpci 0-7：
+
+```sh
+buses=(88 89 b1 b2 3d 3e 1a 1b); args=()
+for i in "${!buses[@]}"; do args+=("-hostpci$i" "0000:${buses[$i]}:00,pcie=1"); done
+qm set 101 "${args[@]}"
+```
+
+查看 VM 当前 PCI 设备：
+
+```sh
+qm config 101 | grep -E '^hostpci'
+```
+
 ### 常见问题：`0 <= irq_num && irq_num < PCI_NUM_PINS`
 
 问题详情：
@@ -487,9 +511,7 @@ kvm: ../hw/pci/pci.c:1815: pci_irq_handler: Assertion `0 <= irq_num && irq_num <
 TASK ERROR: start failed: QEMU exited with code 1
 ```
 
-原因：掉卡 / 上游端口省电 / VFIO 设备出于 D3 状态
-
-临时方案：不启用掉卡的显卡。
+原因一般是掉卡。临时方案：<m>从 Hardware 的 PCI 设备列表中删除有问题的显卡。</m>
 
 <details> <summary>解决方法（暂时无效）</summary>
 

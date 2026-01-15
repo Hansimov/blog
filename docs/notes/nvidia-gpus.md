@@ -159,6 +159,8 @@ dmidecode -t slot | awk -F': ' ' /Designation:/ {d=$2} /Bus Address:/ {print $2 
 - 1x: `SLOT 7 (3.0x4)`
 - 4x: `SLOT 8/9/10/11 (3.0x16)`
 
+### SLOT 和 GPU 对应关系
+
 一般显卡都插在 `SLOT 1/2/3/4` 和 `SLOT 8/9/10/11` 的 `3.0x16` 插槽上。
 那么 8 张显卡的 PCIe BDF 和 SLOT 对应关系为：
 
@@ -214,7 +216,6 @@ hostpci7: 0000:88:00,pcie=1
 这里的 `hostpci` 后面的数字表示 VM 内的设备 ID，从 `0` 开始编号。
 
 注意：这个<m>编号只和添加设备的顺序有关</m>，和实际的 GPU ID 无关。
-
 
 ### 查看设备映射
 
