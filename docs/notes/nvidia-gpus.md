@@ -105,7 +105,7 @@ sudo lspci -nnk -s 0000:04:00.0
         Kernel modules: nvidiafb, nouveau, nvidia_drm, nvidia
 ```
 
-## 在 PVE 中查看 VM GPU 状态
+## 在 PVE 中查看 VM 状态
 
 ### 列出 VM
 
@@ -130,13 +130,74 @@ qm stop 101
 qm start 101
 ```
 
+## 在 PVE 中查看 VM GPU 状态
+
+### 列出 Slot 映射
+
+```sh
+dmidecode -t slot | awk -F': ' ' /Designation:/ {d=$2} /Bus Address:/ {print $2 "\t" d} ' | sort
+```
+```sh
+0000:00:1c.0    PCH  Slot7 PCI-E 3.0 X4
+0000:1a:00.0    CPU1 Slot10 PCI-E 3.0 X16
+0000:1b:00.0    CPU1 Slot11 PCI-E 3.0 X16
+0000:3d:00.0    CPU1 Slot8 PCI-E 3.0 X16
+0000:3e:00.0    CPU1 Slot9 PCI-E 3.0 X16
+0000:5d:00.0    CPU1 Slot6 PCI-E 3.0 X8
+0000:88:00.0    CPU2 Slot1 PCI-E 3.0 X16
+0000:89:00.0    CPU2 Slot2 PCI-E 3.0 X16
+0000:b1:00.0    CPU2 Slot3 PCI-E 3.0 X16
+0000:b2:00.0    CPU2 Slot4 PCI-E 3.0 X16
+0000:d7:02.0    CPU2 Slot5 PCI-E 3.0 X8
+```
+
+![4029GP-PCIE-SLOTS](../images/4029gp-pcie-slots.png)
+
+图中从左到右分别为：
+- 4x: `SLOT 1/2/3/4 (3.0x16)`
+- 2x: `SLOT 5/6 (3.0x8)`
+- 1x: `SLOT 7 (3.0x4)`
+- 4x: `SLOT 8/9/10/11 (3.0x16)`
+
+一般显卡都插在 `SLOT 1/2/3/4` 和 `SLOT 8/9/10/11` 的 `3.0x16` 插槽上。
+那么 8 张显卡的 PCIe BDF 和 SLOT 对应关系为：
+
+```sh
+    PCIe BDF       SLOT ID   GPU ID
+--  ------------   -------   ------
+ 1  0000:88:00.0   SLOT  1   GPU 0
+ 2  0000:89:00.0   SLOT  2   GPU 1
+ 3  0000:b1:00.0   SLOT  3   GPU 2
+ 4  0000:b2:00.0   SLOT  4   GPU 3
+ 5  0000:3d:00.0   SLOT  8   GPU 4
+ 6  0000:3e:00.0   SLOT  9   GPU 5
+ 7  0000:1a:00.0   SLOT 10   GPU 6
+ 8  0000:1b:00.0   SLOT 11   GPU 7
+```
+
+### 列出 NVIDIA GPU 的 BDF
+
+```sh
+lspci -D | awk '/NVIDIA Corporation/ && /(VGA compatible controller|3D controller)/{print $1}'
+```
+```sh
+0000:1a:00.0
+0000:1b:00.0
+0000:3d:00.0
+0000:3e:00.0
+0000:88:00.0
+0000:89:00.0
+0000:b1:00.0
+0000:b2:00.0
+```
+
 ### 查看直通 PCI 设备
 
 ```sh
 qm config 101 | grep -E '^hostpci'
 ```
 
-<details>
+<details open>
 
 ```sh
 hostpci0: 0000:3d:00,pcie=1
@@ -149,6 +210,11 @@ hostpci6: 0000:89:00,pcie=1
 hostpci7: 0000:88:00,pcie=1
 ```
 </details>
+
+这里的 `hostpci` 后面的数字表示 VM 内的设备 ID，从 `0` 开始编号。
+
+注意：这个<m>编号只和添加设备的顺序有关</m>，和实际的 GPU ID 无关。
+
 
 ### 查看设备映射
 
