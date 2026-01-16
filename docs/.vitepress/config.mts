@@ -33,6 +33,11 @@ export default defineConfig({
   },
   markdown: {
     // lineNumbers: true,
+    languageAlias: {
+      'env': 'shell',
+      'conf': 'ini',
+      'ssh': 'ini'
+    },
     config: (md) => {
       md.use(timeline);
     }
