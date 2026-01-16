@@ -278,8 +278,8 @@ journalctl --user -u tmux-restore.service -b --no-pager | tail -20
 
 ### 【备用】手动启动
 
-如果想直接手动启动 tmux 并恢复会话，可以运行：
+如果想手动恢复 tmux 会话，可以运行：
 
 ```sh
-tmux attach || (tmux new-session -d && tmux run-shell ~/.tmux/plugins/tmux-resurrect/scripts/restore.sh && tmux attach)
+tmux has-session 2>/dev/null || (tmux new-session -d && tmux run-shell ~/.tmux/plugins/tmux-resurrect/scripts/restore.sh)
 ```
