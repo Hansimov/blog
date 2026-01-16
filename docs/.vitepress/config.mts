@@ -2,6 +2,8 @@ import { defineConfig, type DefaultTheme } from "vitepress"
 import timeline from "vitepress-markdown-timeline"
 import { notesCategoryItems, researchCategoryItems } from "./categories"
 import { getNotesSidebar, getResearchSidebar } from "./sidebarData"
+import fs from "fs"
+import path from "path"
 
 // https://vitepress.dev/reference/site-config
 // https://github.com/vuejs/vitepress/blob/main/docs/.vitepress/config/en.ts
@@ -48,6 +50,32 @@ export default defineConfig({
     server: {
       allowedHosts: true
     }
+  },
+  async buildEnd(siteConfig) {
+    // 复制 .md 文件到输出目录，以便"纯文本"按钮可以 fetch 原始 markdown
+    const srcDir = siteConfig.srcDir
+    const outDir = siteConfig.outDir
+
+    function copyMdFiles(dir: string, baseDir: string) {
+      const items = fs.readdirSync(dir)
+      for (const item of items) {
+        const srcPath = path.join(dir, item)
+        const stat = fs.statSync(srcPath)
+        if (stat.isDirectory()) {
+          // 跳过 .vitepress 目录
+          if (item !== '.vitepress') {
+            copyMdFiles(srcPath, baseDir)
+          }
+        } else if (item.endsWith('.md')) {
+          const relativePath = path.relative(baseDir, srcPath)
+          const destPath = path.join(outDir, relativePath)
+          fs.mkdirSync(path.dirname(destPath), { recursive: true })
+          fs.copyFileSync(srcPath, destPath)
+        }
+      }
+    }
+
+    copyMdFiles(srcDir, srcDir)
   }
 })
 
