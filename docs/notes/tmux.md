@@ -194,3 +194,92 @@ set -g @resurrect-processes '\
 # Initialize TMUX plugin manager (keep this line at the very bottom of tmux.conf)
 run '~/.tmux/plugins/tpm/tpm'
 ```
+
+## 开机自动启动 tmux 会话
+
+### 清理临时会话
+
+```sh
+nano ~/.tmux.conf
+```
+
+添加：
+
+```sh
+set -g @resurrect-hook-pre-restore-pane-processes 'tmux kill-session -t=0 2>/dev/null || true'
+```
+
+### 创建 systemd 服务
+
+设置无须登录即可启动：
+
+```sh
+sudo loginctl enable-linger "$USER"
+```
+```sh
+# show user linger status
+# loginctl show-user "$USER" -p Linger
+
+# disable linger
+# sudo loginctl disable-linger "$USER"
+```
+
+创建 systemd 服务文件：
+
+```sh
+nano ~/.config/systemd/user/tmux-restore.service
+```
+
+添加如下内容：
+
+```sh
+[Unit]
+Description=Restore tmux sessions with tmux-resurrect
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# run tmux server (with temp session)
+ExecStart=/bin/sh -lc '/usr/bin/tmux has-session 2>/dev/null || /usr/bin/tmux new-session -d'
+# run store shell
+ExecStart=/usr/bin/tmux run-shell %h/.tmux/plugins/tmux-resurrect/scripts/restore.sh
+# [Optional] save tmux sessions on stop
+ExecStop=/usr/bin/tmux run-shell %h/.tmux/plugins/tmux-resurrect/scripts/save.sh
+
+[Install]
+WantedBy=default.target
+```
+
+重启服务守护进程：
+
+```sh
+systemctl --user daemon-reload
+```
+
+启用服务：
+
+```sh
+systemctl --user enable tmux-restore.service
+```
+
+### 查看服务状态
+
+```sh
+systemctl --user status tmux-restore
+```
+
+### 查看服务日志
+
+```sh
+journalctl --user -u tmux-restore.service -b --no-pager | tail -20
+```
+
+### 【备用】手动启动
+
+如果想直接手动启动 tmux 并恢复会话，可以运行：
+
+```sh
+tmux attach || (tmux new-session -d && tmux run-shell ~/.tmux/plugins/tmux-resurrect/scripts/restore.sh && tmux attach)
+```
