@@ -22,3 +22,14 @@ npm install
 npx vitepress dev docs --host 0.0.0.0 --port 15173
 ```
 
+或者：
+
+```sh
+npm exec -- vitepress dev docs --host 0.0.0.0 --port 15173
+```
+
+或者：
+
+```sh
+npm run docs:dev
+```
