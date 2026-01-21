@@ -241,6 +241,8 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+# run boot commands (optional)
+ExecStart=/bin/sh -lc '%h/run_at_boot.sh'
 # run tmux server (with temp session)
 ExecStart=/bin/sh -lc '/usr/bin/tmux has-session 2>/dev/null || /usr/bin/tmux new-session -d'
 # run store shell
