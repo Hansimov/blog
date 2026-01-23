@@ -299,6 +299,9 @@ analysis-stconvert
 elasticsearch/docs/reference/setup/install/docker/docker-compose.yml
 * https://github.com/elastic/elasticsearch/blob/main/docs/reference/setup/install/docker/docker-compose.yml
 * https://github.com/elastic/elasticsearch/blob/main/docs/reference/setup/install/docker/.env
+
+Elastic release notes | Elastic Docs
+* https://www.elastic.co/docs/release-notes/elasticsearch
 :::
 
 ### 下载配置
@@ -306,7 +309,7 @@ elasticsearch/docs/reference/setup/install/docker/docker-compose.yml
 下载 `.env` 和 `docker-compose.yml` 文件到当前目录：
 
 ```sh
-ES_DOCKER_ROOT="$HOME/elasticsearch-docker-9.1.3"
+ES_DOCKER_ROOT="$HOME/elasticsearch-docker-9.2.4-pro"
 mkdir -p $ES_DOCKER_ROOT && cd $ES_DOCKER_ROOT
 ```
 
@@ -319,7 +322,7 @@ wget https://githubfast.com/elastic/elasticsearch/raw/refs/heads/main/docs/refer
 
 ```sh
 ES_DOCKER_ROOT_OLD="$HOME/elasticsearch-docker-9.1.3"
-ES_DOCKER_ROOT_NEW="$HOME/elasticsearch-docker-9.1.3-pro"
+ES_DOCKER_ROOT_NEW="$HOME/elasticsearch-docker-9.2.4-pro"
 cp $ES_DOCKER_ROOT_OLD/.env $ES_DOCKER_ROOT_NEW/.env
 cp $ES_DOCKER_ROOT_OLD/docker-compose.yml $ES_DOCKER_ROOT_NEW/docker-compose.yml
 ```
@@ -443,7 +446,7 @@ setup-1 exited with code 0
 检测 Elasticsearch 是否运行：
 
 ```sh
-curl --cacert ./certs/ca/ca.crt -u elastic:$ELASTIC_PASSWORD https://localhost:19200
+curl --cacert ./certs/ca/ca.crt -u elastic:$ELASTIC_PASSWORD https://localhost:19202
 ```
 
 输出形如：
@@ -452,15 +455,15 @@ curl --cacert ./certs/ca/ca.crt -u elastic:$ELASTIC_PASSWORD https://localhost:1
 {
   "name" : "es01",
   "cluster_name" : "es-docker-cluster",
-  "cluster_uuid" : "df-****************SvQ",
+  "cluster_uuid" : "QaD****************OrQ",
   "version" : {
-    "number" : "9.1.3",
+    "number" : "9.2.4",
     "build_flavor" : "default",
     "build_type" : "docker",
-    "build_hash" : "0c781091a2f57de895a73a1391ff8426c0153c8d",
-    "build_date" : "2025-08-24T22:05:04.526302670Z",
+    "build_hash" : "dfc5c38614c29a598e132c035b66160d3d350894",
+    "build_date" : "2026-01-08T22:07:25.170027027Z",
     "build_snapshot" : false,
-    "lucene_version" : "10.2.2",
+    "lucene_version" : "10.3.2",
     "minimum_wire_compatibility_version" : "8.19.0",
     "minimum_index_compatibility_version" : "8.0.0"
   },
@@ -477,13 +480,13 @@ Create API key:
 ### 复制证书到其他目录
 
 ```sh
-ES_DOCKER_ROOT="$HOME/elasticsearch-docker-9.1.3"
+ES_DOCKER_ROOT="$HOME/elasticsearch-docker-9.2.4"
 cp $ES_DOCKER_ROOT/certs/ca/ca.crt ~/repos/bili-search/configs/elastic_ca_dev.crt
 cp $ES_DOCKER_ROOT/certs/ca/ca.crt ~/repos/bili-scraper/configs/elastic_ca_dev.crt
 ```
 
 ```sh
-ES_DOCKER_ROOT_PRO="$HOME/elasticsearch-docker-9.1.3-pro"
+ES_DOCKER_ROOT_PRO="$HOME/elasticsearch-docker-9.2.4-pro"
 cp $ES_DOCKER_ROOT_PRO/certs/ca/ca.crt ~/repos/bili-search/configs/elastic_ca_pro.crt
 cp $ES_DOCKER_ROOT_PRO/certs/ca/ca.crt ~/repos/bili-scraper/configs/elastic_ca_pro.crt
 ```
