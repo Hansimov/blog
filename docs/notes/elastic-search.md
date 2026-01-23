@@ -315,13 +315,22 @@ wget https://githubfast.com/elastic/elasticsearch/raw/refs/heads/main/docs/refer
 wget https://githubfast.com/elastic/elasticsearch/raw/refs/heads/main/docs/reference/setup/install/docker/docker-compose.yml
 ```
 
+如果本地其他目录已经有这些文件，可以直接复制过去：
+
+```sh
+ES_DOCKER_ROOT_OLD="$HOME/elasticsearch-docker-9.1.3"
+ES_DOCKER_ROOT_NEW="$HOME/elasticsearch-docker-9.1.3-pro"
+cp $ES_DOCKER_ROOT_OLD/.env $ES_DOCKER_ROOT_NEW/.env
+cp $ES_DOCKER_ROOT_OLD/docker-compose.yml $ES_DOCKER_ROOT_NEW/docker-compose.yml
+```
+
 ### 修改配置
 
-修改 `.env` 和 `docker-compose.yml`，参考[样例配置](#样例配置)。
+修改 `.env`，参考[样例配置](#env)。
 
-- 挂载 `data` 和 `certs` 目录到 host
 - 设置 PASSWORD 和 PORT 等环境变量
-- 注释掉 `docker-compose.yml` 中的 `chown` 命令
+
+如果系统中已经设置了 `$ELASTIC_PASSWORD` 的变量，那么容器中会自动使用该变量，而忽略 `.env` 中的设置
 
 ### 设置内存
 
@@ -459,12 +468,24 @@ curl --cacert ./certs/ca/ca.crt -u elastic:$ELASTIC_PASSWORD https://localhost:1
 }
 ```
 
+### 创建 API key
+
+Create API key:
+- `http://localhost:5601/app/management/security/api_keys`
+- 形如: `Z********************Q==`
+
 ### 复制证书到其他目录
 
 ```sh
 ES_DOCKER_ROOT="$HOME/elasticsearch-docker-9.1.3"
 cp $ES_DOCKER_ROOT/certs/ca/ca.crt ~/repos/bili-search/configs/elastic_ca_dev.crt
 cp $ES_DOCKER_ROOT/certs/ca/ca.crt ~/repos/bili-scraper/configs/elastic_ca_dev.crt
+```
+
+```sh
+ES_DOCKER_ROOT_PRO="$HOME/elasticsearch-docker-9.1.3-pro"
+cp $ES_DOCKER_ROOT_PRO/certs/ca/ca.crt ~/repos/bili-search/configs/elastic_ca_pro.crt
+cp $ES_DOCKER_ROOT_PRO/certs/ca/ca.crt ~/repos/bili-scraper/configs/elastic_ca_pro.crt
 ```
 
 ### 样例配置
