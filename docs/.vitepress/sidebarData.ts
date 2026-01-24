@@ -14,6 +14,7 @@ export const notesCategories = {
             { text: "网站搭建和域名解析", link: "website-dns" },
             { text: "使用 certbot 为阿里云域名生成证书", link: "certbot-aliyun" },
             { text: "使用 ddns-go 将公网动态 IP 解析到域名", link: "ddns-go" },
+            { text: "使用 Tailscale 组网", link: "tailscale" },
             { text: "使用 ZeroTier 组网", link: "zerotier" },
             { text: "使用 Merak 组网", link: "merak" },
             { text: "使用 Cloudflare WARP 组网", link: "cf-warp" },

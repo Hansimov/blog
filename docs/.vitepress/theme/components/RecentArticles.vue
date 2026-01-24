@@ -19,6 +19,22 @@ function formatDate(timestamp: number): string {
     date.getDate()
   )} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
+
+function getCategoryClass(category: string): string {
+  const classMap: Record<string, string> = {
+    Networks: "cat-networks",
+    Tools: "cat-tools",
+    Softwares: "cat-softwares",
+    Databases: "cat-databases",
+    Workflows: "cat-workflows",
+    Ubuntu: "cat-ubuntu",
+    LLMs: "cat-llms",
+    Configs: "cat-configs",
+    Transformers: "cat-transformers",
+    搜索系统: "cat-search",
+  };
+  return classMap[category] || "cat-other";
+}
 </script>
 
 <template>
@@ -40,7 +56,11 @@ function formatDate(timestamp: number): string {
             <span class="article-title" :title="article.title">{{
               article.title
             }}</span>
-            <span class="article-category">{{ article.category }}</span>
+            <span
+              class="article-category"
+              :class="getCategoryClass(article.category)"
+              >{{ article.category }}</span
+            >
             <span class="article-date">{{ formatDate(article.created) }}</span>
           </a>
         </li>
@@ -64,7 +84,11 @@ function formatDate(timestamp: number): string {
             <span class="article-title" :title="article.title">{{
               article.title
             }}</span>
-            <span class="article-category">{{ article.category }}</span>
+            <span
+              class="article-category"
+              :class="getCategoryClass(article.category)"
+              >{{ article.category }}</span
+            >
             <span class="article-date">{{ formatDate(article.modified) }}</span>
           </a>
         </li>
@@ -133,7 +157,7 @@ function formatDate(timestamp: number): string {
 }
 
 .header-category {
-  width: 70px;
+  width: 80px;
   text-align: center;
   flex-shrink: 0;
 }
@@ -206,7 +230,7 @@ function formatDate(timestamp: number): string {
 }
 
 .article-category {
-  width: 70px;
+  width: 80px;
   font-size: 11px;
   color: var(--vp-c-text-2);
   text-align: center;
@@ -215,6 +239,7 @@ function formatDate(timestamp: number): string {
   padding: 2px 8px;
   border-radius: 4px;
   margin-right: 8px;
+  white-space: nowrap;
 }
 
 .article-date {
@@ -233,5 +258,61 @@ function formatDate(timestamp: number): string {
   .article-category {
     display: none;
   }
+}
+
+/* 分类配色 */
+.cat-networks {
+  background: rgba(59, 130, 246, 0.15);
+  color: rgb(59, 130, 246);
+}
+
+.cat-tools {
+  background: rgba(168, 85, 247, 0.15);
+  color: rgb(168, 85, 247);
+}
+
+.cat-softwares {
+  background: rgba(34, 197, 94, 0.15);
+  color: rgb(34, 197, 94);
+}
+
+.cat-databases {
+  background: rgba(22, 220, 220, 0.15);
+  color: rgb(22, 220, 220);
+}
+
+.cat-workflows {
+  background: rgba(236, 72, 153, 0.15);
+  color: rgb(236, 72, 153);
+}
+
+.cat-ubuntu {
+  background: rgba(233, 84, 32, 0.15);
+  color: rgb(233, 84, 32);
+}
+
+.cat-llms {
+  background: rgba(14, 165, 233, 0.15);
+  color: rgb(14, 165, 233);
+}
+
+.cat-configs {
+  background: rgba(107, 114, 128, 0.15);
+  color: rgb(156, 163, 175);
+}
+
+.cat-transformers {
+  background: rgba(139, 92, 246, 0.15);
+  color: rgb(139, 92, 246);
+}
+
+.cat-search {
+  background: rgba(20, 184, 166, 0.15);
+  color: rgb(20, 184, 166);
+}
+
+.cat-other {
+  background: rgba(100, 116, 139, 0.15);
+  color: rgb(148, 163, 184);
 }
 </style>
