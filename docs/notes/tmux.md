@@ -241,10 +241,10 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-# run boot commands (optional)
-ExecStart=/bin/sh -lc '%h/run_at_boot.sh'
+# run boot commands (optional) - use bash -l for login shell with proper environment
+ExecStart=/bin/bash -l %h/run_at_boot.sh
 # run tmux server (with temp session)
-ExecStart=/bin/sh -lc '/usr/bin/tmux has-session 2>/dev/null || /usr/bin/tmux new-session -d'
+ExecStart=/bin/bash -lc '/usr/bin/tmux has-session 2>/dev/null || /usr/bin/tmux new-session -d'
 # run store shell
 ExecStart=/usr/bin/tmux run-shell %h/.tmux/plugins/tmux-resurrect/scripts/restore.sh
 # [Optional] save tmux sessions on stop
@@ -254,34 +254,74 @@ ExecStop=/usr/bin/tmux run-shell %h/.tmux/plugins/tmux-resurrect/scripts/save.sh
 WantedBy=default.target
 ```
 
+::: warning 注意事项
+- 使用 `/bin/bash -l` 而不是 `/bin/sh -lc`，确保加载完整的 login shell 环境
+- systemd 服务运行时环境变量（如 `$SUDOPASS`）不可用，需要配置 sudoers NOPASSWD
+- conda 环境路径不在 systemd 的 PATH 中，脚本需要手动初始化 conda
+:::
+
+### 配置 sudoers 免密执行
+
+创建 sudoers 配置文件：
+
+```sh
+sudo nano /etc/sudoers.d/asimov-boot
+```
+
+添加需要免密执行的命令：
+
+```sh
+# used by `~/run_at_boot.sh`
+asimov ALL=(root) NOPASSWD: /home/asimov/miniconda3/envs/ai/bin/python -m webu.ipv6.route
+asimov ALL=(root) NOPASSWD: /usr/bin/nvidia-smi *
+asimov ALL=(root) NOPASSWD: /usr/bin/nvidia-settings *
+```
+
+设置权限并验证：
+
+```sh
+sudo chmod 440 /etc/sudoers.d/asimov-boot
+sudo visudo -c
+```
+
+### 启用服务
+
 重启服务守护进程：
 
 ```sh
 systemctl --user daemon-reload
 ```
 
-启用服务：
+启用并开启服务：
 
 ```sh
-systemctl --user enable tmux-restore.service
+systemctl --user enable --now tmux-restore.service
 ```
 
-### 查看服务状态
+查看服务状态：
 
 ```sh
 systemctl --user status tmux-restore
 ```
 
-### 查看服务日志
+查看服务日志：
 
 ```sh
 journalctl --user -u tmux-restore.service -b --no-pager | tail -20
 ```
 
-### 【备用】手动启动
+### 手动恢复 tmux 历史会话
 
 如果想手动恢复 tmux 会话，可以运行：
 
 ```sh
 tmux has-session 2>/dev/null || (tmux new-session -d && tmux run-shell ~/.tmux/plugins/tmux-resurrect/scripts/restore.sh)
 ```
+
+### `run_at_boot.sh` 示例
+
+<details> <summary>点击展开 <code>run_at_boot.sh</code></summary>
+
+<<< @/notes/scripts/run_at_boot.sh
+
+</details>
