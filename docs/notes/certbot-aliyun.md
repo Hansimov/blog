@@ -22,7 +22,9 @@
 * https://help.aliyun.com/zh/ram/user-guide/create-an-accesskey-pair
 :::
 
-## 安装 aliyun 命令行工具
+## 通过 OpenResty+命令行 申请证书，并定时续期
+
+### 安装 aliyun 命令行工具
 
 ```sh
 wget https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz
@@ -30,7 +32,7 @@ tar xzvf aliyun-cli-linux-latest-amd64.tgz
 sudo cp aliyun /usr/local/bin
 ```
 
-## 安装 alidns
+### 安装 alidns
 
 ```sh
 wget https://cdn.jsdelivr.net/gh/justjavac/certbot-dns-aliyun@main/alidns.sh
@@ -43,7 +45,7 @@ sudo ln -s /usr/local/bin/alidns.sh /usr/local/bin/alidns
 * https://github.com/justjavac/certbot-dns-aliyun
 :::
 
-## 使用 aliyun 配置凭证信息
+### 使用 aliyun 配置凭证信息
 
 ```sh
 aliyun configure set --profile akProfile --mode AK --region cn-hangzhou --access-key-id L********************Nn7 --access-key-secret ******************************
@@ -107,9 +109,9 @@ aliyun configure delete --profile akProfile
 * https://help.aliyun.com/zh/ecs/product-overview/regions-and-zones
 :::
 
-## 申请证书
+### 申请证书
 
-### 测试申请
+#### 测试申请
 
 以 `blbl.top` 为例：
 
@@ -143,7 +145,7 @@ Hook '--manual-cleanup-hook' for blbl.top ran with output:
 The dry run was successful.
 ```
 
-### 正式申请
+#### 正式申请
 
 去掉 `--dry-run`：
 
@@ -184,33 +186,15 @@ If you like Certbot, please consider supporting our work by:
  * Donating to EFF:                    https://eff.org/donate-le
 ```
 
-### 配置证书
+### 复制证书
 
 certbot 申请的证书文件默认保存到：
 
 - `/etc/letsencrypt/live/blbl.top/fullchain.pem` （证书链）
 - `/etc/letsencrypt/live/blbl.top/privkey.pem` （私钥）
 
-#### 在 Nginx 中配置证书
-
-在 Nginx 配置文件中添加：
-
-```nginx
-server {
-    listen 443 ssl;
-    server_name blbl.top;
-
-    ssl_certificate /etc/letsencrypt/live/blbl.top/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/blbl.top/privkey.pem;
-
-    ...
-}
-```
-
-#### 在 1panel + OpenResty 中配置证书
-
 如果使用的是 1panel + openresty，各个网站是运行在各自的容器中的，需要进入网站管理界面：
-- http://*.*.*.*:44444/websites/
+- `http://*.*.*.*:44444/websites/`
 - 查看对应的网站
 - openresty 的根目录是：`/opt/1panel/apps/openresty/openresty`
 - 网站的目录是：
@@ -223,59 +207,94 @@ cp /etc/letsencrypt/live/blbl.top/fullchain.pem /opt/1panel/apps/openresty/openr
 cp /etc/letsencrypt/live/blbl.top/privkey.pem /opt/1panel/apps/openresty/openresty/www/sites/blbl.top/privkey.pem
 ```
 
-在 1panel 管理界面中，依次选择 “网站” > “证书” > “上传证书” > “导入方式” > “选择服务器文件”，填入：
+### 导入证书
+
+在 1panel 管理界面中，依次选择 `网站` > `证书` > `上传证书` > `导入方式` > `选择服务器文件`，填入：
 - 私钥文件：`/opt/1panel/apps/openresty/openresty/www/sites/blbl.top/privkey.pem`
 - 证书文件：`/opt/1panel/apps/openresty/openresty/www/sites/blbl.top/fullchain.pem`
 
-点击网站域名进入设置界面，选择 “HTTPS”，“证书”选择上面的证书即可。
+点击网站域名进入设置界面，选择 `HTTPS`，`证书`选择上面的证书即可。
 
-## 证书续期
-
-### 使用 nginx
-
-添加定时任务：
+### 续期证书
 
 ```sh
-crontab -e
-```
-
-内容为：
-
-```sh
-1 1 */1 * * certbot renew --manual --preferred-challenges dns --manual-auth-hook "alidns" --manual-cleanup-hook "alidns clean" --deploy-hook "nginx -s reload"
-```
-
-- `1 1 */1 * *`：表示每月1日1时1分执行
-- `--deploy-hook "nginx -s reload"`：表示在续期成功后自动重启 nginx
-
-
-### 使用 1panel + openresty
-
-在命令行，运行：
-
-```sh
-certbot renew --manual --preferred-challenges dns --manual-auth-hook "alidns" --manual-cleanup-hook "alidns clean"
-cp /etc/letsencrypt/live/blbl.top/fullchain.pem /opt/1panel/apps/openresty/openresty/www/sites/blbl.top/fullchain.pem
-cp /etc/letsencrypt/live/blbl.top/privkey.pem /opt/1panel/apps/openresty/openresty/www/sites/blbl.top/privkey.pem
-```
-
-若要定时运行，可以将上面的内容放到脚本中：
-
-```sh
-touch certbot_renew.sh
 nano certbot_renew.sh
-...
+```
+
+添加下面的内容：
+
+<<< @/notes/scripts/certbot_renew.sh
+
+
+```sh
 chmod +x certbot_renew.sh
 ```
 
+运行：
+
+```sh
+~/certbot_renew.sh
+```
+
+### 定时续期
+
 添加定时任务：
 
 ```sh
 crontab -e
 ```
 
-内容为：
+添加内容：
 
 ```sh
 1 1 */1 * * ~/certbot_renew.sh
 ```
+
+::: warning 注意：这个定时脚本只会续期证书和复制证书，并不会更新 1panel 中的证书信息。需要手动[导入证书](#导入证书)。
+:::
+
+## 通过 OpenResty 面板 申请证书，并自动续期
+
+打开 1panel 的证书面板，`网站` > `证书`：
+- `http://*.*.*.*:44444/websites/ssl`
+
+### 创建 Acme 账户
+
+点击 `Acme 账户`，点击 `创建账户`：
+- `邮箱`：填写邮箱地址
+- `账号类型`：`Let's Encrypt`（默认）
+- `密钥算法`：`EC 256`（默认）
+- 点击确认
+
+### 创建 DNS 账户
+点击 `DNS 账户`，点击 `创建账户`：
+- `名称`：`aliyun-dns`（自定义）
+- `类型`：`阿里云DNS`（默认）
+- `Access Key`：填写申请的 [AccessKeyId](#阿里云申请-accesskey)
+- `Secret Key`：填写申请的 [AccessKeySecret](#阿里云申请-accesskey)
+- 点击确认
+
+### 申请证书
+
+点击 `申请证书`：
+- `主域名`：从网站中获取，比如 `blbl.top`
+- `Acme 账户`：选择上面创建的 Acme 账户
+- `DNS 账户`：选择上面创建的 DNS 账户
+- 勾选 `自动续签`
+- 点击确认
+
+等待命令行运行，观察输出日志。成功后，可以在证书列表中看到新申请的证书，且 `自动续签` 一列已经被勾选。
+
+### 配置证书
+
+打开 1panel 的网站面板，`网站` > `网站`：
+- `http://*.*.*.*:44444/websites`
+
+选择网站名称（比如 `blbl.top`），进入网站设置界面：
+- 选择 `HTTPS` 标签页
+- `SSL 选择`：`选择已有证书`
+- `Acme 账户`：选择上面创建的 Acme 账户
+- `证书`：选择上面申请的证书
+- 保存
+
+访问网站，查看证书的颁发日期和截止日期，确认新申请的证书是否应用和生效。
