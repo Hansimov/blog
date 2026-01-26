@@ -195,7 +195,7 @@ set -g @resurrect-processes '\
 run '~/.tmux/plugins/tpm/tpm'
 ```
 
-## 开机自动启动 tmux 会话
+## 开机自动恢复 tmux 会话
 
 ### 清理临时会话
 
@@ -230,59 +230,13 @@ sudo loginctl enable-linger "$USER"
 nano ~/.config/systemd/user/tmux-restore.service
 ```
 
-添加如下内容：
+写入如下内容：
 
-```sh
-[Unit]
-Description=Restore tmux sessions with tmux-resurrect
-After=network-online.target
-Wants=network-online.target
+<details open> <summary><code>~/.config/systemd/user/tmux-restore.service</code>:</summary>
 
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-# run boot commands (optional) - use bash -l for login shell with proper environment
-ExecStart=/bin/bash -l %h/run_at_boot.sh
-# run tmux server (with temp session)
-ExecStart=/bin/bash -lc '/usr/bin/tmux has-session 2>/dev/null || /usr/bin/tmux new-session -d'
-# run store shell
-ExecStart=/usr/bin/tmux run-shell %h/.tmux/plugins/tmux-resurrect/scripts/restore.sh
-# [Optional] save tmux sessions on stop
-ExecStop=/usr/bin/tmux run-shell %h/.tmux/plugins/tmux-resurrect/scripts/save.sh
+<<< @/notes/configs/tmux-restore.service
 
-[Install]
-WantedBy=default.target
-```
-
-::: warning 注意事项
-- 使用 `/bin/bash -l` 而不是 `/bin/sh -lc`，确保加载完整的 login shell 环境
-- systemd 服务运行时环境变量（如 `$SUDOPASS`）不可用，需要配置 sudoers NOPASSWD
-- conda 环境路径不在 systemd 的 PATH 中，脚本需要手动初始化 conda
-:::
-
-### 配置 sudoers 免密执行
-
-创建 sudoers 配置文件：
-
-```sh
-sudo nano /etc/sudoers.d/asimov-boot
-```
-
-添加需要免密执行的命令：
-
-```sh
-# used by `~/run_at_boot.sh`
-asimov ALL=(root) NOPASSWD: /home/asimov/miniconda3/envs/ai/bin/python -m webu.ipv6.route
-asimov ALL=(root) NOPASSWD: /usr/bin/nvidia-smi *
-asimov ALL=(root) NOPASSWD: /usr/bin/nvidia-settings *
-```
-
-设置权限并验证：
-
-```sh
-sudo chmod 440 /etc/sudoers.d/asimov-boot
-sudo visudo -c
-```
+</details>
 
 ### 启用服务
 
@@ -310,6 +264,40 @@ systemctl --user status tmux-restore
 journalctl --user -u tmux-restore.service -b --no-pager | tail -20
 ```
 
+### 会话恢复时，运行一次性脚本
+
+<details> <summary><code>~/run_at_boot.sh</code>:</summary>
+
+<<< @/notes/scripts/run_at_boot.sh
+
+</details>
+
+在 `.tmux.conf` 中添加：
+
+```sh{3}
+set -g @resurrect-processes '\
+...
+    "~run_at_boot.sh->~/run_at_boot.sh" \
+...
+```
+
+在第一个 tmux 窗口中运行该脚本：
+
+```sh
+exec ~/run_at_boot.sh
+```
+
+该脚本会在运行指定的命令后，始终保持交互式 shell 运行状态，从而确保 tmux-resurrect 能够检测到该脚本并在下次启动时恢复它。
+
+查看是否在恢复的会话列表中：
+
+```sh
+grep "run_at_boot" ~/.local/share/tmux/resurrect/last
+```
+```
+pane <session>  0  1  :*  0  <host>  :/home/<user>  1  zsh  :/bin/zsh ./run_at_boot.sh
+```
+
 ### 手动恢复 tmux 历史会话
 
 如果想手动恢复 tmux 会话，可以运行：
@@ -317,11 +305,3 @@ journalctl --user -u tmux-restore.service -b --no-pager | tail -20
 ```sh
 tmux has-session 2>/dev/null || (tmux new-session -d && tmux run-shell ~/.tmux/plugins/tmux-resurrect/scripts/restore.sh)
 ```
-
-### `run_at_boot.sh` 示例
-
-<details> <summary>点击展开 <code>run_at_boot.sh</code></summary>
-
-<<< @/notes/scripts/run_at_boot.sh
-
-</details>

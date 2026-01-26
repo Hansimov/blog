@@ -38,7 +38,8 @@ export default defineConfig({
     languageAlias: {
       'env': 'shell',
       'conf': 'ini',
-      'ssh': 'ini'
+      'ssh': 'ini',
+      'service': 'ini'
     },
     config: (md) => {
       md.use(timeline);

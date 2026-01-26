@@ -1,0 +1,17 @@
+[Unit]
+Description=Restore tmux sessions with tmux-resurrect
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# run tmux server (with temp session)
+ExecStart=/bin/bash -lc '/usr/bin/tmux has-session 2>/dev/null || /usr/bin/tmux new-session -d'
+# run resurrect restore script
+ExecStart=/usr/bin/tmux run-shell %h/.tmux/plugins/tmux-resurrect/scripts/restore.sh
+# [Optional] save tmux sessions on stop
+ExecStop=/usr/bin/tmux run-shell %h/.tmux/plugins/tmux-resurrect/scripts/save.sh
+
+[Install]
+WantedBy=default.target

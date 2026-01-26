@@ -1,75 +1,32 @@
-#!/bin/bash
+#!/bin/zsh
 
-# ============================================================
-# Boot script for tmux-restore.service
-# Run with: /bin/bash -l ~/run_at_boot.sh
-# ============================================================
+echo "=========================================="
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Running boot tasks..."
+echo "=========================================="
 
-# Initialize conda environment
-CONDA_BASE="$HOME/miniconda3"
-CONDA_ENV="ai"
+# Start Xvfb (virtual framebuffer for headless GUI)
+echo "RUN: Xvfb"
+Xvfb -ac :99 -screen 0 1280x1024x16 &
 
-# Source conda
-if [ -f "$CONDA_BASE/etc/profile.d/conda.sh" ]; then
-    . "$CONDA_BASE/etc/profile.d/conda.sh"
-    conda activate "$CONDA_ENV"
-else
-    echo "ERROR: conda.sh not found at $CONDA_BASE"
-fi
+# IPv6 route setup
+echo "RUN: webu.ipv6.route"
+echo $SUDOPASS | sudo -S env "PATH=$PATH" python -m webu.ipv6.route
 
-# Ensure PATH includes conda env binaries
-export PATH="$CONDA_BASE/envs/$CONDA_ENV/bin:$PATH"
+# Set file descriptor limit
+echo "RUN: ulimit -n 1048576"
+ulimit -n 1048576
 
-# Helper function for logging
-log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
-}
+# Keep the script running with an interactive shell
+# This ensures tmux-resurrect sees "run_at_boot.sh" as the running process
+# and will restore it on next boot
 
-# ============================================================
-# 1. Start Xvfb (virtual framebuffer)
-# ============================================================
-log "RUN: Xvfb"
-if command -v Xvfb &>/dev/null; then
-    Xvfb -ac :99 -screen 0 1280x1024x16 &
-else
-    log "WARN: Xvfb not found, skipping"
-fi
+echo "=========================================="
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Boot tasks completed! Press Ctrl+C to exit, or keep this pane open for auto-restore on reboot."
 
-# ============================================================
-# 2. IPv6 route setup (requires sudo NOPASSWD in sudoers)
-# ============================================================
-log "RUN: webu.ipv6.route"
-PYTHON_BIN="$CONDA_BASE/envs/$CONDA_ENV/bin/python"
-if [ -x "$PYTHON_BIN" ]; then
-    sudo "$PYTHON_BIN" -m webu.ipv6.route || log "WARN: webu.ipv6.route failed (check sudoers NOPASSWD)"
-else
-    log "WARN: Python not found at $PYTHON_BIN"
-fi
-
-# ============================================================
-# 3. Set file descriptor limit
-# ============================================================
-log "RUN: ulimit -n 1048576"
-ulimit -n 1048576 2>/dev/null || log "WARN: Failed to set ulimit"
-
-# ============================================================
-# 4. GPU power and fan settings (requires sudo NOPASSWD)
-# ============================================================
-log "RUN: set GPU power limit and fans full speed"
-GPU_POW="$CONDA_BASE/envs/$CONDA_ENV/bin/gpu_pow"
-GPU_FAN="$CONDA_BASE/envs/$CONDA_ENV/bin/gpu_fan"
-
-# if [ -x "$GPU_POW" ]; then
-#     "$GPU_POW" -pm a:1 && "$GPU_POW" -pl "a:160" || log "WARN: gpu_pow failed"
-# else
-#     log "WARN: gpu_pow not found at $GPU_POW"
-# fi
-
-# if [ -x "$GPU_FAN" ]; then
-#     "$GPU_FAN" -cs a:1 && "$GPU_FAN" -fs "a:100" || log "WARN: gpu_fan failed"
-# else
-#     log "WARN: gpu_fan not found at $GPU_FAN"
-# fi
-
-log "Boot script completed"
-exit 0
+# Use a read loop to keep the script alive while allowing interaction
+while true; do
+    read -r cmd
+    if [[ -n "$cmd" ]]; then
+        eval "$cmd"
+    fi
+done
