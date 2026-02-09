@@ -273,3 +273,43 @@ Jan 15 01:48:27 pve kernel: vfio-pci 0000:88:00.0: Unable to change power state 
 
 </details>
 
+## 在 PVE 中添加 GPU 设备
+
+### 查看直通的显卡
+
+```sh
+lspci -D | awk '/NVIDIA Corporation/ && /(VGA compatible controller|3D controller)/{print $1}'
+```
+
+### 删除之前的显卡直通设置
+
+```sh
+for i in {0..7}; do qm set 101 -delete hostpci$i; done
+```
+
+### 指定显卡组合
+
+```sh
+# [显卡组合1]: (x8: 12345678)
+buses=(88 89 b1 b2 3d 3e 1a 1b); args=()
+# [显卡组合2]: (x5: 34567)
+buses=(b1 b2 3d 3e 1a); args=()
+# [显卡组合3]: (x6: 234567)
+buses=(89 b1 b2 3d 3e 1a); args=()
+```
+
+### 设置 `hostpci` 参数
+
+```sh
+for i in "${!buses[@]}"; do args+=("-hostpci$i" "0000:${buses[$i]}:00,pcie=1"); done
+```
+
+```sh
+qm set 101 "${args[@]}"
+```
+
+### 启动 VM
+
+```sh
+qm start 101
+```
