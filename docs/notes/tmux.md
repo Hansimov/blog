@@ -6,6 +6,16 @@ cd ~
 touch .tmux.conf
 ```
 
+## CheatSheet
+
+::: tip Tmux Cheat Sheet & Architecture Overview
+https://tmuxai.dev/tmux-cheat-sheet
+:::
+
+![](../images/tmux-cheatsheet-1.png)
+![](../images/tmux-cheatsheet-2.png)
+
+
 ## 常用命令
 
 ```sh
