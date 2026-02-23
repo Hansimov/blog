@@ -313,3 +313,16 @@ qm set 101 "${args[@]}"
 ```sh
 qm start 101
 ```
+
+### 保存到一键脚本
+
+`qm_gpus.sh`:
+
+```sh
+# [显卡组合]: (x6: 234567)
+buses=(89 b1 b2 3d 3e 1a); args=()
+for i in {0..7}; do qm set 101 -delete hostpci$i; done
+for i in "${!buses[@]}"; do args+=("-hostpci$i" "0000:${buses[$i]}:00,pcie=1"); done
+qm set 101 "${args[@]}"
+qm start 101
+```
