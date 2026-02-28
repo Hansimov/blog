@@ -29,6 +29,7 @@ export const notesCategories = {
         collapsed: false,
         items: [
             { text: "在 VSCode 使用 Remote SSH", link: "remote-ssh" },
+            { text: "安装 VSCode CLI", link: "vscode-cli" },
             { text: "VSCode 常见问题", link: "vscode" },
             { text: "Create VSCode snippets", link: "vscode-snippets" },
             { text: "VSCode 自定义 tasks", link: "vscode-tasks" },
