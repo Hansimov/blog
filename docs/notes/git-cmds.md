@@ -241,3 +241,58 @@ git push origin main
 ```sh
 git fetch upstream && git pull upstream main && git push origin main
 ```
+
+## 美化 git diff 输出
+
+
+<details><summary>写入<code>~/.gdc.sh</code>：</summary>
+
+<<< @/notes/scripts/.gdc.sh
+
+</details>
+
+
+在 `~/.zshrc` 中添加：
+
+```sh
+[[ -f ~/.gdc.sh ]] && source ~/.gdc.sh
+```
+
+或者实时更新：
+
+```sh
+source ~/.zshrc
+```
+
+用法：
+
+```sh
+gdc -h
+```
+```sh
+Usage:
+  gdc [options] [<rev-or-range>]
+
+Modes:
+  -c, --cached        Show staged changes only
+  -s, --staged        Same as --cached
+  -w, --worktree      Show unstaged changes + untracked files
+      (default)       Show diff vs HEAD (staged + unstaged) + untracked files
+
+Display options:
+  -n, --name-only     Show only file names
+  -S, --sort KEY      Sort by: add | del | file
+  -t, --top N         Show only the first N rows after sorting/current order
+  -h, --help          Show this help
+
+Examples:
+  gdc
+  gdc -c
+  gdc -w
+  gdc HEAD~1
+  gdc HEAD~3..HEAD
+  gdc -S add
+  gdc -S del -t 20
+  gdc -n -S file
+
+```

@@ -3,3 +3,4 @@ docs/.vitepress/dist
 docs/.vitepress/cache
 *.lm
 .vscode
+.chats
