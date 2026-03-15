@@ -245,9 +245,9 @@ git fetch upstream && git pull upstream main && git push origin main
 ## 美化 git diff 输出
 
 
-<details><summary>写入<code>~/.gdc.sh</code>：</summary>
+<details><summary>写入<code>~/.gd.sh</code>：</summary>
 
-<<< @/notes/scripts/.gdc.sh
+<<< @/notes/scripts/.gd.sh
 
 </details>
 
@@ -255,7 +255,7 @@ git fetch upstream && git pull upstream main && git push origin main
 在 `~/.zshrc` 中添加：
 
 ```sh
-[[ -f ~/.gdc.sh ]] && source ~/.gdc.sh
+[[ -f ~/.gd.sh ]] && source ~/.gd.sh
 ```
 
 或者实时更新：
@@ -267,11 +267,11 @@ source ~/.zshrc
 用法：
 
 ```sh
-gdc -h
+gd -h
 ```
 ```sh
 Usage:
-  gdc [options] [<rev-or-range>]
+  gd [options] [<rev-or-range>]
 
 Modes:
   -c, --cached        Show staged changes only
@@ -286,13 +286,12 @@ Display options:
   -h, --help          Show this help
 
 Examples:
-  gdc
-  gdc -c
-  gdc -w
-  gdc HEAD~1
-  gdc HEAD~3..HEAD
-  gdc -S add
-  gdc -S del -t 20
-  gdc -n -S file
-
+  gd
+  gd -c
+  gd -w
+  gd 'HEAD~1'
+  gd 'HEAD~3..HEAD'
+  gd -S add
+  gd -S del -t 20
+  gd -n -S file
 ```

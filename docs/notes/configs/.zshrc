@@ -43,7 +43,6 @@ alias ls="ls --color"
 alias gs="git status"
 alias gb="git rev-parse --abbrev-ref HEAD"
 alias gba="git -P branch"
-alias gd="git diff"
 alias gdp="git -P diff"
 alias gdh="git diff HEAD^ HEAD"
 alias gl="git log"
@@ -149,3 +148,6 @@ export HF_ENDPOINT=https://hf-mirror.com
 # # reset display
 # # xdpyinfo -display :10.0
 # # export DISPLAY=localhost:10.0 DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1000/bus"
+
+# colored git diff colored
+[[ -f ~/.gd.sh ]] && source ~/.gd.sh
