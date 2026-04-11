@@ -611,109 +611,402 @@ Extremely slow VM startup when IOMMU/Passthrough is enabled
 
 ## 六、把 20TB HDD 配置成大容量数据存储并挂给 VM
 
-你说想用 `/dev/sda` 这块 20TB HDD 来放大容量数据。典型做法是：
+### 在 PVE 中查看磁盘信息
 
-* 在 PVE 上用 `/dev/sda` 创建一个新的 LVM-Thin 存储（比如叫 `hdddata`）；
-* 然后给某个 VM 新增一块硬盘，存放在 `hdddata` 上；
-* VM 里把这块硬盘分区、格式化、挂载到 `/data` 之类。
+```sh
+lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL,SERIAL
+```
 
-### 1. 在 PVE 上用 /dev/sda 创建 LVM-Thin 存储
+```txt{2}
+NAME                            SIZE TYPE FSTYPE      MOUNTPOINT MODEL               SERIAL
+sda                            18.2T disk                        WUH722020CLE604     PP****8P
+nvme0n1                       894.3G disk                        INTEL SSDPF2KX960HZ PHA************QGN
+├─nvme0n1p1                    1007K part
+├─nvme0n1p2                       1G part vfat        /boot/efi
+└─nvme0n1p3                     893G part LVM2_member
+nvme1n1                         3.5T disk LVM2_member            INTEL SSDPF2KX038TZ PHA************AGN
+├─vmdata-vmdata_tmeta          15.9G lvm
+└─vmdata-vmdata_tdata           3.5T lvm
+```
 
-> 你已经会创建 `vmdata` 了，这个步骤类似，只是磁盘换成 `/dev/sda`。
+这里的 `/dev/sda` 就是 20TB 的 HDD。
 
-1. 创建 Volume Group：
 
-   * 左侧选 `pve` 节点 → `Disks` → `LVM`。
-   * 上方点 `Create`：
+查看详细信息：
 
-     * `Disk`：选 `/dev/sda`。
-     * `Name`：比如 `hdd-vg`。
-     * 点 `Create`。
+```sh
+fdisk -l /dev/sda
+```
 
-2. 在这个 VG 上创建 Thin Pool 并注册为存储：
+```txt
+Disk /dev/sda: 18.19 TiB, 20000588955648 bytes, 39063650304 sectors
+Disk model: WUH722020CLE604
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 4096 bytes
+```
 
-   * 左侧仍在 `pve` 节点 → `Disks` → `LVM-Thin`。
-   * 上方点 `Create`：
+### 清理磁盘
 
-     * `Volume group`：选刚才的 `hdd-vg`。
-     * `Name`（Thin pool 名）：比如 `hdd-thin`.
-     * 勾选 `Add as Storage`。
-     * `Storage ID`：比如 `hdddata`。
-     * `Content`：勾选 `Disk image`（必要时再勾 `Container`）。
-     * 点 `Create`。
+如果是全新空盘，这一步可以跳过。
 
-3. 验证：
+```sh
+wipefs -a /dev/sda
+```
 
-   * 到 `Datacenter` → `Storage`，应该能看到一条新的 `hdddata`（Type: LVM-Thin, Content: Disk image）。
+### 创建 GPT 分区和单一大分区
 
-### 2. 给刚才的 Ubuntu VM 加一块大容量数据盘（位于 HDD 上）
+大容量适合 Directory 存储 + GPT 分区。
 
-1. 左侧选中 Ubuntu 这台 VM → `Hardware`。
+```sh
+# apt install -y parted
+parted -a optimal /dev/sda --script mklabel gpt
+parted -a optimal /dev/sda --script mkpart primary ext4 1MiB 100%
+partprobe /dev/sda
+```
 
-2. 上方点 `Add` → `Hard Disk`。
+应当看到新分区 `/dev/sda1`：
 
-3. 在弹窗中设置：
+```sh
+lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT /dev/sda
+```
+```txt
+NAME    SIZE TYPE FSTYPE MOUNTPOINT
+sda    18.2T disk
+└─sda1 18.2T part
+```
 
-   * `Bus/Device`：`SCSI`。
-   * `Storage`：选你刚建立的 `hdddata`。
-   * `Disk size`：比如 `2 TB`、`5 TB`、`10 TB`，看你需要（不一定一次用满 20TB）。
-   * 其他保持默认，点 `Add`。
+### 格式化为 ext4
 
-4. 启动 / 重启 VM。
+```sh
+mkfs.ext4 -L hdd20t /dev/sda1
+```
 
-### 3. 在 Ubuntu 内格式化和挂载这块新硬盘
+等待运行完成，然后检查：
 
-假设新盘在 VM 里显示为 `/dev/sdb`（具体可以用 `lsblk` 看）。
+```sh
+lsblk --fs /dev/sda
+```
+```txt
+NAME   FSTYPE FSVER LABEL  UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+sda
+└─sda1 ext4   1.0   hdd20t 9e******-****-****-****-**********7b
+root@pve:~# blkid /dev/sda1
+```
 
-1. 查看磁盘：
+或者：
 
-   ```bash
-   lsblk
-   ```
+```sh
+blkid /dev/sda1
+```
+```txt
+/dev/sda1: LABEL="hdd20t" UUID="9e******-****-****-****-**********7b" BLOCK_SIZE="4096" TYPE="ext4" PARTLABEL="primary" PARTUUID="e6******-****-****-****-**********5e"
+```
 
-   找到那块没有分区的新盘，比如 `/dev/sdb`（无 `sdb1`）。
+这里的 `UUID` 就是后面要用来挂载的标识符。
 
-2. 建 GPT 分区和 ext4 文件系统（示例）：
+### 挂载
 
-   ```bash
-   sudo parted /dev/sdb -- mklabel gpt
-   sudo parted /dev/sdb -- mkpart primary ext4 0% 100%
-   sudo mkfs.ext4 /dev/sdb1
-   ```
+创建挂载点：
 
-3. 创建挂载点并挂载：
+```sh
+mkdir -p /mnt/pve/hdd20t
+```
 
-   ```bash
-   sudo mkdir /data
-   sudo mount /dev/sdb1 /data
-   ```
+启动时自动挂载：
 
-4. 设为开机自动挂载（推荐用 UUID）：
+```sh
+nano /etc/fstab
+```
 
-   ```bash
-   sudo blkid /dev/sdb1   # 记下输出里的 UUID
-   sudo nano /etc/fstab
-   ```
+添加一行：
 
-   在文件末尾添加一行（替换成你的 UUID）：
+```sh
+UUID=9e******-****-****-****-**********7b /mnt/pve/hdd20t ext4 defaults,nofail 0 2
+```
 
-   ```text
-   UUID=<上面查到的UUID>  /data  ext4  defaults  0  2
-   ```
+系统重新读取并挂载：
 
-   保存退出后执行：
+```sh
+systemctl daemon-reload
+mount -a
+```
 
-   ```bash
-   sudo mount -a
-   ```
+查看挂载情况：
 
-   没报错就说明配置正常。
+```sh
+findmnt /mnt/pve/hdd20t
+```
+```txt
+TARGET          SOURCE    FSTYPE OPTIONS
+/mnt/pve/hdd20t /dev/sda1 ext4   rw,relatime
+```
 
----
+```sh
+df -h /mnt/pve/hdd20t
+```
+```txt
+ilesystem      Size  Used Avail Use% Mounted on
+/dev/sda1        19T  2.1M   18T   1% /mnt/pve/hdd20t
+```
 
-到这里：
+### 注册为 Directory 存储
 
-* PVE 里已经有一台系统盘在 `vmdata`（3.84TB SSD 上）的 Ubuntu 22.04 VM；
-* 可选地，你还把 20TB HDD 做成了 `hdddata` 存储，并给 VM 挂上了一个大容量数据盘。
+```sh
+pvesm add dir hdd20t --path /mnt/pve/hdd20t --content images,backup,iso,vztmpl,rootdir
+```
 
-如果你后面还想再建别的 VM，只要在“Create VM”的 `Disks` 页面记得把 Storage 选成 `vmdata`，它们的系统盘都会放在那块 3.84TB SSD 上；需要大盘时再从 `hdddata` 给它们加额外硬盘就行。
+- `images`: VM 磁盘
+- `rootdir`: LXC 容器
+- `backup`: 备份
+- `iso`: ISO 镜像
+- `vztmpl`: 容器模板
+
+查看状态：
+
+```sh
+pvesm status
+```
+```txt
+Name             Type     Status     Total (KiB)      Used (KiB) Available (KiB)        %
+hdd20t            dir     active     19453053208            2096     18476443576    0.00%
+local             dir     active        98497780        53327176        40121056   54.14%
+local-lvm     lvmthin     active       794337280               0       794337280    0.00%
+vmdata        lvmthin     active      3717050368       405901900      3311148467   10.92%
+```
+
+```sh
+cat /etc/pve/storage.cfg
+```
+```txt
+...
+dir: hdd20t
+        path /mnt/pve/hdd20t
+        content iso,vztmpl,backup,rootdir,images
+```
+
+### 将这个存储加给 VM
+
+在配置中查看槽位信息：
+
+```sh
+qm config 101
+```
+```
+...
+parent: AI122-2025-1204-0606
+scsi0: vmdata:vm-101-disk-1,discard=on,iothread=1,size=2T,ssd=1
+scsihw: virtio-scsi-single
+smbios1: uuid=f9******-****-****-****-**********bf
+sockets: 1
+vmgenid: ac******-****-****-****-**********f5
+```
+
+可以看到：
+- `scsi0` 是系统盘，已经在 `vmdata` 上
+- `scsihw` 是 `virtio-scsi-single`
+- 目前还有一个空闲的 SCSI 插槽 `scsi1`
+
+因此可以把这个新的存储挂在 `scsi1` 上：
+
+```sh
+qm set 101 --scsi1 hdd20t:4096,format=raw,iothread=1
+```
+
+- 给 VM `101`
+- 新增一块挂在 `scsi1` 的磁盘
+- 存储位置在 `hdd20t`
+- 大小 `4096` GiB，也就是约 4TB，可以按需调整，见下一小节
+- 格式 `raw`
+- 开启 `iothread=1`
+
+```txt
+update VM 101: -scsi1 hdd20t:4096,format=raw,iothread=1
+Formatting '/mnt/pve/hdd20t/images/101/vm-101-disk-0.raw', fmt=raw size=4398046511104 preallocation=off
+scsi1: successfully created disk 'hdd20t:101/vm-101-disk-0.raw,iothread=1,size=4T'
+```
+
+再次查看配置：
+
+```sh
+qm config 101 | grep scsi
+```
+```txt
+...
+scsi1: hdd20t:101/vm-101-disk-0.raw,iothread=1,size=4T
+```
+
+表明已经成功添加了新的磁盘。
+
+
+### 优化磁盘占用
+
+将 `ext4` 保留块比例降到 1%，提高空间利用率：
+
+```sh
+tune2fs -m 1 /dev/sda1
+```
+```
+tune2fs 1.47.2 (1-Jan-2025)
+Setting reserved blocks percentage to 1% (48829557 blocks)
+```
+
+查看当前保留块比例：
+
+```sh
+tune2fs -l /dev/sda1 | egrep 'Reserved block count|Block size'
+```
+```
+Reserved block count:     48829557
+Block size:               4096
+```
+
+查看当前磁盘使用情况：
+
+```sh
+df -h /mnt/pve/hdd20t
+```
+```
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1        19T  2.1M   18T   1% /mnt/pve/hdd20t
+```
+
+预留 100GB 给宿主机和文件系统缓冲，剩下的都给 VM：
+
+```sh
+avail_gib=$(df --output=avail -BG /mnt/pve/hdd20t | tail -1 | tr -dc '0-9')
+target_gib=$((avail_gib - 100))
+echo "$target_gib"
+```
+```
+18266
+```
+
+考虑到 ext4 + 标准 4KiB 块大小，单文件大小上限是 16TB。不能直接将整个 18TB 分配给 VM，否则可能会遇到下面的报错：
+
+```txt
+# qm resize 101 scsi1 ${target_gib}G
+VM 101 qmp command 'block_resize' failed - Could not resize file: File too large
+```
+
+因此 VM 分配 16TB：
+
+```sh
+qm resize 101 scsi1 16380G
+```
+
+查看配置：
+
+```sh
+qm config 101 | grep scsi1
+```
+```
+scsi1: hdd20t:101/vm-101-disk-0.raw,iothread=1,size=16380G
+```
+
+### 在 VM 中添加磁盘
+
+上面的命令都是在 PVE 宿主机上执行的。下面的命令是在 VM 里执行的。
+
+下面的很多命令可能似曾相识，但是需要注意区分。
+
+上面的工作是在 PVE 中格式化 `hdd20t` 这个宿主机存储池，下面的工作是在 VM 中格式化 `scsi1` 这个虚拟磁盘。
+
+
+```sh
+lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL
+```
+```
+...
+sda        2T disk                                              QEMU HARDDISK
+├─sda1   512M part vfat     /boot/efi
+└─sda2     2T part ext4     /
+sdb       16T disk                                              QEMU HARDDISK
+```
+
+这里的 `sdb` 就是新加的 16TB 磁盘。
+
+
+### 在 VM 中创建 GPT 分区和单一大分区
+
+```sh
+sudo parted -a optimal /dev/sdb --script mklabel gpt
+sudo parted -a optimal /dev/sdb --script mkpart primary ext4 1MiB 100%
+sudo partprobe /dev/sdb
+```
+
+```sh
+lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT /dev/sdb
+```
+```
+NAME   SIZE TYPE FSTYPE MOUNTPOINT
+sdb     16T disk
+└─sdb1  16T part
+```
+
+### 在 VM 中格式化文件系统
+
+```sh
+sudo mkfs.ext4 -L data /dev/sdb1
+```
+
+等待一会，运行完成。然后查看：
+
+```sh
+lsblk --fs /dev/sdb
+```
+```
+NAME   FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+sdb
+└─sdb1 ext4   1.0   data  a6******-****-****-****-**********b2
+```
+
+### 在 VM 中挂载
+
+```sh
+sudo mkdir -p /media/data
+sudo mount /dev/sdb1 /media/data
+```
+
+查看挂载情况：
+
+```sh
+df -h /media/data
+```
+```
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sdb1        16T   28K   16T   1% /media/data
+```
+
+### 设置开机自动挂载
+
+查看 uuid：
+
+```sh
+sudo blkid /dev/sdb1
+```
+```
+/dev/sdb1: LABEL="data" UUID="a6******-****-****-****-**********b2" BLOCK_SIZE="4096" TYPE="ext4" PARTLABEL="primary" PARTUUID="fb******-****-****-****-**********1c"
+```
+
+`sudo nano /etc/fstab`，添加一行：
+
+```sh
+UUID=a6******-****-****-****-**********b2 /media/data ext4 defaults,nofail 0 2
+```
+
+挂载：
+
+```sh
+sudo mount -a
+```
+
+查看挂载情况：
+
+```sh
+df -h /media/data
+```
+```
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sdb1        16T   28K   16T   1% /media/data
+```
