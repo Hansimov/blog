@@ -16,7 +16,7 @@ function formatDate(timestamp: number): string {
   const date = new Date(timestamp);
   const pad = (n: number) => n.toString().padStart(2, "0");
   return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(
-    date.getDate()
+    date.getDate(),
   )} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
@@ -101,32 +101,40 @@ function getCategoryClass(category: string): string {
 .recent-articles {
   display: flex;
   justify-content: center;
+  align-items: stretch;
   gap: 30px;
   max-width: 100%;
-  padding: 0 20px 20px;
+  padding: 0 20px;
   box-sizing: border-box;
+  min-height: 0;
 }
 
 @media (max-width: 768px) {
   .recent-articles {
     flex-direction: column;
-    align-items: center;
-    gap: 24px;
+    align-items: stretch;
+    gap: 16px;
   }
 }
 
 .articles-section {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
   background: var(--vp-c-bg-soft);
   border-radius: 12px;
   padding: 20px 24px;
-  width: 560px;
-  max-width: calc(50% - 15px);
+  max-width: 560px;
+  max-height: var(--home-recent-articles-max-height, none);
+  min-height: 0;
+  overflow: hidden;
 }
 
 @media (max-width: 768px) {
   .articles-section {
+    flex: 0 1 auto;
     width: 100%;
-    max-width: 500px;
+    max-width: none;
   }
 }
 
@@ -172,6 +180,24 @@ function getCategoryClass(category: string): string {
   list-style: none;
   padding: 0;
   margin: 0;
+}
+
+.article-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@media (min-width: 769px) {
+  .article-list {
+    padding-right: 6px;
+  }
+}
+
+@media (max-width: 768px) {
+  .recent-articles .articles-section:first-child {
+    display: none;
+  }
 }
 
 .article-list::-webkit-scrollbar {
@@ -248,11 +274,20 @@ function getCategoryClass(category: string): string {
   color: var(--vp-c-text-3);
   text-align: right;
   flex-shrink: 0;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-    "Liberation Mono", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
 }
 
-/* 窄屏时隐藏分类列 */
+/* 窄屏时隐藏日期列，优先让标题显示更多内容 */
+@media (max-width: 1200px) {
+  .header-date,
+  .article-date {
+    display: none;
+  }
+}
+
+/* 更窄时再隐藏分类列 */
 @media (max-width: 900px) {
   .header-category,
   .article-category {

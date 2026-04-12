@@ -15,25 +15,66 @@ layout: home
 ---
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { nextTick, ref, onMounted, onUnmounted } from 'vue'
 import RecentArticles from './.vitepress/theme/components/RecentArticles.vue'
 import CategoryNav from './.vitepress/theme/components/CategoryNav.vue'
 
 const showHeader = ref(true)
 const heightThreshold = 600
 const widthThreshold = 768
+let layoutFrame = 0
+
+function clearRecentArticlesMaxHeight() {
+  document.documentElement.style.removeProperty('--home-recent-articles-max-height')
+}
+
+function updateRecentArticlesMaxHeight() {
+  if (layoutFrame) {
+    cancelAnimationFrame(layoutFrame)
+  }
+
+  layoutFrame = requestAnimationFrame(() => {
+    const vpContent = document.querySelector('.VPContent.is-home')
+    const recentArticles = document.querySelector('.recent-articles')
+
+    if (!vpContent || !recentArticles) {
+      clearRecentArticlesMaxHeight()
+      return
+    }
+
+    const availableHeight = Math.max(
+      0,
+      Math.floor(
+        vpContent.getBoundingClientRect().bottom -
+          recentArticles.getBoundingClientRect().top,
+      ),
+    )
+
+    document.documentElement.style.setProperty(
+      '--home-recent-articles-max-height',
+      `${availableHeight}px`,
+    )
+  })
+}
 
 function checkSize() {
   showHeader.value = window.innerHeight >= heightThreshold && window.innerWidth >= widthThreshold
+  nextTick(updateRecentArticlesMaxHeight)
 }
 
 onMounted(() => {
   checkSize()
   window.addEventListener('resize', checkSize)
+  window.addEventListener('load', updateRecentArticlesMaxHeight)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkSize)
+  window.removeEventListener('load', updateRecentArticlesMaxHeight)
+  if (layoutFrame) {
+    cancelAnimationFrame(layoutFrame)
+  }
+  clearRecentArticlesMaxHeight()
 })
 </script>
 
