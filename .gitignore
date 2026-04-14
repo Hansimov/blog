@@ -4,3 +4,4 @@ docs/.vitepress/cache
 *.lm
 .vscode
 .chats
+debugs

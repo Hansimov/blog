@@ -107,6 +107,7 @@ export const notesCategories = {
             { text: "Ubuntu 开启 SSH 服务", link: "ubuntu-ssh" },
             { text: "Ubuntu GUI 设置", link: "ubuntu-gui" },
             { text: "Ubuntu 安装新硬盘", link: "ubuntu-disk" },
+            { text: "Ubuntu 配置 Intel P3608", link: "ubuntu-p3608" },
             { text: "Ubuntu 安装 NVIDIA 驱动和 CUDA (NVCC)", link: "nvidia-driver" },
             { text: "安装 NVIDIA Container Toolkit", link: "nvidia-container" },
             { text: "查看 NVIDIA 显卡状态", link: "nvidia-gpus" },
