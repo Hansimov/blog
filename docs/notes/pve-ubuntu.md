@@ -608,6 +608,15 @@ Extremely slow VM startup when IOMMU/Passthrough is enabled
 ::: tip 【已验证】试试 Remove 几张显卡。
 :::
 
+## 智能启动脚本
+
+### 启动 VM 时自动诊断和排除故障显卡
+
+<details> <summary><code>start_vm101.sh</code></summary>
+
+<<< @/notes/scripts/start_vm101.sh
+
+</details>
 
 ## 六、把 20TB HDD 配置成大容量数据存储并挂给 VM
 
