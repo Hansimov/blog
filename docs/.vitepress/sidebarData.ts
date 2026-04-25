@@ -61,7 +61,8 @@ export const notesCategories = {
             { text: "允许新版 Chrome 使用旧版插件", link: "chrome-extensions" },
             { text: "使用 tmpfs 加速文件读写", link: "tmpfs" },
             { text: "Windows 安装 CUDA Toolkit + cuDNN", link: "windows-cuda-cudnn" },
-            { text: "Windows 安装支持 GPU 的 opencv-python", link: "windows-opencv-python" }
+            { text: "Windows 安装支持 GPU 的 opencv-python", link: "windows-opencv-python" },
+            { text: "安装 Codex", link: "codex" }
         ]
     },
     "Databases": {

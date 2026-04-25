@@ -1,0 +1,14 @@
+model = "gpt-5.5"
+model_reasoning_effort = "medium"
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@playwright/mcp@latest"]
+startup_timeout_sec = 60
+tool_timeout_sec = 300
+
+[features]
+apps = false
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4
