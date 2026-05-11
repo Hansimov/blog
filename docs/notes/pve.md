@@ -4,7 +4,7 @@
 
 ::: tip ISO - Proxmox Virtual Environment
 - https://www.proxmox.com/en/downloads/proxmox-virtual-environment/iso
-https://enterprise.proxmox.com/iso/proxmox-ve_9.1-1.iso
+- https://enterprise.proxmox.com/iso/proxmox-ve_9.1-1.iso
 
 Rufus - 轻松创建 USB 启动盘
 - https://rufus.ie/zh/#download
@@ -57,6 +57,127 @@ https://github.com/pbatard/rufus/releases/download/v4.11/rufus-4.11.exe
 - 按 `F4` 保存并退出 BIOS 设置
 
 这样应该就会从 U 盘启动。
+
+## GA-X99-UD4 BIOS 设置
+
+::: tip GIGABYTE GA-X99-UD4 User's Manual Rev. 1103:
+- https://download1.gigabyte.com/Files/Manual/mb_manual_ga-x99-ud4_v1.1_e.pdf
+
+Proxmox VE PCI Passthrough:
+- https://pve.proxmox.com/wiki/PCI_Passthrough
+
+Proxmox VE Secure Boot Setup:
+- https://pve.proxmox.com/wiki/Secure_Boot_Setup
+
+Intel Virtualization Technology:
+- https://www.intel.com/content/www/us/en/support/articles/000005486/processors.html
+:::
+
+### 进入 BIOS
+
+- GA-X99-UD4 是普通桌面/工作站主板，没有 4029GP 那种 BMC/IPMI KVM，需要接显示器和键盘操作
+- 开机自检时按 `Delete` 进入 BIOS Setup
+- 临时从 U 盘启动可以按 `F12` 打开 Boot Menu
+  - 这个选择只对本次启动生效，不会改 BIOS 里的永久启动顺序
+- 如果刚刷过 BIOS 或清过 CMOS：
+  - `Save & Exit` > `Load Optimized Defaults`
+  - 载入默认值后再按下面的小节逐项调整
+
+### 开启虚拟化相关
+
+- `Chipset`
+  - `Intel VT for Directed I/O (VT-d)` 设为 `Enabled`
+  - 官方手册里这个选项默认就是 `Enabled`，但装 PVE 前建议确认一遍
+
+- 如果当前 BIOS 版本里能看到下面这些名字，也设为 `Enabled`：
+  - `Intel Virtualization Technology`
+  - `VT-x`
+  - `Intel VMX`
+
+官方 GA-X99-UD4 手册只明确列出了 `VT-d`，没有单独列出 `VT-x` 开关。Intel 文档里说明 VT-x 需要 CPU 和 BIOS 同时支持；如果 BIOS 里找不到独立 VT-x 选项，先确认 CPU 型号本身支持 VT-x，然后安装 PVE 后用命令验证：
+
+```sh
+grep -m1 -o vmx /proc/cpuinfo
+dmesg | grep -e DMAR -e IOMMU
+```
+
+如果第二条能看到类似 `DMAR: IOMMU enabled`，说明 IOMMU/VT-d 已经被系统识别。
+
+### UEFI & CSM
+
+- `BIOS Features`
+  - `Fast Boot` 设为 `Disabled`
+  - `Boot Option Priorities` 里选择带 `UEFI:` 前缀的 U 盘启动项
+  - 如果看不到 `CSM Support`：
+    - 先把 `Windows 8 Features` 设为 `Windows 8`
+    - 再回到 `CSM Support`
+  - `CSM Support` 建议设为 `Disabled`
+
+如果某块老显卡、老 RAID 卡或老 HBA 不支持 UEFI，导致关掉 CSM 后黑屏或看不到启动盘，可以先保留 `CSM Support` 为 `Enabled`，但仍然把下面两个 Option ROM 设为 UEFI：
+
+- `BIOS Features`
+  - `Storage Boot Option Control` 设为 `UEFI`
+  - `Other PCI Device ROM Priority` 设为 `UEFI`
+
+### Secure Boot
+
+GA-X99-UD4 Rev. 1103 手册里没有单独列出 `Secure Boot` 菜单。如果当前 BIOS 版本能看到这个选项：
+
+- 装 PVE 时建议先设为 `Disabled`
+- 如果后续确实需要 Secure Boot，再按 Proxmox 官方 Secure Boot 文档切回启用
+
+### SATA/存储控制器
+
+- `Chipset` > `PCH SATA Configuration`
+  - `SATA Controller` 设为 `Enabled`
+  - `Configure SATA as` 设为 `AHCI`
+
+- `Chipset` > `PCH sSATA Configuration`
+  - `sSATA Controller` 设为 `Enabled`
+  - `Configure sSATA as` 设为 `AHCI`
+
+PVE 直装到 SATA SSD/HDD 时建议用 AHCI。除非你明确要用主板 Intel RAID，否则不要设为 `RAID`，否则后面磁盘识别和维护会更麻烦。
+
+### USB 启动兼容性
+
+- `Peripherals`
+  - `Legacy USB Support` 保持 `Enabled`
+  - `XHCI Hand-off` 保持 `Enabled`
+
+- `Chipset`
+  - `XHCI Mode` 保持默认的 `Smart Auto` 即可
+
+这样可以降低 USB 键盘和 USB 3.0 启动盘在安装器里失灵的概率。
+
+### PCIe 相关
+
+- `M.I.T` > `Miscellaneous Settings`
+  - `PCIe Slot Configuration` 保持 `Auto`
+
+官方手册没有列出 `Above 4G Decoding` 或 `SR-IOV Support`。如果你刷到的 BIOS 版本里能看到：
+
+- `Above 4G Decoding`：做 GPU/大 BAR PCIe 设备直通时建议设为 `Enabled`
+- `SR-IOV Support`：只有需要网卡等设备 SR-IOV 时才设为 `Enabled`
+
+如果 BIOS 里没有这些项，就不要按 4029GP 的菜单硬找；先按 `VT-d` + UEFI 启动把 PVE 装起来。
+
+### 设置启动顺序
+
+- 临时启动：
+  - 开机按 `F12`
+  - 选择类似 `UEFI: <你的U盘型号>` 的启动项
+
+- 固定启动：
+  - `BIOS Features` > `Boot Option Priorities`
+  - `Boot Option #1` 选带 `UEFI:` 前缀的 PVE 安装 U 盘
+  - 安装完成后，把 `proxmox` 或安装目标硬盘的 UEFI 启动项改为第一位
+
+### 保存并退出 BIOS 设置
+
+- `Save & Exit` > `Save & Exit Setup`
+- 选择 `Yes` 保存到 CMOS 并重启
+
+这样应该就会从 U 盘以 UEFI 模式启动 PVE 安装器。
 
 ## 从 U 盘安装 PVE
 
