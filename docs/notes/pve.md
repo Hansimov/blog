@@ -8,7 +8,7 @@
 
 Rufus - 轻松创建 USB 启动盘
 - https://rufus.ie/zh/#download
-https://github.com/pbatard/rufus/releases/download/v4.11/rufus-4.11.exe
+- https://github.com/pbatard/rufus/releases/download/v4.11/rufus-4.11.exe
 :::
 
 
@@ -192,12 +192,13 @@ PVE 直装到 SATA SSD/HDD 时建议用 AHCI。除非你明确要用主板 Intel
 ### 选择安装目标硬盘
 
 - `Target Harddisk`
-  - 在列表里找到 1TB Intel SSD（通过容量和型号区分）；
-  - 确认不要选错成 4TB。
+  - 单盘部署：选择 Zhitai 1TB SSD
+  - 双盘部署：选择 1TB Intel SSD（通过容量和型号区分），确认不要选错成 4TB
 - 点击右边的 `Options`：
   - `Filesystem`：选 `ext4`（默认），PVE 会在这块盘上创建 LVM + LVM-Thin，root 用 ext4
   - 其他参数（hdsize, swapsize, maxroot, minfree, maxvz）可以先用默认值
-  - 后面反正主力用 4TB 盘来放 VM，所以 1TB 上那块 local-lvm 只会偶尔用来放 ISO/模板/临时测试 VM
+  - 如果只有这一块 1TB SSD，后面直接使用默认的 `local-lvm` 运行 VM
+  - 如果另有 4TB SSD，后面再把 4TB 盘加成新的 VM 存储
 
 ### 地区 & 键盘布局
   - Country 选 China
@@ -220,13 +221,15 @@ PVE 直装到 SATA SSD/HDD 时建议用 AHCI。除非你明确要用主板 Intel
   - DNS Server：例如 `192.168.31.1`
 
 ### 开始安装
-- 再检查一眼目标硬盘是不是那块 1TB Intel SSD；
+- 再检查一眼目标硬盘是不是计划安装 PVE 的那块 SSD；
 - 点 Install，几分钟就装完（这时代码会装完整 Debian + PVE 包）。
 
 ### 首次重启
 - 默认会自动重启
-- 需要用 IPMI 的 KVM 里的虚拟键盘，狂按 F11，进入启动菜单
-- 选择 `proxmox (INTEL SSDPF2KX960HZ-****)`，从 1TB SSD 启动
+- 如果需要手动选启动项：
+  - 4029GP：用 IPMI KVM 里的虚拟键盘按 F11，进入启动菜单
+  - GA-X99-UD4：本地键盘按 F12，进入启动菜单
+- 选择 `proxmox (...)` 或安装目标 SSD 对应的 UEFI 启动项
 - 系统会从 1TB SSD 启动，控制台上会显示：
   - 管理 URL：https://你的IP:8006
   - Hostname 等信息
@@ -249,6 +252,123 @@ PVE 直装到 SATA SSD/HDD 时建议用 AHCI。除非你明确要用主板 Intel
 ### 订阅提示
 - 第一次登录会弹出 “No valid subscription” 的提示
 - 直接点 OK 忽略即可（可以后面改成 no-subscription 源）。
+
+## 将系统盘配置为 VM 存储
+
+::: tip Proxmox VE Installation - Advanced LVM Configuration Options:
+- https://pve.proxmox.com/pve-docs/chapter-pve-installation.html#advanced_lvm_options
+
+Proxmox VE Storage:
+- https://pve.proxmox.com/pve-docs/chapter-pvesm.html
+
+Proxmox VE Logical Volume Manager (LVM):
+- https://pve.proxmox.com/wiki/Logical_Volume_Manager_(LVM)
+:::
+
+如果服务器里只有一块 Zhitai 1TB SSD，可以直接使用 PVE 安装器默认创建的 `local-lvm` 来放 VM/CT 磁盘，不需要再单独创建 `vmdata`。
+
+PVE 选择 `ext4` 或 `xfs` 安装时，安装器会在系统盘上创建一个叫 `pve` 的 LVM Volume Group，并在里面创建：
+
+- `root`：PVE 系统盘，挂载为 `/`
+- `swap`：交换分区
+- `data`：LVM-thin thin pool，在 Web UI 里显示为 `local-lvm`
+
+安装完成后，默认存储通常是：
+
+- `local`
+  - 类型：Directory
+  - 路径：`/var/lib/vz`
+  - 用途：ISO image、Container template、Backup、Snippets
+  - 物理位置：同一块 1TB SSD 上的 `root` LV
+- `local-lvm`
+  - 类型：LVM-Thin
+  - 后端：`pve/data`
+  - 用途：Disk image、Container
+  - 物理位置：同一块 1TB SSD 上的 `data` thin pool
+
+也就是说：
+- ISO 上传到 `local`
+- VM/CT 磁盘放到 `local-lvm`
+- 不要删除或禁用 `local-lvm`，它就是单盘部署时运行 VM 的主存储
+
+### 磁盘选项
+
+在 PVE 安装器的 `Target Harddisk` > `Options` 里：
+
+- `Filesystem`：选 `ext4`（默认）或 `xfs`
+- `hdsize`：默认即可，表示整块 1TB SSD 都给 PVE 使用
+- `swapsize`：默认即可；如果内存很大，也可以手动设为 `8`
+- `maxroot`：建议 `96` 或默认
+  - 官方默认策略里，大于 48 GiB 的盘会把 `root` 控制在 `hdsize / 4`，最大 96 GiB
+  - 只放少量 ISO/模板时，96 GiB 通常够用
+  - 如果你打算把大量 ISO、模板、临时备份也放本机，可以适当调大，但会减少 VM 磁盘空间
+- `minfree`：默认即可；1TB 盘会默认在 VG 里留一部分未分配空间
+- `maxvz`：默认留空即可，让剩余空间尽量分给 `data` / `local-lvm`
+
+不要把 `maxvz` 设为 `0`。官方文档说明，`maxvz=0` 会导致不创建 `data` 卷，也就不会有默认的 `local-lvm` VM 磁盘池。
+
+### 检查存储
+
+登录 Web UI 后：
+
+- 左侧点 `Datacenter`
+- 右侧打开 `Storage`
+- 确认有两行：
+  - `local`，Type 是 `Directory`
+  - `local-lvm`，Type 是 `LVM-Thin`
+- 选中 `local-lvm` > `Edit`
+  - `Content` 至少勾选 `Disk image`、`Container`
+
+也可以在节点 Shell 里看：
+
+```sh
+pvesm status
+lvs
+```
+
+输出一般类似：
+
+```sh{4}
+root@pve:~# pvesm status
+Name             Type     Status     Total (KiB)      Used (KiB) Available (KiB)        %
+local             dir     active        98497780         3849496        89598736    3.91%
+local-lvm     lvmthin     active       794337280               0       794337280    0.00%
+```
+
+`lvs` 里应该能看到类似：
+
+```sh
+data pve twi-a-tz--
+root pve -wi-ao----
+swap pve -wi-ao----
+```
+
+### 创建 VM
+
+- 上传 ISO：
+  - `Datacenter` > `pve` > `local` > `ISO Images`
+  - 点击 `Upload`
+- 创建 VM：
+  - `Create VM`
+  - `OS` 页面选择刚上传到 `local` 的 ISO
+  - `Disks` 页面：
+    - `Storage` 选 `local-lvm`
+    - 磁盘大小按 VM 需求填写
+
+这样 VM 的虚拟磁盘会直接创建在系统盘同一块 SSD 的 `pve/data` thin pool 上。
+
+### 单盘部署注意事项
+
+- 单盘没有冗余：Zhitai 1TB SSD 坏了，PVE 系统和 VM 磁盘都会一起丢
+- 不建议把长期备份放在同一块盘的 `local`
+  - 备份会占用 `root` LV 空间
+  - 更建议备份到 NAS、移动硬盘、另一台 PVE 或 Proxmox Backup Server
+- `local-lvm` 是块存储，不是普通目录
+  - Web UI 里不会像 `local` 那样浏览文件
+  - 这是正常现象，VM 磁盘由 PVE/LVM 管理
+- LVM-thin 支持快照和 thin provisioning，但不要长期把空间打满
+  - 建议定期看 `pvesm status`
+  - `local-lvm` 使用率接近 80% 以后就要清理、迁移或扩容
 
 ## 将 4TB SSD 配置为 VM 存储
 
