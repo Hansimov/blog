@@ -12,7 +12,15 @@ npm i -g @openai/codex@latest
 
 ### VSCode 安装插件
 
-直接搜索安装即可。
+直接搜索 `@id:openai.chatgpt` 安装即可。
+
+如果是用 Remote SSH 连接到远程 Linux 服务器，有时候安装时会出现问题，可以在远程服务器上写入并运行下面的脚本：
+
+<details> <summary><code>install_vsc_codex.sh</code></summary>
+
+<<< @/notes/scripts/install_vsc_codex.sh
+
+</details>
 
 ## 登录
 
