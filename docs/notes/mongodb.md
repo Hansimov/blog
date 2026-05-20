@@ -110,6 +110,37 @@ mongosh
 
 默认端口为 `27017`。
 
+## 通过 Docker 运行 MongoDB
+
+如果需要在同一台机器上运行第二个独立 MongoDB 实例，可以用 Docker 隔离进程和依赖，只把数据目录挂载到指定硬盘。例如将实例命名为 `mongo2`，宿主机监听 `27027`，数据放在 `/media/p3608a/mongodb-mongo2/`。
+
+Compose 端口映射中的 `27027:27017` 是 `宿主机端口:容器端口`。容器内部可以继续使用 MongoDB 默认的 `27017`，不会占用宿主机已有 MongoDB 的 `27017`；对外连接时使用宿主机端口 `27027`。不要绑定到 `127.0.0.1:27027:27017`，否则只有本机能访问，局域网内其他机器不能访问。
+
+`compose.yml` 示例：
+
+<<< @/notes/configs/mongodb/compose.yml
+
+`mongod.conf` 示例：
+
+<<< @/notes/configs/mongodb/mongod.conf
+
+启动和查看状态：
+
+```sh
+cd /media/p3608a/mongodb-mongo2
+docker compose -f compose.yml up -d
+docker compose -f compose.yml ps
+docker compose -f compose.yml logs --tail 100 mongo2
+```
+
+连接测试：
+
+```sh
+mongosh --host xeon --port 27027
+```
+
+其中 `mem_limit`/`memswap_limit` 限制容器可用内存，`storage.wiredTiger.engineConfig.cacheSizeGB` 限制 WiredTiger 缓存。一般应让 WiredTiger cache 小于容器内存上限，给连接、聚合、日志和文件系统缓存留出余量。
+
 
 ## 允许远程访问
 

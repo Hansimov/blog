@@ -1,0 +1,31 @@
+name: mongo2
+
+services:
+  mongo2:
+    image: mongo:7.0.12
+    container_name: mongo2
+    restart: unless-stopped
+    ports:
+      # host:container. MongoDB keeps its default container port; host exposes 27027 to LAN.
+      - "27027:27017"
+    volumes:
+      - /media/p3608a/mongodb-mongo2/data:/data/db
+      - /media/p3608a/mongodb-mongo2/configdb:/data/configdb
+      - /media/p3608a/mongodb-mongo2/mongod.conf:/etc/mongod.conf:ro
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    mem_limit: 250g
+    memswap_limit: 250g
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
