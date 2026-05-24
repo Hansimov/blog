@@ -268,3 +268,13 @@ code --new-window --folder-uri "vscode-remote://ssh-remote+asimov@xeon/home/asim
 ## 新的系统环境变量无法在 cmd 中生效
 
 关闭所有 VSCode 进程，重新打开即可。
+
+## 为 Continue 插件配置 API
+
+在 `C:\Users\<user>\.continue\config.yaml` 中写入下面的内容：
+
+- `prefixPercentage: 0.3`: 在可用 prompt token 预算里，给“光标前内容”分配一部分比例。它不是“只看当前文件前 30%”，而是控制 autocomplete prompt 里 prefix 上下文占比。
+- `maxSuffixPercentage: 0.2`: autocomplete prompt 里最多拿 20% 的 token 预算给光标后的内容。
+- `onlyMyCode: true`: 构造 autocomplete prompt 时，尽量只用当前 workspace / repo 里的代码上下文，不混入外部依赖、库源码、非项目代码等。
+
+<<< @/notes/configs/continue-config.yaml

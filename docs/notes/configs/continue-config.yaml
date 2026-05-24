@@ -1,0 +1,30 @@
+name: Local Config
+version: 1.0.0
+schema: v1
+models:
+  - name: Coder
+    provider: deepseek
+    model: deepseek-coder
+    apiKey: sk-********************************
+    roles:
+      - chat
+      - edit
+      - apply
+
+  - name: AutoComplete
+    provider: deepseek
+    model: deepseek-v4-flash
+    apiKey: sk-********************************
+    roles:
+      - autocomplete
+    autocompleteOptions:
+      disable: false
+      debounceDelay: 200
+      modelTimeout: 4000
+      maxPromptTokens: 2048
+      prefixPercentage: 0.4
+      maxSuffixPercentage: 0.3
+      onlyMyCode: false
+    defaultCompletionOptions:
+      temperature: 0.1
+      maxTokens: 128
