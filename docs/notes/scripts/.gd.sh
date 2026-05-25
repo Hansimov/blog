@@ -227,6 +227,12 @@ EOH
 
                     printf "%s%s%s%s%s\n", gray, dir, reset, file_color($1, $2), base reset
                 }
+
+                END {
+                    if (NR == 0) {
+                        printf "%sNo changes%s\n", green, reset
+                    }
+                }
             ' "$tmp_view"
             rc=$?
         else
@@ -259,6 +265,10 @@ EOH
                 }
 
                 function append_summary(summary, text) {
+                    return summary == "" ? text : summary ", " text
+                }
+
+                function append_summary_plain(summary, text) {
                     return summary == "" ? text : summary ", " text
                 }
 
@@ -314,6 +324,11 @@ EOH
                 }
 
                 END {
+                    if (n == 0) {
+                        printf "%sNo changes%s\n", green, reset
+                        exit
+                    }
+
                     add_sum_display = display_count(add_sum)
                     del_sum_display = display_count(del_sum)
 
@@ -324,14 +339,37 @@ EOH
                         maxw = length(del_sum "")
                     }
 
-                    sep_num = sprintf("%" maxw "s", "")
-                    sep_file = sprintf("%" filew "s", "")
+                    summary = ""
+                    summary_plain = ""
+                    if (add_files > 0) {
+                        summary = append_summary(summary, green sprintf("add %d files", add_files) reset)
+                        summary_plain = append_summary_plain(summary_plain, sprintf("add %d files", add_files))
+                    }
+                    if (del_files > 0) {
+                        summary = append_summary(summary, red sprintf("del %d files", del_files) reset)
+                        summary_plain = append_summary_plain(summary_plain, sprintf("del %d files", del_files))
+                    }
+                    if (change_files > 0) {
+                        summary = append_summary(summary, blue sprintf("change %d files", change_files) reset)
+                        summary_plain = append_summary_plain(summary_plain, sprintf("change %d files", change_files))
+                    }
+
+                    if (n > 1) {
+                        total_label = summary == "" ? sprintf("TOTAL %d", n) : sprintf("TOTAL %d (%s)", n, summary)
+                        total_label_plain = summary_plain == "" ? sprintf("TOTAL %d", n) : sprintf("TOTAL %d (%s)", n, summary_plain)
+                        if (length(total_label_plain) > filew) {
+                            filew = length(total_label_plain)
+                        }
+                    }
+
+                    sep_num = sprintf("%" (maxw + 2) "s", "")
+                    sep_file = sprintf("%" (filew + 2) "s", "")
                     gsub(/ /, "-", sep_num)
                     gsub(/ /, "-", sep_file)
 
-                    printf magenta "%s  %s  %s\n" reset, sep_num, sep_num, sep_file
-                    printf magenta bold "%" maxw "s  %" maxw "s  %-" filew "s\n" reset, "ADD", "DEL", "FILE"
-                    printf magenta "%s  %s  %s\n" reset, sep_num, sep_num, sep_file
+                    printf magenta "+%s+%s+%s+" reset "\n", sep_num, sep_num, sep_file
+                    printf magenta "| " bold "%" maxw "s" reset magenta " | " bold "%" maxw "s" reset magenta " | " bold "%-" filew "s" reset magenta " |" reset "\n", "ADD", "DEL", "FILE"
+                    printf magenta "+%s+%s+%s+" reset "\n", sep_num, sep_num, sep_file
 
                     for (i = 1; i <= n; i++) {
                         file = files[i]
@@ -347,26 +385,18 @@ EOH
                         del_display = display_count(dels[i])
                         color = file_color(adds[i], dels[i])
 
-                        printf green "%" maxw "s" reset "  " red "%" maxw "s" reset "  %s%s%s%s%s\n", \
-                               add_display, del_display, gray, dir, reset, color, base reset
+                        file_display = gray dir reset color base reset
+                        pad = filew - length(file)
+
+                        printf magenta "|" reset " " green "%" maxw "s" reset " " magenta "|" reset " " red "%" maxw "s" reset " " magenta "|" reset " %s%" pad "s " magenta "|" reset "\n", \
+                               add_display, del_display, file_display, ""
                     }
 
-                    printf magenta "%s  %s  %s\n" reset, sep_num, sep_num, sep_file
-
-                    summary = ""
-                    if (add_files > 0) {
-                        summary = append_summary(summary, green sprintf("add %d files", add_files) reset)
+                    if (n > 1) {
+                        printf magenta "+%s+%s+%s+" reset "\n", sep_num, sep_num, sep_file
+                        printf magenta "|" reset " " green "%" maxw "s" reset " " magenta "|" reset " " red "%" maxw "s" reset " " magenta "|" reset " %s%" (filew - length(total_label_plain)) "s " magenta "|" reset "\n", add_sum_display, del_sum_display, total_label, ""
                     }
-                    if (del_files > 0) {
-                        summary = append_summary(summary, red sprintf("del %d files", del_files) reset)
-                    }
-                    if (change_files > 0) {
-                        summary = append_summary(summary, blue sprintf("change %d files", change_files) reset)
-                    }
-
-                    total_label = summary == "" ? "TOTAL" : "TOTAL (" summary ")"
-                    printf green "%" maxw "s" reset "  " red "%" maxw "s" reset "  %s\n", add_sum_display, del_sum_display, total_label
-                    printf magenta "%s  %s  %s\n" reset, sep_num, sep_num, sep_file
+                    printf magenta "+%s+%s+%s+" reset "\n", sep_num, sep_num, sep_file
                 }
             ' "$tmp_view"
             rc=$?
