@@ -278,3 +278,15 @@ code --new-window --folder-uri "vscode-remote://ssh-remote+asimov@xeon/home/asim
 - `onlyMyCode: true`: 构造 autocomplete prompt 时，尽量只用当前 workspace / repo 里的代码上下文，不混入外部依赖、库源码、非项目代码等。
 
 <<< @/notes/configs/continue-config.yaml
+
+如果卡顿（尤其是在按下 Backspace 时非常明显），则在 `ctrl`+`shift`+`p` 打开 `settins.json` ，添加：
+
+```json
+{
+    "editor.inlineSuggest.enabled": false,
+    "continue.enableNextEdit": false,
+    "continue.showInlineTip": false
+}
+```
+
+并打开 `Keyboard Shortcuts`，将 `continue.forceautocomplete` 设为 `alt`+`c`，手动触发补全。

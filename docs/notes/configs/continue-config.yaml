@@ -19,7 +19,7 @@ models:
       - autocomplete
     autocompleteOptions:
       disable: false
-      debounceDelay: 200
+      debounceDelay: 250
       modelTimeout: 4000
       maxPromptTokens: 2048
       prefixPercentage: 0.4
