@@ -66,7 +66,7 @@ sudo pkill -t <TTY_ID>
 ### 复制文件
 
 ```sh
-scp asimov@11.24.11.2:/home/asimov/repos/blog/docs/notes/scripts/v2ray-install-release.sh ~/downloads/
+scp asimov@100.*.*.*:/home/asimov/repos/blog/docs/notes/scripts/v2ray-install-release.sh ~/downloads/
 ```
 
 ### 转发端口
@@ -74,7 +74,7 @@ scp asimov@11.24.11.2:/home/asimov/repos/blog/docs/notes/scripts/v2ray-install-r
 在 Windows 的 cmd 运行：
 
 ```sh
-ssh -L 40101:192.168.31.110:443 root@11.24.11.121
+ssh -L 40101:192.168.31.110:443 root@100.*.*.***
 #      ----- -------------- --- ---- ------------
 #      |     |              |   |    |
 #      |     |              |   |    └─ SSH 服务器地址（通过 Merak 能访问到的远程服务器 IP）

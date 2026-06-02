@@ -155,7 +155,7 @@ wget https://raw.staticdn.net/Hansimov/blog/main/docs/notes/scripts/v2ray-instal
 
 ```sh
 cd ~/downloads
-scp asimov@11.24.11.2:/home/asimov/repos/blog/docs/notes/scripts/v2ray-install-release.sh ./
+scp asimov@[host]:/home/asimov/repos/blog/docs/notes/scripts/v2ray-install-release.sh ./
 chmod +x ./v2ray-install-release.sh && sudo ./v2ray-install-release.sh
 ```
 
@@ -255,8 +255,8 @@ v2ray 默认调用的配置文件位于：
 如果局域网内其他设备有这个配置文件，可以直接下载：
 
 ```sh
-scp asimov@11.24.11.2:/usr/local/etc/v2ray/config.json /usr/local/etc/v2ray/
-# scp asimov@11.24.11.2:/usr/local/etc/v2ray/new.json /usr/local/etc/v2ray/
+scp asimov@[host]:/usr/local/etc/v2ray/config.json /usr/local/etc/v2ray/
+# scp asimov@[host]:/usr/local/etc/v2ray/new.json /usr/local/etc/v2ray/
 ```
 
 ::: tip See: Client Configuration - V2Fly.org
@@ -331,7 +331,7 @@ sudo nano /usr/local/etc/v2ray/new.json
 如果局域网内其他设备有这个配置文件，可以直接下载：
 
 ```sh
-scp asimov@11.24.11.2:/usr/local/etc/v2ray/new.json /usr/local/etc/v2ray/
+scp asimov@[host]:/usr/local/etc/v2ray/new.json /usr/local/etc/v2ray/
 ```
 
 重载 systemd 配置：

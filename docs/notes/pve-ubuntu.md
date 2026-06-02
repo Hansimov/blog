@@ -187,7 +187,7 @@
     sudo nmcli connection down "$CONN_NAME" && sudo nmcli connection up "$CONN_NAME"
     ```
 
-## 一些常用配置
+## 三a、软件环境配置
 
 ### 换源
 
@@ -238,11 +238,11 @@ sudo systemctl status ssh
 
 之后就可以通过 SSH 登录这台虚拟机了。
 
-### 安装 Merak
+### 安装 tailscale
 
-参考：[使用 Merak 组网](./merak.md)
+参考：[使用 Tailscale 组网](./tailscale.md)
 
-之后就可以通过 Merak 远程访问这台虚拟机了。
+之后就可以通过 Tailscale 远程访问这台虚拟机了。
 
 ### 安装 tmux
 
@@ -584,7 +584,7 @@ lspci -nn | grep -i audio
 参考：[Ubuntu 安装 NVIDIA 驱动和 CUDA (NVCC)](./nvidia-driver.md)
 
 
-## 常见问题
+## 五a、常见问题
 
 ### 启动时间太长
 
@@ -608,7 +608,7 @@ Extremely slow VM startup when IOMMU/Passthrough is enabled
 ::: tip 【已验证】试试 Remove 几张显卡。
 :::
 
-## 智能启动脚本
+## 五b、智能启动脚本
 
 ### 启动 VM 时自动诊断和排除故障显卡
 
@@ -1019,3 +1019,290 @@ df -h /media/data
 Filesystem      Size  Used Avail Use% Mounted on
 /dev/sdb1        16T   28K   16T   1% /media/data
 ```
+
+
+## 七、使用自动化脚本和配置
+
+本节记录一套可复用的自动化脚本，用来在 PVE 宿主机上创建 Ubuntu VM，并在 VM 内继续完成基础环境、Tailscale、v2ray、HDD 挂载、NVIDIA 驱动和 CUDA/NVCC 安装。
+
+脚本模板保存在：
+
+```txt
+docs/notes/scripts/pve-ubuntu/
+├── pve_ubuntu.sh
+├── pve_ubuntu.yaml
+├── setup_ubuntu.sh
+└── setup_ubuntu.yaml
+```
+
+`.chats/pve-ubuntu/` 中保留的是本次实际运行用的完整脚本和配置，可能包含真实密码、IP、磁盘 by-id、GPU PCI 地址等信息，并且不会随文档提交。`docs/notes/scripts/pve-ubuntu/` 中保存的是脱敏后的模板备份，用于以后在其他 PVE 宿主机或 VM 上参考和改写。
+
+其中 `pve_ubuntu.sh` 在 PVE 宿主机上运行，负责创建 VM、准备 cloud-init、配置 GPU 直通、格式化并挂载 HDD、创建 PVE Directory Storage、给 VM 挂载 HDD-backed 数据盘。`setup_ubuntu.sh` 会被写入 VM，并在 Ubuntu 内运行，负责安装软件包、启动 SSH/Tailscale/v2ray、挂载数据盘、安装 NVIDIA 驱动和 CUDA Toolkit。
+
+v2ray 的通用安装脚本和客户端配置不在本目录重复保存，直接复用：
+
+- `docs/notes/scripts/v2ray-install-release.sh`
+- `docs/notes/configs/v2ray-client-config.json`
+- 详细说明见：[安装 v2ray](./v2ray.md)
+
+### 运行前写好的配置
+
+运行前需要准备并修改这些文件：
+
+- `pve_ubuntu.yaml`：PVE 宿主机侧配置，包含源宿主机、VM 参数、网络、GPU、HDD。
+- `setup_ubuntu.yaml`：Ubuntu VM 内部配置，包含用户、软件包、Tailscale、v2ray、HDD、NVIDIA/CUDA、Git。
+- `pve_ubuntu.sh`：PVE 侧执行脚本。
+- `setup_ubuntu.sh`：Ubuntu 侧执行脚本，会被 `pve_ubuntu.sh` 写入 cloud-init。
+
+这些模板中的真实 IP、密码、磁盘序列、GPU PCI 地址、Git 信息都已经用占位符脱敏。`xeon`、`pve`、`qve`、`ai122`、`bj123` 只是用于区分宿主机或 VM 的标识，可以按场景保留或修改。
+
+### 占位符说明
+
+`pve_ubuntu.yaml` 中常见占位符：
+
+| 占位符 | 含义 |
+| --- | --- |
+| `<SOURCE_PVE_LAN_IP>` | 用来复制 ISO 和 v2ray 配置的源 PVE 宿主机 LAN IP，例如 `pve` 的局域网地址。 |
+| `<SOURCE_PVE_ROOT_PASSWORD>` | 源 PVE 宿主机 root 密码；脚本通过 `sshpass/scp` 复制文件。 |
+| `<SOURCE_UBUNTU_ISO_PATH>` | 源 PVE 上已有的 Ubuntu ISO 路径。 |
+| `<VM_ID>` | 新 VM 的 PVE ID，例如 `123`。 |
+| `<VM_LAN_IP>` | 新 Ubuntu VM 的静态 LAN IP。 |
+| `<LAN_GATEWAY_IP>` | 局域网网关。 |
+| `<LAN_DNS_IP>` / `<PUBLIC_DNS_IP>` | DNS 服务器。 |
+| `<UBUNTU_USER>` / `<UBUNTU_USER_PASSWORD>` / `<UBUNTU_FULL_NAME>` | VM 内创建的 Ubuntu 用户信息。 |
+| `<GPU_PCI_ADDRESS_*>` | 要直通给 VM 的 GPU PCI 地址，例如通过 `lspci -Dnn | grep -i nvidia` 查看。 |
+| `<GPU_VENDOR_DEVICE_ID>` | GPU 显卡功能的 vendor/device id，例如 `10de:2206`。 |
+| `<GPU_AUDIO_VENDOR_DEVICE_ID>` | GPU HDMI/DP Audio 功能的 vendor/device id，例如 `10de:1aef`。 |
+| `<GPU_PCI_ADDRESS_TO_EXCLUDE>` | 已知会导致 VM 启动失败或暂不直通的 GPU，可留作记录。 |
+| `<HDD_DISK_BY_ID>` | HDD 的 `/dev/disk/by-id/` 稳定设备名，必须在目标 PVE 上重新确认。 |
+| `<PVE_HDD_LABEL>` | PVE 宿主机上 HDD 分区的文件系统标签。 |
+| `<PVE_HDD_MOUNTPOINT>` | PVE 宿主机上 HDD 的挂载点，例如 `/mnt/hdd-data`。 |
+| `<PVE_HDD_STORAGE_NAME>` | PVE Directory Storage 名称。 |
+| `<VM_DATA_DISK_SIZE_GB>` | 挂给 VM 的数据盘大小，单位是 GB，例如 `7000`。 |
+
+`setup_ubuntu.yaml` 中常见占位符：
+
+| 占位符 | 含义 |
+| --- | --- |
+| `tailscale.auth_key` | 可选 Tailscale auth key；默认留空并把 `tailscale.up` 设为 `false`，后续手动运行 `tailscale up`。 |
+| `<GIT_USER_NAME>` / `<GIT_USER_EMAIL>` | VM 内 Git 全局配置。 |
+| `<VM_HDD_LABEL>` | Ubuntu VM 内数据盘分区的文件系统标签。 |
+| `<VM_HDD_MOUNTPOINT>` | Ubuntu VM 内数据盘挂载点，例如 `/media/data`。 |
+
+v2ray 配置不在这里另写一份模板。`pve_ubuntu.sh` 会从 `source.v2ray_config_dir` 复制源宿主机上的 `config.json` 和 `new.json`，再通过 cloud-init 写入 VM；如果需要从头生成客户端配置，参考 [安装 v2ray](./v2ray.md) 和 `docs/notes/configs/v2ray-client-config.json`。
+
+### 阶段开关
+
+两份 YAML 都支持阶段开关：
+
+```yaml
+global:
+  mode: auto
+
+stages:
+  gpu_passthrough:
+    mode: auto
+```
+
+可选值：
+
+- `auto`：自动运行该阶段。
+- `manual` 或 `skip`：跳过该阶段。
+- `confirm`：运行时询问是否执行。
+
+如果某个阶段已经完成，可以把它改成 `skip`。如果只想补跑某一阶段，可以把其他阶段设为 `skip`，目标阶段设为 `auto`。
+
+PVE 侧主要阶段：
+
+```txt
+install_host_packages
+copy_iso
+copy_v2ray_config
+create_vm
+hdd_storage
+attach_hdd
+gpu_passthrough
+start_vm
+```
+
+Ubuntu 侧主要阶段：
+
+```txt
+apt_sources
+base_packages
+qemu_guest_agent
+ssh
+tailscale
+v2ray
+hdd_mount
+nvidia_driver
+cuda
+git
+zsh
+desktop
+```
+
+### 在 PVE 宿主机上运行
+
+先把模板复制到目标 PVE 宿主机，例如 `qve`：
+
+```sh
+scp -r docs/notes/scripts/pve-ubuntu root@qve:/root/pve-ubuntu
+scp docs/notes/scripts/v2ray-install-release.sh root@qve:/root/pve-ubuntu/
+```
+
+登录目标 PVE：
+
+```sh
+ssh root@qve
+cd /root/pve-ubuntu
+```
+
+按目标机器修改配置：
+
+```sh
+nano pve_ubuntu.yaml
+nano setup_ubuntu.yaml
+chmod +x v2ray-install-release.sh
+```
+
+至少需要确认：
+
+- `source.ip`、`source.password`、`source.iso_path`
+- `vm.id`、`vm.name`、`vm.hostname`
+- `network.ipv4`、`network.gateway4`、`network.dns`
+- `ubuntu.user`、`ubuntu.password`
+- `gpu_passthrough.pci_addresses`、`gpu_passthrough.vfio_ids`
+- `hdd.disk_by_id`、`hdd.partition`
+- `hdd.wipe_existing`
+- `hdd.vm_disk.size`
+- `source.v2ray_config_dir`，以及源宿主机中是否存在 `config.json` 和 `new.json`
+
+::: warning
+`hdd.wipe_existing: true` 会格式化目标 HDD。换机器前必须用下面命令确认设备确实是要清空的数据盘：
+
+```sh
+lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,MODEL,SERIAL
+ls -l /dev/disk/by-id/
+```
+:::
+
+运行 PVE 侧脚本：
+
+```sh
+bash pve_ubuntu.sh pve_ubuntu.yaml
+```
+
+如果脚本配置了 GPU 直通并提示需要重启，执行：
+
+```sh
+reboot
+```
+
+宿主机重新上线后再次运行同一命令。已经完成的阶段会按配置和现有状态跳过。
+
+```sh
+cd /root/pve-ubuntu
+bash pve_ubuntu.sh pve_ubuntu.yaml
+```
+
+### 在 Ubuntu VM 内运行或补跑
+
+正常情况下，`setup_ubuntu.sh` 和 `setup_ubuntu.yaml` 会通过 cloud-init 写入 VM 的 `/opt/bj123-setup/`，并在首次启动时自动运行。
+
+如果需要手动补跑：
+
+```sh
+ssh <UBUNTU_USER>@<VM_LAN_IP>
+sudo bash /opt/bj123-setup/setup_ubuntu.sh /opt/bj123-setup/setup_ubuntu.yaml
+```
+
+如果没有配置 Tailscale auth key，手动运行：
+
+```sh
+sudo tailscale up --hostname=bj123
+```
+
+命令会输出一个授权链接。复制链接到浏览器中确认授权后，VM 会加入 tailnet。
+
+### 运行后自动生成的内容
+
+PVE 宿主机上会生成或修改：
+
+- `/root/pve-ubuntu/`：运行目录，包含脚本、配置、复制来的 ISO 和 v2ray 配置。
+- `/root/pve-ubuntu/seed/`：cloud-init 的 `user-data`、`meta-data`、`network-config`。
+- `/var/lib/vz/template/iso/<vm>-cidata.iso`：cloud-init seed ISO。
+- `/etc/default/grub` 或 `/etc/kernel/cmdline`：IOMMU/VFIO 内核参数。
+- `/etc/modules-load.d/vfio.conf`
+- `/etc/modprobe.d/vfio.conf`
+- `/etc/modprobe.d/blacklist-nvidia-passthrough.conf`
+- `/etc/fstab`：HDD 自动挂载。
+- PVE storage：例如 `<PVE_HDD_STORAGE_NAME>`。
+- VM 配置：`scsi0` 系统盘、`scsi1` HDD-backed 数据盘、`hostpci*` GPU 直通、`efidisk0`。
+
+Ubuntu VM 内会生成或修改：
+
+- `/opt/bj123-setup/`：VM 内脚本和配置。
+- `/var/log/setup_ubuntu.log`
+- `/usr/local/etc/v2ray/config.json`
+- `/usr/local/etc/v2ray/new.json`
+- `v2ray.service`
+- `v2ray@new.service`
+- `/etc/fstab`：数据盘自动挂载。
+- `<VM_HDD_MOUNTPOINT>`：数据盘挂载点。
+- `/etc/profile.d/cuda.sh`
+- `/usr/local/cuda`
+- Tailscale 状态和主机名。
+
+### 验证命令
+
+PVE 宿主机上检查：
+
+```sh
+cat /proc/cmdline
+dmesg | grep -m1 -E "DMAR: IOMMU enabled|IOMMU enabled"
+lspci -Dnnk | awk '/NVIDIA/{print; n=1; next} n && /Kernel driver in use/{print; n=0}'
+qm config <VM_ID>
+pvesm status
+findmnt <PVE_HDD_MOUNTPOINT>
+```
+
+Ubuntu VM 内检查：
+
+```sh
+hostname
+tailscale ip -4
+systemctl is-active qemu-guest-agent ssh tailscaled v2ray v2ray@new
+ss -ltnp | grep -E ":1111(0|1|8|9)"
+findmnt <VM_HDD_MOUNTPOINT>
+df -h <VM_HDD_MOUNTPOINT>
+nvidia-smi
+nvcc --version
+mokutil --sb-state
+```
+
+### 样例脚本和配置
+
+<details> <summary><code>pve_ubuntu.sh</code></summary>
+
+<<< @/notes/scripts/pve-ubuntu/pve_ubuntu.sh
+
+</details>
+
+<details> <summary><code>pve_ubuntu.yaml</code></summary>
+
+<<< @/notes/scripts/pve-ubuntu/pve_ubuntu.yaml
+
+</details>
+
+<details> <summary><code>setup_ubuntu.sh</code></summary>
+
+<<< @/notes/scripts/pve-ubuntu/setup_ubuntu.sh
+
+</details>
+
+<details> <summary><code>setup_ubuntu.yaml</code></summary>
+
+<<< @/notes/scripts/pve-ubuntu/setup_ubuntu.yaml
+
+</details>

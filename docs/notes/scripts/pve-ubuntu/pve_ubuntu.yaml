@@ -1,0 +1,110 @@
+global:
+  mode: auto
+  workdir: /root/pve-ubuntu
+
+source:
+  host: pve
+  ip: <SOURCE_PVE_LAN_IP>
+  user: root
+  password: <SOURCE_PVE_ROOT_PASSWORD>
+  iso_path: <SOURCE_UBUNTU_ISO_PATH>
+  v2ray_config_dir: /usr/local/etc/v2ray
+
+stages:
+  install_host_packages:
+    mode: auto
+  copy_iso:
+    mode: auto
+  copy_v2ray_config:
+    mode: auto
+  create_vm:
+    mode: auto
+  hdd_storage:
+    mode: auto
+  attach_hdd:
+    mode: auto
+  gpu_passthrough:
+    mode: auto
+  start_vm:
+    mode: auto
+
+vm:
+  id: <VM_ID>
+  name: bj123
+  hostname: bj123
+  bridge: vmbr0
+  storage: local-lvm
+  iso_storage_dir: /var/lib/vz/template/iso
+  snippets_storage_dir: /var/lib/vz/snippets
+  cloud_image_url: https://mirrors.tuna.tsinghua.edu.cn/ubuntu-cloud-images/jammy/current/jammy-server-cloudimg-amd64.img
+  cloud_image_path: /var/lib/vz/template/cache/jammy-server-cloudimg-amd64.img
+  disk_size: 256G
+  memory_mib: 65536
+  cores: 16
+  sockets: 1
+  cpu: host
+  machine: q35
+  bios: ovmf
+  ostype: l26
+  agent: true
+  start_on_boot: false
+  overwrite_existing: false
+
+network:
+  ipv4: <VM_LAN_IP>
+  prefix: 24
+  gateway4: <LAN_GATEWAY_IP>
+  dns:
+    - <LAN_DNS_IP>
+    - <PUBLIC_DNS_IP>
+
+ubuntu:
+  user: <UBUNTU_USER>
+  password: <UBUNTU_USER_PASSWORD>
+  full_name: <UBUNTU_FULL_NAME>
+  timezone: Asia/Shanghai
+  locale: en_US.UTF-8
+  ssh_password_auth: true
+
+guest_setup:
+  config: setup_ubuntu.yaml
+  script: setup_ubuntu.sh
+  run_on_first_boot: true
+
+gpu_passthrough:
+  enabled: true
+  auto_detect_nvidia: true
+  pci_addresses:
+    - "<GPU_PCI_ADDRESS_1>"
+    - "<GPU_PCI_ADDRESS_2>"
+  excluded_pci_addresses:
+    - "<GPU_PCI_ADDRESS_TO_EXCLUDE> # optional; keep problematic GPUs out of the VM"
+  vfio_ids:
+    - "<GPU_VENDOR_DEVICE_ID>"
+    - "<GPU_AUDIO_VENDOR_DEVICE_ID>"
+  kernel_args:
+    - intel_iommu=on
+    - iommu=pt
+    - pcie_port_pm=off
+    - pcie_aspm=off
+    - vfio-pci.disable_idle_d3=1
+  reboot_after_config: true
+
+hdd:
+  enabled: true
+  disk_by_id: /dev/disk/by-id/<HDD_DISK_BY_ID>
+  partition: /dev/disk/by-id/<HDD_DISK_BY_ID>-part1
+  filesystem: ext4
+  label: <PVE_HDD_LABEL>
+  mountpoint: <PVE_HDD_MOUNTPOINT>
+  storage_name: <PVE_HDD_STORAGE_NAME>
+  storage_content: images,backup,iso
+  wipe_existing: true
+  vm_disk:
+    enabled: true
+    bus: scsi1
+    size: <VM_DATA_DISK_SIZE_GB>
+    format: raw
+    discard: false
+    ssd: false
+    iothread: true

@@ -1,0 +1,103 @@
+global:
+  mode: auto
+
+stages:
+  apt_sources:
+    mode: auto
+  base_packages:
+    mode: auto
+  qemu_guest_agent:
+    mode: auto
+  ssh:
+    mode: auto
+  tailscale:
+    mode: auto
+  v2ray:
+    mode: auto
+  hdd_mount:
+    mode: auto
+  nvidia_driver:
+    mode: auto
+  cuda:
+    mode: auto
+  git:
+    mode: auto
+  zsh:
+    mode: auto
+  desktop:
+    mode: manual
+
+system:
+  hostname: bj123
+  timezone: Asia/Shanghai
+  apt_mirror: https://mirrors.ustc.edu.cn
+
+user:
+  name: <UBUNTU_USER>
+  password: <UBUNTU_USER_PASSWORD>
+  shell: /usr/bin/zsh
+
+packages:
+  base:
+    - ca-certificates
+    - curl
+    - wget
+    - gnupg
+    - lsb-release
+    - software-properties-common
+    - build-essential
+    - net-tools
+    - pciutils
+    - htop
+    - tmux
+    - unzip
+    - qemu-guest-agent
+    - openssh-server
+    - git
+    - git-lfs
+    - zsh
+
+tailscale:
+  install: true
+  up: false
+  auth_key: ""
+
+v2ray:
+  install: true
+  install_script: /opt/bj123-setup/v2ray-install-release.sh
+  config_src: /opt/bj123-setup/v2ray/config.json
+  config_dst: /usr/local/etc/v2ray/config.json
+  extra_configs:
+    - name: new
+      src: /opt/bj123-setup/v2ray/new.json
+      dst: /usr/local/etc/v2ray/new.json
+      service: v2ray@new
+  install_dat: true
+  enable_service: true
+
+hdd:
+  enabled: true
+  device: /dev/sdb
+  partition: /dev/sdb1
+  filesystem: ext4
+  label: <VM_HDD_LABEL>
+  mountpoint: <VM_HDD_MOUNTPOINT>
+  wipe_existing: true
+
+nvidia:
+  install_driver: true
+  driver_package: auto
+  install_cuda: true
+  cuda_method: nvidia_repo
+  cuda_package: cuda-toolkit-13-0
+  cuda_keyring_url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+
+git:
+  user_name: <GIT_USER_NAME>
+  user_email: <GIT_USER_EMAIL>
+  http_proxy: http://127.0.0.1:11119
+  https_proxy: http://127.0.0.1:11119
+
+desktop:
+  install: false
+  package: ubuntu-desktop-minimal
