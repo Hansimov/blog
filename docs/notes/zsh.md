@@ -79,7 +79,7 @@ touch zsh-autosuggestions.zsh
 
 复制下列脚本内容到 `~/.zsh/zsh-autosuggestions.zsh` 中：
 
-- https://raw.githubusercontent.com/zsh-users/zsh-autosuggestions/master/zsh-autosuggestions.zsh
+- https://raw.staticdn.net/zsh-users/zsh-autosuggestions/master/zsh-autosuggestions.zsh
 
 
 将下列内容添加到 `~/.zshrc` 中：
@@ -106,7 +106,7 @@ git clone --depth 1 -- https://github.com/marlonrichert/zsh-autocomplete.git
 
 ```sh
 # auto complete
-source ~/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh
+source ~/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh 2>/dev/null
 # style of auto complete
 zstyle ':completion:*'  list-colors '=*=96'
 ```
@@ -167,7 +167,7 @@ set-option -g default-shell /usr/bin/zsh
 ## 一键配置
 
 ```sh
-wget https://raw.githubusercontent.com/Hansimov/blog/main/docs/notes/scripts/zsh_setup.sh -O ~/zsh_setup.sh && chmod +x ~/zsh_setup.sh && ~/zsh_setup.sh
+wget https://raw.staticdn.net/Hansimov/blog/main/docs/notes/scripts/zsh_setup.sh -O ~/zsh_setup.sh && chmod +x ~/zsh_setup.sh && ~/zsh_setup.sh
 ```
 
 ::: info 脚本: https://github.com/Hansimov/blog/blob/main/docs/notes/scripts/zsh_setup.sh
@@ -181,4 +181,3 @@ wget https://raw.githubusercontent.com/Hansimov/blog/main/docs/notes/scripts/zsh
 :::
 
 <<< @/notes/configs/.zshrc{sh}
-

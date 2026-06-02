@@ -4,11 +4,11 @@
 ## 安装
 
 ```sh
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh -u
+wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh -O Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh -b -u -p "$HOME/miniconda3"
 ```
 
-一路 Enter 和 yes。
+国内网络下优先使用镜像地址，避免从 `repo.anaconda.com` 慢速下载。交互安装也可以不加 `-b -p "$HOME/miniconda3"`，一路 Enter 和 yes。
 
 ## 初始化 conda
 
@@ -23,14 +23,14 @@ conda init
 ```sh
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/home/asimov/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+__conda_setup="$("$HOME/miniconda3/bin/conda" 'shell.bash' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
     eval "$__conda_setup"
 else
-    if [ -f "/home/asimov/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "/home/asimov/miniconda3/etc/profile.d/conda.sh"
+    if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+        . "$HOME/miniconda3/etc/profile.d/conda.sh"
     else
-        export PATH="/home/asimov/miniconda3/bin:$PATH"
+        export PATH="$HOME/miniconda3/bin:$PATH"
     fi
 fi
 unset __conda_setup
@@ -63,6 +63,8 @@ nano ~/miniconda3/.condarc
 
 ```yaml
 channels:
+  - conda-forge
+  - bioconda
   - nodefaults
 custom_channels:
   conda-forge: https://mirrors.ustc.edu.cn/anaconda/cloud
@@ -92,11 +94,13 @@ conda clean -i
 
 ```sh
 # conda create --name ai python
-# conda create --name ai python=3.11
-conda create --name ai python=3.13.9 -c conda-forge
+# conda create --name ai python=3.11 --override-channels -c https://mirrors.ustc.edu.cn/anaconda/cloud/conda-forge
+conda create --name ai python=3.13 --override-channels -c https://mirrors.ustc.edu.cn/anaconda/cloud/conda-forge
 conda activate ai
 conda deactivate
 ```
+
+`--override-channels` 可以避免新版 conda 在默认 Anaconda channels 上触发非交互 ToS 确认；自动化脚本中建议显式使用 conda-forge 镜像。
 
 ## 删除 conda env
 

@@ -1,5 +1,7 @@
 # Ubuntu 安装 NVIDIA 驱动和 CUDA (NVCC)
 
+本文只负责 Ubuntu 宿主机或 VM 内的 NVIDIA 驱动、`nvidia-smi`、CUDA Toolkit 和 `nvcc`。如果 Docker 容器也要使用 GPU，先完成本文并确认 `nvidia-smi` 正常，再继续：[安装 NVIDIA Container Toolkit](./nvidia-container.md)。
+
 ## 列出 GPU 信息
 
 ```sh

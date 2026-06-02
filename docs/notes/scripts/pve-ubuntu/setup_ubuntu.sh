@@ -106,15 +106,82 @@ configure_git() {
 }
 
 configure_zsh() {
-  local target_user shell_path
+  local target_user shell_path home_dir
   target_user="$(yaml_get user.name ubuntu)"
+  home_dir="$(getent passwd "$target_user" | cut -d: -f6)"
   shell_path="$(yaml_get user.shell /usr/bin/zsh)"
-  if [[ -x "$shell_path" ]] && id "$target_user" >/dev/null 2>&1; then
+  if [[ -x "$shell_path" && -n "$home_dir" ]] && id "$target_user" >/dev/null 2>&1; then
     chsh -s "$shell_path" "$target_user" || true
-    sudo -u "$target_user" touch "/home/${target_user}/.zshrc"
-    if ! grep -q "PROMPT='%F{yellow}%~ # %f'" "/home/${target_user}/.zshrc"; then
-      cat >>"/home/${target_user}/.zshrc" <<'EOF'
+    sudo -u "$target_user" mkdir -p "$home_dir/.zsh"
+    if [[ ! -d "$home_dir/.zsh/zsh-autocomplete/.git" ]]; then
+      sudo -u "$target_user" git clone --depth 1 https://github.com/marlonrichert/zsh-autocomplete.git "$home_dir/.zsh/zsh-autocomplete" || true
+    fi
+    if [[ ! -f "$home_dir/.zsh/zsh-autosuggestions.zsh" ]]; then
+      if [[ -d "$home_dir/.zsh/zsh-autosuggestions/.git" ]]; then
+        cp "$home_dir/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh" "$home_dir/.zsh/zsh-autosuggestions.zsh" || true
+      else
+        timeout 60 wget -q https://raw.staticdn.net/zsh-users/zsh-autosuggestions/master/zsh-autosuggestions.zsh -O "$home_dir/.zsh/zsh-autosuggestions.zsh" || true
+      fi
+    fi
+    cat >"$home_dir/.zshrc" <<'EOF'
+autoload -Uz promptinit
+promptinit
 PROMPT='%F{yellow}%~ # %f'
+
+setopt histignorealldups sharehistory
+bindkey -e
+HISTSIZE=1000
+SAVEHIST=1000
+HISTFILE=~/.zsh_history
+
+zstyle ':completion:*' auto-description 'specify: %d'
+zstyle ':completion:*' completer _expand _complete _correct _approximate
+zstyle ':completion:*' format 'Completing %d'
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*' menu select=2
+eval "$(dircolors -b)"
+zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*' list-colors ''
+zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
+zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
+zstyle ':completion:*' menu select=long
+zstyle ':completion:*' select-prompt %SScrolling active: current selection at %p%s
+zstyle ':completion:*' use-compctl false
+zstyle ':completion:*' verbose true
+zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
+zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
+
+alias ls="ls --color"
+alias gs="git status"
+alias gb="git rev-parse --abbrev-ref HEAD"
+alias gba="git -P branch"
+alias gdp="git -P diff"
+alias gdh="git diff HEAD^ HEAD"
+alias gl="git log"
+alias gn="git --no-pager log --pretty='format:%Cgreen[%h] %Cblue[%ai] %Creset[%an]%C(Red)%d %n  %Creset%s %n' -n5"
+alias ga="git add"
+alias gas="git add . && git status"
+alias gc="git commit"
+alias gk="git checkout"
+alias gau="git add -u"
+alias gcm="git commit -m"
+alias gcan="git commit --amend --no-edit"
+alias gp="git push"
+alias gpf="git push -f"
+alias gacp="git add -u && git commit --amend --no-edit && git push -f"
+[[ -f ~/.gd.sh ]] && source ~/.gd.sh
+
+alias ta="tmux a"
+alias td="tmux detach"
+alias tn="tmux new -s x"
+alias tl="tmux ls"
+alias ts="tmux select-pane -T"
+alias tm="top -o %MEM -d 2 -c"
+alias tc="top -o %CPU -d 2 -c"
+alias k9="kill -9"
+alias lt="ls -lt"
+alias hi="hostname -i"
+
 bindkey "^[[1;5C" forward-word
 bindkey "^[[1;3C" forward-word
 bindkey "^[[1;5D" backward-word
@@ -123,10 +190,263 @@ bindkey "^[[1~"   beginning-of-line
 bindkey "^[[4~"   end-of-line
 bindkey "^[[3~"   delete-char
 bindkey "^[^[[3~" delete-word
+
+if [[ -f ~/.zsh/zsh-autosuggestions.zsh ]]; then
+  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#ff00ff"
+  source ~/.zsh/zsh-autosuggestions.zsh
+fi
+if [[ -f ~/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh ]]; then
+  source ~/.zsh/zsh-autocomplete/zsh-autocomplete.plugin.zsh 2>/dev/null
+  zstyle ':completion:*' list-colors '=*=96'
+fi
+
+if [[ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]]; then
+  . "$HOME/miniconda3/etc/profile.d/conda.sh"
+elif [[ -x "$HOME/miniconda3/bin/conda" ]]; then
+  export PATH="$HOME/miniconda3/bin:$PATH"
+fi
+alias cda="conda activate ai"
+alias cdd="conda deactivate"
+if command -v conda >/dev/null 2>&1 && conda env list | awk '{print $1}' | grep -qx ai; then
+  conda activate ai
+fi
+
+alias nu="gpustat -cpu -i -F -P"
+alias nsd="nvidia-smi | grep Default"
+export HF_ENDPOINT=https://hf-mirror.com
+export REPOS=$HOME/repos
+export DATA=/media/data1
+export PATH=/usr/local/cuda/bin:$HOME/.local/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH:-}
+
+ulimit -n 1048576 2>/dev/null || true
+fpath+=~/.zfunc
+autoload -Uz compinit
+compinit
 EOF
-      chown "$target_user:$target_user" "/home/${target_user}/.zshrc"
+    cat >"$home_dir/.zshenv" <<'EOF'
+skip_global_compinit=1
+EOF
+    chown "$target_user:$target_user" "$home_dir/.zshrc" "$home_dir/.zshenv"
+  fi
+}
+
+configure_tmux() {
+  local target_user home_dir
+  target_user="$(yaml_get user.name ubuntu)"
+  home_dir="$(getent passwd "$target_user" | cut -d: -f6)"
+  [[ -z "$home_dir" ]] && return
+  sudo -u "$target_user" mkdir -p "$home_dir/.tmux/plugins" "$home_dir/.config/systemd/user"
+  if [[ ! -d "$home_dir/.tmux/plugins/tpm/.git" ]]; then
+    sudo -u "$target_user" git clone --depth 1 https://github.com/tmux-plugins/tpm "$home_dir/.tmux/plugins/tpm" || true
+  fi
+  if [[ ! -d "$home_dir/.tmux/plugins/tmux-resurrect/.git" ]]; then
+    sudo -u "$target_user" git clone --depth 1 https://github.com/tmux-plugins/tmux-resurrect "$home_dir/.tmux/plugins/tmux-resurrect" || true
+  fi
+  cat >"$home_dir/.tmux.conf" <<'EOF'
+unbind C-b
+set -g prefix M-z
+bind M-z send-prefix
+bind r source-file ~/.tmux.conf \; display ".tmux.conf reloaded!"
+set -g mouse on
+set -g status-interval 1
+set-option -g status-position bottom
+set-option -g status-style bg=default
+set-option -g status-left ""
+set-option -g window-status-format ""
+set-option -g window-status-separator ""
+set -g window-status-current-format "#[fg=cyan] #{pane_title}: [#{pane_current_path}]"
+set-option -g status-right "#[fg=cyan,bold] [ww%V.%w] %m-%d %H:%M:%S"
+set -g pane-border-status top
+set -g pane-border-lines heavy
+set -g pane-border-style bg=default,fg=cyan
+set -g pane-active-border-style bg=cyan,fg=black
+setw -g pane-border-format ' #{pane_index}: [#{pane_current_path}] '
+unbind -n a
+unbind-key -T root MouseDrag1Pane
+unbind-key -T copy-mode-vi MouseDrag1Pane
+unbind-key -T copy-mode MouseDrag1Pane
+set-option -g default-shell /usr/bin/zsh
+set-option -g history-limit 100000
+set -g @plugin 'tmux-plugins/tpm'
+set -g @plugin 'tmux-plugins/tmux-resurrect'
+set -g @resurrect-hook-pre-restore-pane-processes 'tmux kill-session -t=0 2>/dev/null || true'
+set -g @resurrect-processes '\
+    ssh mongosh \
+    "~npx->npx *" \
+    "~npm->npm *" \
+    "~python->python *" \
+    "~docker->docker *" \
+    "~gpustat->gpustat *" \
+'
+run '~/.tmux/plugins/tpm/tpm'
+EOF
+  chown "$target_user:$target_user" "$home_dir/.tmux.conf"
+}
+
+install_dotfiles() {
+  local target_user home_dir gd_src
+  target_user="$(yaml_get user.name ubuntu)"
+  home_dir="$(getent passwd "$target_user" | cut -d: -f6)"
+  [[ -z "$home_dir" ]] && return
+  gd_src="$(yaml_get dotfiles.gd_source /opt/bj123-setup/dotfiles/.gd.sh)"
+  if [[ -f "$gd_src" ]]; then
+    install -m 0644 -o "$target_user" -g "$target_user" "$gd_src" "$home_dir/.gd.sh"
+  elif [[ ! -f "$home_dir/.gd.sh" ]]; then
+    timeout 60 wget -q "$(yaml_get dotfiles.gd_url https://raw.staticdn.net/Hansimov/blog/main/docs/notes/scripts/.gd.sh)" -O "$home_dir/.gd.sh" || true
+    chown "$target_user:$target_user" "$home_dir/.gd.sh" 2>/dev/null || true
+  fi
+  sudo -u "$target_user" mkdir -p "$home_dir/.pip"
+  cat >"$home_dir/.pip/pip.conf" <<'EOF'
+[global]
+index-url = https://mirrors.ustc.edu.cn/pypi/simple
+
+[install]
+trusted-host = mirrors.ustc.edu.cn
+EOF
+cat >"$home_dir/.condarc" <<'EOF'
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+custom_channels:
+  conda-forge: https://mirrors.ustc.edu.cn/anaconda/cloud
+  bioconda: https://mirrors.ustc.edu.cn/anaconda/cloud
+show_channel_urls: true
+EOF
+  chown -R "$target_user:$target_user" "$home_dir/.pip" "$home_dir/.condarc"
+  configure_zsh
+  configure_tmux
+}
+
+install_conda() {
+  [[ "$(yaml_get conda.install false)" == "true" ]] || return
+  local target_user home_dir installer url python_version env_name
+  target_user="$(yaml_get user.name ubuntu)"
+  home_dir="$(getent passwd "$target_user" | cut -d: -f6)"
+  [[ -z "$home_dir" ]] && return
+  url="$(yaml_get conda.installer_url https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh)"
+  installer="/tmp/miniconda.sh"
+  if [[ ! -x "$home_dir/miniconda3/bin/conda" ]]; then
+    wget -O "$installer" "$url"
+    sudo -u "$target_user" bash "$installer" -b -u -p "$home_dir/miniconda3"
+  fi
+  cat >"$home_dir/.condarc" <<'EOF'
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+custom_channels:
+  conda-forge: https://mirrors.ustc.edu.cn/anaconda/cloud
+  bioconda: https://mirrors.ustc.edu.cn/anaconda/cloud
+show_channel_urls: true
+EOF
+  chown "$target_user:$target_user" "$home_dir/.condarc"
+  sudo -u "$target_user" "$home_dir/miniconda3/bin/conda" config --set show_channel_urls true || true
+  env_name="$(yaml_get conda.env_name ai)"
+  python_version="$(yaml_get conda.python_version 3.13)"
+  if [[ "$(yaml_get conda.create_env true)" == "true" ]]; then
+    if ! sudo -u "$target_user" "$home_dir/miniconda3/bin/conda" env list | awk '{print $1}' | grep -qx "$env_name"; then
+      sudo -u "$target_user" "$home_dir/miniconda3/bin/conda" create -y -n "$env_name" "python=${python_version}" --override-channels -c https://mirrors.ustc.edu.cn/anaconda/cloud/conda-forge || true
     fi
   fi
+  configure_zsh
+}
+
+install_python_tools() {
+  [[ "$(yaml_get python_tools.install true)" == "true" ]] || return
+  local target_user home_dir pip_bin env_name
+  target_user="$(yaml_get user.name ubuntu)"
+  home_dir="$(getent passwd "$target_user" | cut -d: -f6)"
+  [[ -z "$home_dir" ]] && return
+  DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip python3-venv
+  sudo -u "$target_user" python3 -m pip install --user -U pip pipreqs gpustat || true
+  env_name="$(yaml_get conda.env_name ai)"
+  if [[ -x "$home_dir/miniconda3/envs/${env_name}/bin/pip" ]]; then
+    pip_bin="$home_dir/miniconda3/envs/${env_name}/bin/pip"
+    sudo -u "$target_user" "$pip_bin" install -U pip pipreqs gpustat || true
+  fi
+}
+
+install_docker() {
+  [[ "$(yaml_get docker.install false)" == "true" ]] || return
+  local target_user mirror http_proxy https_proxy no_proxy
+  target_user="$(yaml_get user.name ubuntu)"
+  mirror="$(yaml_get docker.repo_mirror https://mirrors.ustc.edu.cn/docker-ce)"
+  DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl gnupg
+  install -m 0755 -d /etc/apt/keyrings
+  rm -f /etc/apt/keyrings/docker.gpg
+  curl -fsSL "${mirror}/linux/ubuntu/gpg" | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  chmod a+r /etc/apt/keyrings/docker.gpg
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] ${mirror}/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" >/etc/apt/sources.list.d/docker.list
+  apt-get update
+  DEBIAN_FRONTEND=noninteractive apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  usermod -aG docker "$target_user" || true
+  gpasswd -a "$target_user" docker || true
+  mkdir -p /etc/docker
+  python3 - <<'PY'
+import json, pathlib
+path = pathlib.Path("/etc/docker/daemon.json")
+data = {}
+if path.exists():
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        data = {}
+data.setdefault("registry-mirrors", [
+    "https://docker.1ms.run",
+    "https://docker.1panel.live",
+    "https://docker.m.daocloud.io",
+])
+path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+PY
+  http_proxy="$(yaml_get docker.http_proxy "")"
+  https_proxy="$(yaml_get docker.https_proxy "$http_proxy")"
+  no_proxy="$(yaml_get docker.no_proxy localhost,127.0.0.1)"
+  if [[ -n "$http_proxy" ]]; then
+    mkdir -p /etc/systemd/system/docker.service.d
+    cat >/etc/systemd/system/docker.service.d/proxy.conf <<EOF
+[Service]
+Environment="HTTP_PROXY=${http_proxy}"
+Environment="HTTPS_PROXY=${https_proxy}"
+Environment="NO_PROXY=${no_proxy}"
+EOF
+  fi
+  systemctl daemon-reload
+  systemctl enable --now docker
+  systemctl restart docker
+}
+
+install_nvidia_container() {
+  [[ "$(yaml_get nvidia_container.install false)" == "true" ]] || return
+  local base_url
+  command -v docker >/dev/null 2>&1 || install_docker
+  if ! command -v docker >/dev/null 2>&1; then
+    log "Docker is not installed; skip NVIDIA Container Toolkit"
+    return
+  fi
+  if ! command -v nvidia-smi >/dev/null 2>&1 || ! nvidia-smi >/dev/null 2>&1; then
+    log "NVIDIA driver is not ready; skip NVIDIA Container Toolkit"
+    return
+  fi
+  if [[ "$(yaml_get nvidia_container.use_ustc_mirror true)" == "true" ]]; then
+    base_url="https://mirrors.ustc.edu.cn/libnvidia-container"
+  else
+    base_url="https://nvidia.github.io/libnvidia-container"
+  fi
+  rm -f /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+  curl -fsSL "${base_url}/gpgkey" | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+  curl -fsSL "${base_url}/stable/deb/nvidia-container-toolkit.list" | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' >/etc/apt/sources.list.d/nvidia-container-toolkit.list
+  if [[ "$(yaml_get nvidia_container.use_ustc_mirror true)" == "true" ]]; then
+    sed -i 's#nvidia.github.io#mirrors.ustc.edu.cn#g' /etc/apt/sources.list.d/nvidia-container-toolkit.list
+  fi
+  apt-get update
+  DEBIAN_FRONTEND=noninteractive apt-get install -y nvidia-container-toolkit
+  if command -v nvidia-ctk >/dev/null 2>&1; then
+    nvidia-ctk runtime configure --runtime=docker
+  fi
+  systemctl daemon-reload
+  systemctl restart docker
 }
 
 install_tailscale() {
@@ -196,8 +516,8 @@ mount_hdd() {
   dev="$(yaml_get hdd.device /dev/sdb)"
   part="$(yaml_get hdd.partition /dev/sdb1)"
   fs="$(yaml_get hdd.filesystem ext4)"
-  label="$(yaml_get hdd.label data)"
-  mountpoint="$(yaml_get hdd.mountpoint /media/data)"
+  label="$(yaml_get hdd.label data1)"
+  mountpoint="$(yaml_get hdd.mountpoint /media/data1)"
   if mountpoint -q "$mountpoint"; then
     log "HDD already mounted at ${mountpoint}"
     return
@@ -322,6 +642,21 @@ main() {
   fi
   if run_stage git; then
     configure_git
+  fi
+  if run_stage dotfiles; then
+    install_dotfiles
+  fi
+  if run_stage conda; then
+    install_conda
+  fi
+  if run_stage python_tools; then
+    install_python_tools
+  fi
+  if run_stage docker; then
+    install_docker
+  fi
+  if run_stage nvidia_container; then
+    install_nvidia_container
   fi
   if run_stage zsh; then
     configure_zsh

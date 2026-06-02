@@ -22,6 +22,16 @@ stages:
     mode: auto
   git:
     mode: auto
+  dotfiles:
+    mode: auto
+  conda:
+    mode: auto
+  python_tools:
+    mode: auto
+  docker:
+    mode: auto
+  nvidia_container:
+    mode: auto
   zsh:
     mode: auto
   desktop:
@@ -56,6 +66,34 @@ packages:
     - git
     - git-lfs
     - zsh
+    - python3-pip
+    - python3-venv
+    - lm-sensors
+
+dotfiles:
+  gd_source: /opt/bj123-setup/dotfiles/.gd.sh
+  gd_url: https://raw.staticdn.net/Hansimov/blog/main/docs/notes/scripts/.gd.sh
+
+conda:
+  install: true
+  installer_url: https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh
+  env_name: ai
+  python_version: "3.13"
+  create_env: true
+
+python_tools:
+  install: true
+
+docker:
+  install: true
+  repo_mirror: https://mirrors.ustc.edu.cn/docker-ce
+  http_proxy: http://127.0.0.1:11119
+  https_proxy: http://127.0.0.1:11119
+  no_proxy: localhost,127.0.0.1
+
+nvidia_container:
+  install: true
+  use_ustc_mirror: true
 
 tailscale:
   install: true

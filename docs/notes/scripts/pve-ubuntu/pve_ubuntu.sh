@@ -160,7 +160,7 @@ create_cloud_init_seed() {
   ip="$(yaml_get network.ipv4)"
   prefix="$(yaml_get network.prefix 24)"
   gateway="$(yaml_get network.gateway4)"
-  mapfile -t dns < <(yaml_get network.dns "1.1.1.1")
+  mapfile -t dns < <(yaml_get network.dns "192.168.31.1")
   password_hash_value="$(password_hash "$password")"
   seed_dir="${workdir}/seed-${vmid}"
   cidata_iso="$(yaml_get vm.iso_storage_dir /var/lib/vz/template/iso)/${hostname}-cidata.iso"
@@ -197,6 +197,9 @@ EOF
   write_b64_file_entry "${BASE_DIR}/setup_ubuntu.sh" "/opt/bj123-setup/setup_ubuntu.sh" "0755"
   write_b64_file_entry "${BASE_DIR}/setup_ubuntu.yaml" "/opt/bj123-setup/setup_ubuntu.yaml" "0644"
   write_b64_file_entry "${BASE_DIR}/v2ray-install-release.sh" "/opt/bj123-setup/v2ray-install-release.sh" "0755"
+  if [[ -f "${BASE_DIR}/dotfiles/.gd.sh" ]]; then
+    write_b64_file_entry "${BASE_DIR}/dotfiles/.gd.sh" "/opt/bj123-setup/dotfiles/.gd.sh" "0644"
+  fi
   write_b64_file_entry "${workdir}/v2ray/config.json" "/opt/bj123-setup/v2ray/config.json" "0644"
   write_b64_file_entry "${workdir}/v2ray/new.json" "/opt/bj123-setup/v2ray/new.json" "0644"
   cat >>"$USER_DATA" <<EOF
@@ -232,7 +235,7 @@ EOF
 }
 
 create_vm() {
-  local vmid name storage bridge memory cores sockets cpu machine bios ostype disk_size img overwrite cidata_iso
+  local vmid name storage bridge memory cores sockets cpu machine bios ostype vga disk_size img overwrite cidata_iso
   vmid="$(yaml_get vm.id)"
   name="$(yaml_get vm.name)"
   storage="$(yaml_get vm.storage local-lvm)"
@@ -244,6 +247,7 @@ create_vm() {
   machine="$(yaml_get vm.machine q35)"
   bios="$(yaml_get vm.bios ovmf)"
   ostype="$(yaml_get vm.ostype l26)"
+  vga="$(yaml_get vm.vga std)"
   disk_size="$(yaml_get vm.disk_size 256G)"
   img="$(yaml_get vm.cloud_image_path)"
   overwrite="$(yaml_get vm.overwrite_existing false)"
@@ -272,6 +276,7 @@ create_vm() {
     --net0 "virtio,bridge=${bridge}"
 
   qm importdisk "$vmid" "$img" "$storage"
+  qm set "$vmid" --vga "$vga"
   qm set "$vmid" --scsi0 "${storage}:vm-${vmid}-disk-0,discard=on,ssd=1,iothread=1"
   qm set "$vmid" --efidisk0 "${storage}:0,efitype=4m,pre-enrolled-keys=0"
   qm set "$vmid" --ide2 "local:iso/$(basename "$cidata_iso"),media=cdrom"
@@ -289,7 +294,7 @@ configure_gpu_passthrough() {
     log "gpu_passthrough.enabled=false; skip host VFIO changes"
     return
   fi
-  local ids vmid idx changed arg current grub_line
+  local ids vmid idx changed arg current grub_line spec
   vmid="$(yaml_get vm.id)"
   ids="$(yaml_get gpu_passthrough.vfio_ids "" | paste -sd, -)"
   changed=0
@@ -346,10 +351,17 @@ EOF
   proxmox-boot-tool refresh || true
   update-initramfs -u -k all
   qm stop "$vmid" --skiplock 1 >/dev/null 2>&1 || true
+  qm set "$vmid" --vga "$(yaml_get vm.vga std)"
   idx=0
   while read -r pci; do
     [[ -z "$pci" ]] && continue
-    qm set "$vmid" "--hostpci${idx}" "${pci},pcie=1"
+    if [[ "$pci" == *,* ]]; then
+      spec="$pci"
+      [[ "$spec" != *pcie=* ]] && spec="${spec},pcie=1"
+    else
+      spec="${pci},pcie=1"
+    fi
+    qm set "$vmid" "--hostpci${idx}" "$spec"
     idx=$((idx + 1))
   done < <(yaml_get gpu_passthrough.pci_addresses "")
   if qm config "$vmid" | grep -q '^efidisk0: .*pre-enrolled-keys=1'; then
@@ -368,9 +380,9 @@ configure_hdd_storage() {
   disk="$(yaml_get hdd.disk_by_id)"
   part="$(yaml_get hdd.partition)"
   fs="$(yaml_get hdd.filesystem ext4)"
-  label="$(yaml_get hdd.label hdddata)"
-  mountpoint="$(yaml_get hdd.mountpoint /mnt/hdd-data)"
-  storage="$(yaml_get hdd.storage_name hdddata)"
+  label="$(yaml_get hdd.label hdd8t)"
+  mountpoint="$(yaml_get hdd.mountpoint /mnt/hdd8t)"
+  storage="$(yaml_get hdd.storage_name hdd8t)"
 
   if mountpoint -q "$mountpoint" && pvesm status | awk '{print $1}' | grep -qx "$storage"; then
     log "HDD storage ${storage} already mounted at ${mountpoint}"
@@ -415,7 +427,7 @@ attach_hdd_to_vm() {
   [[ "$(yaml_get hdd.vm_disk.enabled false)" == "true" ]] || return 0
   local vmid storage bus size opts
   vmid="$(yaml_get vm.id)"
-  storage="$(yaml_get hdd.storage_name hdddata)"
+  storage="$(yaml_get hdd.storage_name hdd8t)"
   bus="$(yaml_get hdd.vm_disk.bus scsi1)"
   size="$(yaml_get hdd.vm_disk.size 7000)"
   if qm config "$vmid" | grep -q "^${bus}:"; then

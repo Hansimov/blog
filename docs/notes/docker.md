@@ -128,7 +128,6 @@ sudo usermod -aG docker $USER && newgrp docker
 * https://stackoverflow.com/questions/48568172/docker-sock-permission-denied
 :::
 
-
 ## 检查是否配置成功
 
 ```sh
@@ -170,5 +169,10 @@ For more examples and ideas, visit:
  https://docs.docker.com/get-started/
 ```
 
-
 </details>
+
+## GPU 容器支持
+
+Docker 本身只负责容器引擎。GPU 容器需要在 NVIDIA 驱动可用之后，另外安装 NVIDIA Container Toolkit，见：[安装 NVIDIA Container Toolkit](./nvidia-container.md)。
+
+`docs/notes/scripts/pve-ubuntu/setup_ubuntu.sh` 的 `docker` 阶段只安装 Docker CE、配置 registry mirror 和 daemon 代理；`nvidia_container` 阶段才安装 NVIDIA Container Toolkit 并写入 `/etc/docker/daemon.json`。

@@ -49,7 +49,7 @@ pip install -i https://pypi.org/simple -U pip
 ## 安装 pipreqs
 
 ```sh
-python -m pip install pipreqs
+python -m pip install -U pip pipreqs
 ```
 
 ## 生成 requirements.txt

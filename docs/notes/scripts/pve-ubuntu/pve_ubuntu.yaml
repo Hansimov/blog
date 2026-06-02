@@ -45,6 +45,7 @@ vm:
   cpu: host
   machine: q35
   bios: ovmf
+  vga: none
   ostype: l26
   agent: true
   start_on_boot: false
@@ -77,6 +78,7 @@ gpu_passthrough:
   pci_addresses:
     - "<GPU_PCI_ADDRESS_1>"
     - "<GPU_PCI_ADDRESS_2>"
+    - "<BOOT_VGA_GPU_PCI_ADDRESS>,rombar=0"
   excluded_pci_addresses:
     - "<GPU_PCI_ADDRESS_TO_EXCLUDE> # optional; keep problematic GPUs out of the VM"
   vfio_ids:
