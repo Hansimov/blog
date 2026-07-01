@@ -513,3 +513,216 @@ Hit:5 http://security.debian.org/debian-security trixie-security InRelease
 ## 创建 VM
 
 参考：[PVE 创建 Ubuntu 虚拟机](./pve-ubuntu.md)
+
+## qve 运维经验：bj123 自启、HDD 存储和网卡稳定性
+
+本节记录 qve 上运行 bj123 时遇到的几个问题。示例保留 `qve` 和 `bj123` 这两个主机名；IP、密码、磁盘序列、tailnet 域名等敏感信息不要写入文档，实际执行时用占位符替换。
+
+### Start at boot 早于 HDD 挂载
+
+现象：
+
+```text
+TASK ERROR: unable to activate storage 'hdd8t' - directory is expected to be a mount point but is not mounted: '/mnt/hdd8t'
+```
+
+原因：
+
+- PVE 的 `pve-guests.service` 会在开机时执行 `startall`。
+- 如果 VM 的某块虚拟磁盘放在 Directory Storage，例如 `hdd8t`，而这个 storage 对应的 `/mnt/hdd8t` 还没挂载完成，PVE 会拒绝激活该 storage。
+- `/etc/fstab` 中如果对 HDD 使用了 `nofail`，系统不会为了它阻塞整个 boot 流程，导致 `pve-guests.service` 可能抢跑。
+
+检查：
+
+```sh
+qm config <VM_ID>
+sed -n '1,220p' /etc/pve/storage.cfg
+sed -n '1,220p' /etc/fstab
+findmnt <PVE_HDD_MOUNTPOINT>
+systemctl status pve-guests.service --no-pager -l
+systemctl status mnt-hdd8t.mount --no-pager -l
+journalctl -b -u pve-guests.service -u mnt-hdd8t.mount --no-pager
+```
+
+修复方式：给 `pve-guests.service` 增加 drop-in，明确要求 VM 自启前等待 HDD mount point。
+
+```sh
+mkdir -p /etc/systemd/system/pve-guests.service.d
+nano /etc/systemd/system/pve-guests.service.d/10-wait-for-hdd8t.conf
+```
+
+写入：
+
+```ini
+[Unit]
+RequiresMountsFor=/mnt/hdd8t
+After=mnt-hdd8t.mount
+
+[Service]
+ExecStartPre=
+ExecStartPre=-/usr/share/pve-manager/helpers/pve-startall-delay
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 300); do mountpoint -q /mnt/hdd8t && exit 0; echo "waiting for /mnt/hdd8t before starting PVE guests ($i/300)"; sleep 1; done; echo "/mnt/hdd8t is not mounted; refusing to start PVE guests" >&2; exit 1'
+```
+
+应用并验证：
+
+```sh
+systemctl daemon-reload
+systemd-analyze verify pve-guests.service
+systemctl cat pve-guests.service
+```
+
+如果 VM 需要自启：
+
+```sh
+qm set <VM_ID> --onboot 1 --startup order=10
+qm config <VM_ID> | grep -E '^(onboot|startup):'
+```
+
+### e1000e 管理网卡 Hardware Unit Hang
+
+现象：
+
+- 局域网内无法访问 PVE Web UI、SSH 和 VM。
+- VM 内部来不及记录明显错误。
+- PVE 重启后，前一个 boot 的 journal 末尾反复出现：
+
+```text
+e1000e 0000:00:19.0 nic0: Detected Hardware Unit Hang
+```
+
+排查命令：
+
+```sh
+journalctl --list-boots --no-pager
+journalctl -b -1 -k --since '<LOCAL_TIME_START>' --until '<LOCAL_TIME_END>' --no-pager
+journalctl -b -1 -k -p warning..alert --no-pager
+lspci -nnk | sed -n '/Ethernet controller/,+8p'
+ethtool -i nic0
+ethtool -k nic0
+ethtool --show-eee nic0
+```
+
+判断：
+
+- 如果故障窗口的最后日志持续刷 `e1000e ... Detected Hardware Unit Hang`，但没有先出现 MCE、thermal shutdown、OOM、NVMe timeout、kernel panic 等日志，优先怀疑宿主机管理网卡或驱动卡死。
+- qve 这里的管理网卡是 Intel I218-V，驱动为 `e1000e`，并作为 `vmbr0` 的 bridge port。Linux bridge/vhost 流量叠加 TSO/GSO/GRO/checksum/EEE 时，可能触发这种硬件队列 hang。
+
+保守修复：关闭这类 offload 和 EEE，并做持久化。
+
+```sh
+nano /usr/local/sbin/qve-nic0-stability.sh
+chmod +x /usr/local/sbin/qve-nic0-stability.sh
+```
+
+脚本：
+
+```sh
+#!/bin/sh
+set -eu
+IFACE="${1:-nic0}"
+[ -d "/sys/class/net/$IFACE" ] || exit 0
+
+if command -v ethtool >/dev/null 2>&1; then
+  ethtool -K "$IFACE" tso off gso off gro off sg off tx off rx off 2>/dev/null || true
+  ethtool -K "$IFACE" rxvlan off txvlan off 2>/dev/null || true
+  ethtool --set-eee "$IFACE" eee off 2>/dev/null || true
+  ethtool -s "$IFACE" wol d 2>/dev/null || true
+fi
+```
+
+systemd 服务：
+
+```sh
+nano /etc/systemd/system/qve-nic0-stability.service
+```
+
+```ini
+[Unit]
+Description=Apply stable settings for qve Intel e1000e management NIC
+Documentation=man:ethtool(8)
+Requires=sys-subsystem-net-devices-nic0.device
+After=sys-subsystem-net-devices-nic0.device network-pre.target
+Before=pve-guests.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/qve-nic0-stability.sh nic0
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+```
+
+if-up hook，防止接口重新 up 后 offload 恢复默认：
+
+```sh
+nano /etc/network/if-up.d/qve-nic0-stability
+chmod +x /etc/network/if-up.d/qve-nic0-stability
+```
+
+```sh
+#!/bin/sh
+[ "${IFACE:-}" = "nic0" ] || exit 0
+/usr/local/sbin/qve-nic0-stability.sh nic0 >/dev/null 2>&1 || true
+exit 0
+```
+
+可选 modprobe 参数：
+
+```sh
+cat >/etc/modprobe.d/e1000e-stability.conf <<'EOF'
+options e1000e SmartPowerDownEnable=0
+EOF
+```
+
+应用并验证：
+
+```sh
+systemctl daemon-reload
+systemctl enable --now qve-nic0-stability.service
+ethtool -k nic0 | grep -E 'rx-checksumming|tx-checksumming|scatter-gather|tcp-segmentation-offload|generic-segmentation-offload|generic-receive-offload|rx-vlan-offload|tx-vlan-offload'
+ethtool --show-eee nic0
+journalctl -k --since '<FIX_TIME>' --no-pager | grep -E 'Detected Hardware Unit Hang|NETDEV WATCHDOG'
+```
+
+如果后续仍复现，下一步更根本的方案是改用独立 Intel server NIC，或把 PVE 管理口迁到另一块更稳定的网卡。
+
+### GPU 直通的 rombar 经验
+
+如果某张 GPU 是宿主机 boot VGA 或在 VM 启动时对 option ROM 敏感，直通给纯 SSH/计算 VM 时可以禁用 ROM BAR：
+
+```sh
+qm set <VM_ID> --hostpci<N> '<GPU_PCI_ADDRESS>,pcie=1,rombar=0'
+qm set <VM_ID> --vga none
+```
+
+qve 上 bj123 的 4090 曾经需要 `rombar=0` 才稳定启动。删除这个选项后，VM 可能仍能保存配置，但下一次启动存在失败或卡住风险。验证方式：
+
+```sh
+qm config <VM_ID> | grep '^hostpci'
+qm start <VM_ID>
+qm status <VM_ID> --verbose
+```
+
+VM 运行后，可以在 QEMU 命令行确认参数是否实际生效：
+
+```sh
+PID="$(qm status <VM_ID> --verbose | awk '/^pid:/ {print $2}')"
+tr '\0' ' ' < "/proc/$PID/cmdline" | grep -o 'host=<GPU_PCI_ADDRESS>[^ ]*\|rombar=0'
+```
+
+### 大内存 VM 的启动速度
+
+把宿主机几乎全部内存分给单个 VM 会让启动变慢，也会挤压 PVE 管理面。bj123 的默认值建议用 96 GiB：
+
+```sh
+qm set <VM_ID> --memory 98304
+```
+
+如果 VM 正在运行，配置会先写入 PVE，通常要等下次 VM 重启后运行态 `maxmem` 才会变成新的值：
+
+```sh
+qm config <VM_ID> | grep '^memory:'
+qm status <VM_ID> --verbose | grep -E '^(maxmem|mem|freemem):'
+```

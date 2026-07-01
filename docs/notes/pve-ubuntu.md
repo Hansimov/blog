@@ -109,6 +109,30 @@
   * `Allow KSM`：默认勾选
 * 点 `Next`
 
+#### 大内存 VM 的默认值经验
+
+如果 VM 类似 `bj123`，主要用于 GPU/AI 任务，可以给较大的内存，但不一定要把宿主机内存几乎全部分给 VM。
+
+经验值：
+
+- 默认建议：`98304 MiB`，即 96 GiB。
+- 需要更大内存任务时再临时调大，例如 120 GiB。
+- 大内存 VM 启动时 QEMU 初始化和 guest 内存上报会更慢；从 120 GiB 调回 96 GiB 可以缩短启动等待。
+- 宿主机应保留足够内存给 PVE、存储、网络和日志服务，避免管理面在 VM 压力下不可用。
+
+命令行修改示例：
+
+```sh
+qm set <VM_ID> --memory 98304
+```
+
+如果 VM 正在运行，配置会写入 PVE；是否立即影响运行态取决于当前 balloon/hotplug 设置。最稳妥的判断方式是下一次重启 VM 后检查：
+
+```sh
+qm config <VM_ID> | grep '^memory:'
+qm status <VM_ID> --verbose | grep -E '^(maxmem|mem|freemem):'
+```
+
 ### 7. Network 选项卡
 
 * `Bridge`：选择默认的即可
@@ -247,6 +271,58 @@ sudo systemctl status ssh
 ### 安装 tmux
 
 参考：[安装 tmux](./tmux.md)
+
+### tmux-resurrect 恢复失败排查
+
+在 `bj123` 这类纯 SSH/算力 VM 中，常用下面命令在登录后恢复 tmux：
+
+```sh
+tmux has-session 2>/dev/null || (tmux new-session -d && tmux run-shell ~/.tmux/plugins/tmux-resurrect/scripts/restore.sh)
+```
+
+如果预期是恢复上一次保存的所有 session/window/pane，但实际没有恢复，按下面顺序查：
+
+```sh
+tmux ls
+ls -la ~/.tmux/plugins/tmux-resurrect/scripts/
+ls -la ~/.local/share/tmux/resurrect/
+readlink -f ~/.local/share/tmux/resurrect/last
+sed -n '1,220p' ~/.tmux.conf
+```
+
+重点看两类问题：
+
+- `last` 指向的保存文件是否本身就不完整。
+  - `tmux-resurrect` 只会从 `~/.local/share/tmux/resurrect/last` 指向的文件恢复。
+  - 如果某次崩溃后只保存了一个空 session 或很少的 pane，`last` 可能已经被覆盖成缩水版本。
+  - 可以查看旧文件，选择最近一个完整文件重新指向：
+
+```sh
+cd ~/.local/share/tmux/resurrect
+ls -lh tmux_resurrect_*.txt
+ln -sfn tmux_resurrect_<TIMESTAMP>.txt last
+```
+
+- `.tmux.conf` 中是否有会破坏恢复流程的 hook。
+  - `tmux-resurrect` 自己会处理从空 `session 0` 恢复时的清理。
+  - 不要额外添加类似下面的 hook：
+
+```tmux
+set -g @resurrect-hook-pre-restore-pane-processes 'tmux kill-session -t=0 2>/dev/null || true'
+```
+
+这类 hook 会在 pane 恢复后、pane process 恢复前杀掉 `session 0`。而 `tmux new-session -d` 默认创建的 session 往往就是 `0`，结果可能是唯一 tmux server 被杀掉，恢复过程提前中断。
+
+修复后可验证：
+
+```sh
+tmux kill-server 2>/dev/null || true
+tmux has-session 2>/dev/null || (tmux new-session -d && tmux run-shell ~/.tmux/plugins/tmux-resurrect/scripts/restore.sh)
+sleep 3
+tmux ls
+tmux list-windows -a
+tmux list-panes -a -F 'session=#{session_name} window=#{window_index} pane=#{pane_index} path=#{pane_current_path} cmd=#{pane_current_command}'
+```
 
 ### 安装 zsh
 
