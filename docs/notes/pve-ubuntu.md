@@ -694,7 +694,13 @@ Extremely slow VM startup when IOMMU/Passthrough is enabled
 
 <details> <summary><code>start_vm101.sh</code></summary>
 
-<<< @/notes/scripts/start_vm101.sh
+<<< @/notes/scripts/pve-vm/start_vm101.sh
+
+</details>
+
+<details> <summary><code>qm_gpus.sh</code></summary>
+
+<<< @/notes/scripts/pve-vm/qm_gpus.sh
 
 </details>
 
