@@ -692,6 +692,17 @@ Extremely slow VM startup when IOMMU/Passthrough is enabled
 
 ### 启动 VM 时自动诊断和排除故障显卡
 
+如果 GPU 是在 VM 运行期间掉卡，先保留 VM 内的 Xid 日志，不要按 `hostpci` 序号
+猜测宿主机显卡。使用 `diagnose_vm_gpu.sh VMID GUEST_BDF` 读取实时 QEMU
+`info pci`，将 VM BDF 映射到宿主机 BDF，并检查物理槽位、配置空间和上游 PLX
+链路。完整流程见：[排查正在运行的直通 GPU 掉卡](./nvidia-gpus.md#排查正在运行的直通-gpu-掉卡)。
+
+<details> <summary><code>diagnose_vm_gpu.sh</code></summary>
+
+<<< @/notes/scripts/pve-vm/diagnose_vm_gpu.sh
+
+</details>
+
 <details> <summary><code>start_vm101.sh</code></summary>
 
 <<< @/notes/scripts/pve-vm/start_vm101.sh
