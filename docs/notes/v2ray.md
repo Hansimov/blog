@@ -359,6 +359,58 @@ sudo systemctl status v2ray@new
 curl --proxy http://127.0.0.1:11119 http://ifconfig.me/ip && echo ""
 ```
 
+## 在直连与本机前置代理间切换
+
+如果 `11119` 对应的远端节点只能经本机 `11111` 访问，可以在其出站项使用
+`proxySettings.tag` 指向一个 `127.0.0.1:11111` 的 HTTP outbound。两种模式分别是：
+
+- `direct`：应用 → 本机 `11119` → 原远端节点 → 目标网站。
+- `relay`：应用 → 本机 `11119` → 本机 `11111` 的远端节点 → 原远端节点 → 目标网站。
+
+这里的 `direct` 仍使用 `11119` 原有的远端代理和认证，只是取消前置中转；
+不会把所有请求改成 `freedom`，也不会清除已有的分流规则。
+
+在 VM 中安装切换脚本：
+
+```sh
+sudo install -m 755 v2ray_11119_route.py /usr/local/sbin/v2ray-11119-route
+```
+
+```sh
+# 查看当前模式
+sudo v2ray-11119-route status
+
+# 独立测试直连，不修改生产配置
+sudo v2ray-11119-route test-direct
+
+# 测试成功后切换为直连
+sudo v2ray-11119-route direct
+
+# 切换回经 11111 中转
+sudo v2ray-11119-route relay
+```
+
+脚本默认读取 `/usr/local/etc/v2ray/new.json`，管理 `v2ray@new.service`，
+从原配置保留远端地址、端口和凭据。测试进程使用服务自身的 Unix 用户、独立的
+loopback 临时端口，并强制探测请求经过所选代理，防止分流规则造成误判。
+只有两轮 HTTPS 检查全部通过才应用配置；切换后的服务或请求检查失败会恢复
+原配置并重启服务。已处于目标模式时，测试通过后不会重复重启。
+
+原配置备份保存在 VM 内 `/var/backups/v2ray-route/`，权限为 `0600`，目录为
+`0700`。备份包含真实代理凭据，**不能提交到 public 仓库**；仓库中的脚本不包含
+真实上游地址或认证信息。依赖 Python 3.9+、curl、systemd 和现有 V2Ray 4.x。
+
+这份脚本针对现有 V2Ray 4.28 的普通 TCP 配置。若使用 WebSocket/TLS 或更新核心，
+应重新核对传输层中转行为；`transportLayer` 从 4.35 才加入，不能直接套到旧版。
+参见 [V2Fly 出站代理配置](https://www.v2fly.org/config/outbounds.html#proxysettingsobject)。
+
+2026-09-05 在 ai122 的复测中，原上游 TCP 端口能够连接，但完整直连请求仍出现
+长延迟和超时；延长等待后一个请求约 26 秒才成功，另一个仍超时。经 `11111`
+中转的四次请求均成功，约 0.8–3.1 秒，因此保留中转。不能仅凭 TCP 端口恢复
+连接就自动切回直连，也不能据此断定具体是哪一家运营商或哪一跳的问题。
+
+<<< @/notes/scripts/pve-vm/v2ray_11119_route.py
+
 ## 附录
 ### v2ray 完整安装脚本
 
