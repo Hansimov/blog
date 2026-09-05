@@ -1,6 +1,7 @@
 node_modules
 docs/.vitepress/dist
 docs/.vitepress/cache
+docs/.vitepress/.temp/
 *.lm
 .vscode
 .chats
