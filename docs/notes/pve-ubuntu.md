@@ -690,6 +690,31 @@ Extremely slow VM startup when IOMMU/Passthrough is enabled
 
 ## 五b、智能启动脚本
 
+### 拔卡或调整插槽后重新建立直通配置
+
+硬件位置改变后，应重新读取 PCI 清单。旧 `hostpci*` 可能指向空槽，历史隔离的
+BDF 也可能已被另一张正常显卡占用。先在 PVE 确认 VM 已停止并预览全量检查：
+
+```sh
+qm status 101
+/root/qm_gpus.sh 101 --dry-run --include-quarantined
+```
+
+确认数量、型号、配置空间、链路和存储后，运行完整验证与启动：
+
+```sh
+/root/start_vm101.sh 101 --revalidate-quarantined
+```
+
+此流程会备份并重建连续的 `hostpci0..N`，绑定显卡各 PCI function 到 VFIO，
+执行 256 MiB 的联合 QEMU 探测，再启动生产 VM；只有完整枚举后才解除相应隔离。
+该流程不会主动关闭已经运行的 VM。大内存 VM 的初始化时间应结合启动日志中的
+QEMU RSS 增长判断，不能仅凭 `qm status` 显示 running 就认为 Ubuntu 已就绪。
+
+VM 启动后还需检查 guest agent、`nvidia-smi` 的实际卡数和本次启动的 Xid 日志，
+并重新建立 VM BDF 到宿主机 BDF 的映射。运行时映射方法见下节；主板插槽编号应
+以 DMI 的端点对应关系核对，避免把上游桥的 `Physical Slot` 当成 GPU 插槽。
+
 ### 启动 VM 时自动诊断和排除故障显卡
 
 如果 GPU 是在 VM 运行期间掉卡，先保留 VM 内的 Xid 日志，不要按 `hostpci` 序号
