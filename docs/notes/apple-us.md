@@ -1,8 +1,60 @@
-# 苹果手机注册美区账号和充值礼品卡
+# GPT 充值
+
+## 使用安卓手机 Google Play 添加银行卡并充值
+
+省流：Google 美国地址 + Visa卡 + Google Play 支付
+
+### 创建新的 Chrome 浏览器实例
+
+这个适用于电脑上已经登录了一个 Google 账号的情况。
+
+新建 Chrome 浏览器的快捷方式，右键"属性"，"目标"设置为：
+- `"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --user-data-dir="D:\_chrome_user_data\user_x"`
+
+开启全局代理，避免添加支付方式时出错。
+
+### 注册 Google 账号
+
+略。
+
+### 添加支付方式
+
+网页端 Google 支付中心：
+- https://wallet.google.com/wallet/u/1/settings
+- 添加银行卡信息
+
+建议选择美区，填写美国地址：
+* http://www.meiguodizhi.com/usa-address/oregon
+* 最好选择免税州，比如俄勒冈州（Oregon）
+* 注意邮编
+
+### 安卓登录 Google Play
+
+* 进入 Google Play 商店，点击右上角头像
+* 选择 "付款和订阅" -> "支付方式"
+* 理论上，上面在 "Google 支付中心" 中添加的银行卡应该已经在了
+* 确保信息一致，且可能要填入邮编
+
+### ChatGPT App 内支付
+
+* 点击左下角头像，升级为 Plus 即可
+* 弹出的支付方式，选择 Google Pay，默认会选择上面添加的 Visa 卡
+* 确认无误，输入密码即可
+
+不过有个小细节可能需要注意：
+- 如果当前的手机登录了两个 Google 账号，可能支付的时候用的是另一个的
+- 这个地方有点疑惑，但是暂时先不管了
+
+### 升级套餐
+
+* 点击左下角头像，升级为 Pro 即可
+* 有些银行卡可能有风控机制，按照短信提示，复制短信再发送一遍即可
+
+## 使用苹果手机注册美区账号，并充值礼品卡
 
 省流：Apple 美区账号 + 支付宝美区购买礼品卡 + App Store 内购
 
-## 注册美区账号
+### 注册美区账号
 ::: tip 求教老友们怎么注册美区苹果ID - 开发调优 - LINUX DO
 * https://linux.do/t/topic/709295/8
 
@@ -28,7 +80,7 @@
 
 刷新 App Store 页面，如果能看到美区应用，就表示注册成功了。
 
-## 礼品卡充值和使用
+### 礼品卡充值和使用
 
 ::: tip 2025年ChatGPT iOS礼品卡订阅完整指南：4种方法对比与详细步骤 - Cursor IDE 博客
 * https://www.cursor-ide.com/blog/chatgpt-ios-gift-card
@@ -62,7 +114,7 @@ IOS端充值GPT4.0，亲测非常有效 - 李文轩 2024的文章 - 知乎
 * 登录 OpenAI 账号（如果是 Google 账号，点击后在浏览器中打开，输入邮箱和密码即可）
 * 选择升级套餐，用 App Store 的余额购买即可
 
-## 在 ios26 中切换到美区账户
+### 在 ios26 中切换到美区账户
 
 * 在 "设置" 中搜索 "媒体与购买项目"
 * 选择 "退出登录"
@@ -72,7 +124,7 @@ IOS端充值GPT4.0，亲测非常有效 - 李文轩 2024的文章 - 知乎
 * 选择 "使用 Apple 升级"，这就会默认使用该美区 Apple Store 的余额订阅
 * 订阅 Plus 成功后，再点进 ChatGPT 的订阅页面，选择升级方案，升到 "Pro 20x" 即可
 
-## 升级应用套餐
+### 升级应用套餐
 
 以 ChatGPT 为例：
 
@@ -86,6 +138,6 @@ IOS端充值GPT4.0，亲测非常有效 - 李文轩 2024的文章 - 知乎
 * 因此首次安装和购买套餐时，需要在更高版本的 iPhone 上安装 ChatGPT 并充值
 * 在后续续费和升级套餐时，如果已经有了 ChatGPT 的订阅，就不再需要在高版本的 iPhone 上操作了
 
-## 其他注意事项
+### 其他注意事项
 
 * Apple 支付方式不支持 "国内的 Visa 卡" 或者 "非美区的 PayPal"。
