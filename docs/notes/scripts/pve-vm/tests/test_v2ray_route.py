@@ -13,7 +13,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 
 SOURCE = Path(__file__).resolve().parents[1] / "v2ray_11119_route.py"
@@ -112,6 +112,40 @@ class RouteTests(unittest.TestCase):
         self.config["outbounds"][0]["streamSettings"] = {"network": "ws"}
         with self.assertRaisesRegex(RuntimeError, "raw TCP"):
             route.candidate(self.config, "relay", None)
+
+    def test_listener_timeout_restores_previous_config(self):
+        real_restart = route.restart
+        self.invoke()
+        with patch.object(route, "restart", side_effect=real_restart), \
+                patch.object(route, "wait_for_listener", side_effect=[
+                    RuntimeError("synthetic listener timeout"), None]) as wait:
+            with self.assertRaisesRegex(RuntimeError, "Previous config restored"):
+                route.main()
+        self.assertEqual(self.config_path.read_bytes(), self.original)
+        self.assertEqual(wait.call_count, 2)
+
+
+class ReadinessTests(unittest.TestCase):
+    def test_retries_until_listener_accepts_connections(self):
+        with patch.object(route.socket, "create_connection", side_effect=[
+                ConnectionRefusedError(), MagicMock()]) as connect, \
+                patch.object(route.time, "sleep"):
+            route.wait_for_listener()
+        self.assertEqual(connect.call_count, 2)
+        connect.assert_called_with(("127.0.0.1", 11119), timeout=0.25)
+
+    def test_listener_wait_has_a_deadline(self):
+        with patch.object(route.socket, "create_connection", side_effect=ConnectionRefusedError()), \
+                patch.object(route.time, "monotonic", side_effect=[0, 0, 0.5, 1]), \
+                patch.object(route.time, "sleep"):
+            with self.assertRaisesRegex(RuntimeError, "did not become ready"):
+                route.wait_for_listener(timeout=1)
+
+    def test_active_service_still_waits_for_listener(self):
+        with patch.object(route, "command", return_value=subprocess.CompletedProcess([], 0)), \
+                patch.object(route, "wait_for_listener") as wait:
+            route.restart("v2ray@new.service")
+        wait.assert_called_once_with()
 
 
 if __name__ == "__main__":

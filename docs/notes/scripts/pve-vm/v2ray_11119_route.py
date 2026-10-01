@@ -165,11 +165,25 @@ def atomic_write(path, data, metadata):
             os.unlink(temporary)
 
 
+def wait_for_listener(port=11119, timeout=10):
+    # A Type=simple unit can be active before V2Ray has bound its inbounds.
+    # Wait for the local listener before testing HTTPS, including after rollback.
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=0.25):
+                return
+        except OSError:
+            time.sleep(0.1)
+    raise RuntimeError(f"Proxy listener 127.0.0.1:{port} did not become ready after restart.")
+
+
 def restart(service):
     if command(["systemctl", "restart", service]).returncode:
         raise RuntimeError("Service restart failed.")
     if command(["systemctl", "is-active", "--quiet", service]).returncode:
         raise RuntimeError("Service is not active after restart.")
+    wait_for_listener()
 
 
 def main():
