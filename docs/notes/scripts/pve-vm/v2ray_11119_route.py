@@ -17,6 +17,7 @@ from pathlib import Path
 import pwd
 import socket
 import stat
+import statistics
 import subprocess
 import tempfile
 import time
@@ -102,7 +103,7 @@ def validate(binary, path):
         raise RuntimeError("V2Ray configuration validation failed (private config output suppressed).")
 
 
-def probe(config, args, uid, gid, directory):
+def probe(config, args, uid, gid, directory, check=None):
     probe_config = copy.deepcopy(config)
     target = primary(probe_config, args.outbound_tag)
     with socket.socket() as listener:
@@ -139,7 +140,7 @@ def probe(config, args, uid, gid, directory):
                     time.sleep(0.1)
             else:
                 raise RuntimeError("Isolated V2Ray probe listener did not become ready.")
-            return check_proxy(port) and process.poll() is None
+            return (check or check_proxy)(port) and process.poll() is None
         finally:
             if process.poll() is None:
                 process.terminate()
@@ -186,15 +187,81 @@ def restart(service):
     wait_for_listener()
 
 
+def diagnostic_request(port, url, expected):
+    """Bounded, credential-free output; never print curl stderr or response bodies."""
+    try:
+        result = command([
+            "curl", "--silent", "--show-error", "--noproxy", "",
+            "--proxy", f"http://127.0.0.1:{port}", "--connect-timeout", "6",
+            "--max-time", "12", "--output", "/dev/null", "--write-out",
+            "%{http_code} %{time_total} %{size_download}", url], timeout=15)
+        code, seconds, size = result.stdout.split()
+        seconds, size = float(seconds), int(size)
+        ok = result.returncode == 0 and code == expected
+        if "__down?bytes=1048576" in url:
+            ok = ok and size == 1048576
+        return {"ok": ok, "seconds": seconds, "bytes": size,
+                "code": code, "curl": result.returncode}
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return {"ok": False, "seconds": None, "bytes": 0,
+                "code": "000", "curl": "probe-error"}
+
+
+def diagnostic_check(port, label, download=False):
+    records = []
+    for round_number in range(1, 3):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(CHECKS)) as pool:
+            jobs = [pool.submit(diagnostic_request, port, url, expected)
+                    for url, expected in CHECKS]
+            for (url, _), job in zip(CHECKS, jobs):
+                record = job.result()
+                records.append(record)
+                print(f"{label} round={round_number} {url}: "
+                      + json.dumps(record), flush=True)
+    successful = [r["seconds"] for r in records if r["ok"]]
+    print(f"{label}: HTTPS success={len(successful)}/{len(records)}; "
+          + (f"successful median={statistics.median(successful):.3f}s "
+             f"max={max(successful):.3f}s" if successful else "no successful timings"),
+          flush=True)
+    if download:
+        result = diagnostic_request(port,
+            "https://speed.cloudflare.com/__down?bytes=1048576", "200")
+        records.append(result)
+        print(f"{label}: 1 MiB download " + json.dumps(result), flush=True)
+    return all(r["ok"] for r in records)
+
+
+def diagnose(config, args, uid, gid):
+    print("Read-only route comparison; no production config changes or restarts.", flush=True)
+    for port in (11111, 11119):
+        diagnostic_check(port, f"live-{port}", args.download)
+    # Sequential paths avoid making the two throughput probes compete.
+    for mode in ("direct", "relay"):
+        changed = candidate(config, mode, args.outbound_tag)
+        with tempfile.TemporaryDirectory(prefix="v2ray-route-", dir="/run") as temp:
+            directory = Path(temp)
+            os.chown(directory, 0, gid)
+            directory.chmod(0o710)
+            healthy = probe(changed, args, uid, gid, directory,
+                check=lambda port: diagnostic_check(port, f"isolated-{mode}", args.download))
+            print(f"isolated-{mode}: healthy={healthy}", flush=True)
+    print("Compare failures and latency, not just ping/TCP reachability. "
+          "No route was automatically selected.", flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("status", "test-direct", "direct", "relay"))
+    parser.add_argument("mode", choices=("status", "diagnose", "test-direct", "test-relay", "direct", "relay"))
+    parser.add_argument("--download", action="store_true",
+                        help="diagnose only: also fetch 1 MiB per path (four paths)")
     parser.add_argument("--config", type=Path, default=Path("/usr/local/etc/v2ray/new.json"))
     parser.add_argument("--service", default="v2ray@new.service")
     parser.add_argument("--binary", default="/usr/local/bin/v2ray")
     parser.add_argument("--outbound-tag", default=None)
     parser.add_argument("--backup-dir", type=Path, default=Path("/var/backups/v2ray-route"))
     args = parser.parse_args()
+    if args.download and args.mode != "diagnose":
+        parser.error("--download is only valid with diagnose")
     if os.geteuid() != 0:
         parser.error("Run with sudo inside the VM.")
     args.config = args.config.resolve(strict=True)
@@ -214,9 +281,13 @@ def main():
             raise RuntimeError("Expected HTTP inbound on 11119 is absent.")
         if command(["systemctl", "is-active", "--quiet", args.service]).returncode:
             raise RuntimeError("Start the existing service before testing or switching routes.")
-        mode = "direct" if args.mode == "test-direct" else args.mode
-        changed = candidate(config, mode, args.outbound_tag)
         uid, gid = service_account(args.service)
+        if args.mode == "diagnose":
+            diagnose(config, args, uid, gid)
+            return
+        testing = args.mode.startswith("test-")
+        mode = args.mode.removeprefix("test-")
+        changed = candidate(config, mode, args.outbound_tag)
         with tempfile.TemporaryDirectory(prefix="v2ray-route-", dir="/run") as temp:
             directory = Path(temp)
             os.chown(directory, 0, gid)
@@ -224,8 +295,8 @@ def main():
             print(f"Testing {mode} with an isolated listener as service uid={uid}...", flush=True)
             if not probe(changed, args, uid, gid, directory):
                 raise RuntimeError("Candidate route failed; production config and service were left unchanged.")
-            if args.mode == "test-direct":
-                print("Direct route passed. Use 'direct' to switch production.")
+            if testing:
+                print(f"{mode.capitalize()} route passed. Use '{mode}' to switch production.")
                 return
             if config == changed:
                 print("Already using the requested route; no restart needed.")

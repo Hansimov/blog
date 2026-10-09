@@ -108,6 +108,23 @@ class RouteTests(unittest.TestCase):
         self.assertEqual(self.config_path.read_bytes(), self.original)
         restart.assert_not_called()
 
+    def test_test_relay_never_writes_or_restarts(self):
+        restart = self.invoke(mode="test-relay")
+        route.main()
+        self.assertEqual(self.config_path.read_bytes(), self.original)
+        self.assertFalse((self.directory / "backups").exists())
+        restart.assert_not_called()
+
+    def test_diagnose_never_writes_or_restarts(self):
+        restart = self.invoke(mode="diagnose", probe=False)
+        with patch.object(route, "diagnostic_check", return_value=False) as check:
+            route.main()
+        self.assertEqual([c.args[0] for c in check.call_args_list], [11111, 11119])
+        self.assertEqual(route.probe.call_count, 2)
+        self.assertEqual(self.config_path.read_bytes(), self.original)
+        self.assertFalse((self.directory / "backups").exists())
+        restart.assert_not_called()
+
     def test_relay_refuses_to_discard_existing_transport(self):
         self.config["outbounds"][0]["streamSettings"] = {"network": "ws"}
         with self.assertRaisesRegex(RuntimeError, "raw TCP"):
@@ -146,6 +163,29 @@ class ReadinessTests(unittest.TestCase):
                 patch.object(route, "wait_for_listener") as wait:
             route.restart("v2ray@new.service")
         wait.assert_called_once_with()
+
+
+class DiagnosticTests(unittest.TestCase):
+    def test_failed_http_is_not_a_successful_fast_measurement(self):
+        with patch.object(route, "command", return_value=
+                subprocess.CompletedProcess([], 28, "000 6.0 0", "private upstream")):
+            result = route.diagnostic_request(11119, route.CHECKS[0][0], "204")
+        self.assertFalse(result["ok"])
+        self.assertNotIn("private", json.dumps(result))
+
+    def test_download_requires_complete_payload(self):
+        with patch.object(route, "command", return_value=
+                subprocess.CompletedProcess([], 0, "200 0.1 1024", "")):
+            result = route.diagnostic_request(11119,
+                "https://speed.cloudflare.com/__down?bytes=1048576", "200")
+        self.assertFalse(result["ok"])
+
+    def test_diagnostic_timeout_is_reported_without_exception_details(self):
+        with patch.object(route, "command", side_effect=
+                subprocess.TimeoutExpired("private-command", 15)):
+            result = route.diagnostic_request(11119, route.CHECKS[0][0], "204")
+        self.assertFalse(result["ok"])
+        self.assertNotIn("private-command", json.dumps(result))
 
 
 if __name__ == "__main__":
