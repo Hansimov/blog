@@ -1,0 +1,10 @@
+[Unit]
+Description=Guard against stale IPv6 SLAAC source prefixes on %I
+After=NetworkManager.service tailscaled.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/tailscale-ipv6-repair maintain --interface %I
+TimeoutStartSec=180
+UMask=0077

@@ -1,5 +1,9 @@
 # 使用 Tailscale 组网
 
+遇到高延迟或网站加载缓慢，先看下文的
+[旧 IPv6 前缀残留导致中继回退](#旧-ipv6-前缀残留导致中继回退)，
+不要先重启整张网卡、关闭防火墙或盲目调大 TCP 缓冲区。
+
 ## 注册账号
 
 注册：https://tailscale.com
@@ -665,6 +669,150 @@ iperf3 -c <MACHINE_A_TAILSCALE_IP> -P 8 -t 60
 
 ## 重启 tailscaled + tailscale
 
+远程执行会中断 Tailscale 管理连接，必须先准备 PVE 控制台或其他独立管理通道。
+重启 Tailscale 不会清除 NetworkManager 保存的旧 IPv6 自动配置状态。
+
 ```sh
 sudo tailscale down && sudo systemctl restart tailscaled && sudo tailscale up
 ```
+
+## 旧 IPv6 前缀残留导致中继回退
+
+### 2026-10 的现象与根因
+
+desktop 访问 ai122 一度绕行旧金山 DERP，中继延迟约 300–900 ms，并伴有超时。
+两端 UDP 检测都通过，但 ai122 的默认 IPv6 源地址不可用。它同时保留两组公网前缀：
+旧前缀的绑定源地址探测失败，新前缀的探测成功；当时默认路由器的 RA 只通告新前缀。
+不能把“本机有全局 IPv6 地址”当作“IPv6 公网正常”。
+
+第一次把旧地址的 `preferred_lft` 设为零后，直连立即恢复，普通 ping 三十次零丢包，
+平均约 45 ms。但这只是运行时缓解：数分钟后旧地址重新变为 preferred，还生成了
+旧前缀下的新临时地址，连接再次回退到 DERP。**短时间测试通过不等于修复完成。**
+
+进一步处理是通过 NetworkManager **仅刷新所选接口的 IPv6 自动配置状态**，
+重新学习当前路由通告；不执行 `connection down/up`，不重启 NetworkManager，
+不改 IPv4、默认防火墙或代理。刷新后旧前缀地址消失，IPv4 地址保持不变，
+Tailscale 恢复 IPv6 直连。这与前缀变更后旧状态未及时撤销的情况一致；
+不能仅凭一次 RA 捕获断言路由器完整的历史行为。
+
+后续检查还需要覆盖新的 RA、临时地址更新和一段持续访问，而非只测一次 ping。
+路由器如何撤销旧前缀可参考 [RFC 9096](https://www.rfc-editor.org/rfc/rfc9096.html#name-signaling-stale-configuration)。
+客户端防护不能替代路由器正确处理前缀变更，也不能保证运营商链路没有抖动。
+
+### 先确认路径，再测延迟和吞吐
+
+在 desktop 上运行：
+
+```powershell
+# 是否直连、实际使用 IPv4/IPv6，还是 via DERP(...)
+tailscale ping --c 20 --until-direct=false --timeout 2s ai122
+
+# 普通 ICMP，验证经过系统网络栈后的结果
+ping -n 30 ai122
+```
+
+独立、限时、只允许测试客户端访问的内存数据测试中，两次 8 MiB 下载约 1.08/1.34 秒，
+即约 62/50 Mbps；临时测试监听随后关闭，没有对外暴露目录。小文件测量包含握手和
+首包等待，不能直接当作带宽上限；短传输也不是持续吞吐保证。
+后续一分钟抽样中，路径十二次检查均保持 IPv6 直连，普通 ping 平均约 43 ms，
+但六十包中仍有两包超时：恢复直连不等于公网链路完全无丢包。
+
+在 VM 中对照检查：
+
+```sh
+tailscale ping --c 20 --until-direct=false --timeout 2s DESKTOP_HOSTNAME
+tailscale netcheck
+```
+
+这里 `DESKTOP_HOSTNAME` 要换为 Tailscale 中实际的机器名，不是假设一定叫 `desktop`。
+直接运行原生 Tailscale、`ip address`、`ss`、`journalctl` 可能输出真实地址和用户信息，
+请只在私有终端检查。正式排查方法参见
+[Tailscale 性能故障排查](https://tailscale.com/docs/reference/troubleshooting/poor-performance-tailnet)。
+
+### 安全诊断与 NetworkManager 修复脚本
+
+仓库脚本：[tailscale_ipv6_repair.py](./scripts/pve-vm/tailscale_ipv6_repair.py)。
+在 VM 上安装；接口名必须用当前物理网卡，不能照搬历史 GPU 拓扑下的旧接口名。
+
+```sh
+sudo install -m 755 tailscale_ipv6_repair.py /usr/local/sbin/tailscale-ipv6-repair
+
+# 默认只诊断，不更改地址、路由或服务
+sudo tailscale-ipv6-repair --interface enp7s18
+
+# P1 是上一步输出的标签，不是固定前缀；修复会重新检查所有证据
+sudo tailscale-ipv6-repair repair --interface enp7s18 --stale-prefix P1
+```
+
+依赖 Linux、Python 3.9+、iproute2、NetworkManager、systemd 和支持
+`netcheck --format=json --bind-address` 的 Tailscale。已在 Tailscale 1.102.2、
+NetworkManager 1.36.6 环境验证。需要 root 接收原始 IPv6 路由通告。
+
+修复前必须同时满足：
+
+- 所选接口只有一条 IPv6 默认路由；当前默认源属于待修复前缀。
+- 两次绑定源地址的 IPv6 检测均失败，而至少一个替代前缀的两次检测均成功。
+- 当前默认路由器的有效 RA 通告替代前缀，不通告待修复前缀；修复前再次确认 RA 和地址快照。
+- 地址属于动态 SLAAC `/64`，NetworkManager 配置为 `ipv6.method=auto`，并存在 IPv4 管理路径。
+
+多路由、静态地址、RA 缺失、检查工具出错或证据变化时拒绝自动修复。
+脚本不只凭 ping 失败来判断旧地址，也不会固定写死某个公网前缀。
+
+修复过程短暂将该设备的运行时 `ipv6.method` 从 `auto` 切为 `disabled` 再恢复 `auto`。
+**IPv6 连接可能短暂中断**，因此应经 PVE guest agent/控制台或独立 IPv4 通道执行。
+`finally` 恢复之外，还有独立的 90 秒恢复定时器，防止调用方断开或进程被杀后长期停用 IPv6。
+脚本验证 IPv4 地址/默认路由未变化、新前缀可用且旧前缀已消失，成功后取消恢复定时器。
+没有修改磁盘中的 NetworkManager 连接配置；这是清理缓存，不是静态地址绑定。
+
+备份位于 `/var/backups/tailscale-network/`，目录 `0700`、文件 `0600`，包含真实地址、
+连接名称、machine/boot ID，**只能留在私有主机，不可提交**。必要时：
+
+```sh
+sudo tailscale-ipv6-repair restore --interface enp7s18 \
+  --backup /var/backups/tailscale-network/ipv6-TIMESTAMP.json
+```
+
+恢复仅适用于本脚本创建的同机、同接口、同次启动备份，作用是重新启用 IPv6 自动配置，
+**不会重建已经失效的旧地址**，也不承诺还原旧 SLAAC 缓存。
+
+### 持久防复发：按接口启用检查定时器
+
+先手动诊断并确认适用，再安装仓库内的两个模板：
+
+```sh
+sudo install -m 644 tailscale-ipv6-guard@.service tailscale-ipv6-guard@.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now tailscale-ipv6-guard@enp7s18.timer
+
+# 手动执行一轮并查看结果
+sudo systemctl start tailscale-ipv6-guard@enp7s18.service
+sudo journalctl -u tailscale-ipv6-guard@enp7s18.service -n 20 --no-pager
+sudo systemctl list-timers 'tailscale-ipv6-guard@*'
+```
+
+定时器开机后启动，每轮结束约两分钟后再检查，附加最多十秒随机延迟。
+默认源仍在当前 RA 中时直接退出，不重启网络，也不反复测速。
+只有发现疑似旧前缀才运行完整证据检查；符合上述条件才刷新 IPv6。
+因此它不是“每两分钟重启网络”，也不是故障出现瞬间就能恢复的保证。
+不使用 NetworkManager 或多默认路由的主机不要直接启用，应人工诊断。
+
+停用自动维护不会撤销已经恢复的健康地址：
+
+```sh
+sudo systemctl disable --now tailscale-ipv6-guard@enp7s18.timer
+```
+
+公开脚本的正常输出使用 `P1/P2` 标签和计数，不打印真实 IP、路由器标识或原始 netcheck
+日志；异常也不打印可能含地址的命令参数/堆栈。模板不含主机凭据或公网地址。
+
+### 离线回归测试
+
+在 Linux 上运行以下命令；私有备份权限测试需要 root。测试中的网络、systemd、
+NetworkManager 修改均被 mock，不会真实改变服务或地址，示例地址只使用文档保留网段。
+
+```sh
+sudo python3 -B -m unittest discover -s docs/notes/scripts/pve-vm/tests -v
+```
+
+覆盖旧前缀证据不足时拒绝修改、RA/源地址中途变化、健康状态不操作、IPv4 变化检测、
+恢复定时器启动失败、更新中断后恢复 `auto`、备份权限、脱敏输出和 V2Ray 诊断不修改生产配置。

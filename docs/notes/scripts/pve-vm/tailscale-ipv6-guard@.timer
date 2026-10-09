@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodically check IPv6 prefix selection on %I
+
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=2min
+RandomizedDelaySec=10s
+Unit=tailscale-ipv6-guard@%i.service
+
+[Install]
+WantedBy=timers.target
