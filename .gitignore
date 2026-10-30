@@ -7,3 +7,7 @@ docs/.vitepress/.temp/
 .chats
 debugs
 .secrets
+
+# Python interpreter caches (all directories)
+__pycache__/
+*.py[cod]
