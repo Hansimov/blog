@@ -86,6 +86,10 @@ Normal startup:
 The production-start deadline is sized automatically from configured VM
 memory. Set START_TIMEOUT to a positive number of seconds to override it.
 
+Every GPU uses rombar=0 in configuration and lightweight VFIO probes. Before
+each production start, this script refuses hostpci entries without exactly
+one rombar=0 (including when an older/custom GPU_TOOL is used).
+
 --dry-run performs read-only storage and PCI checks. It writes only diagnostic
 logs and the JSON state record; it does not mount storage, bind PCI devices,
 change VM configuration, or start/stop the VM.
@@ -953,6 +957,25 @@ stop_failed_start() {
 	die "VM ${VMID} did not stop within ${STOP_WAIT_SECONDS} seconds"
 }
 
+verify_gpu_rom_policy() {
+	local config
+
+	config="$(timeout "$QM_TIMEOUT" qm config "$VMID")" || return 1
+	awk '
+		/^hostpci[0-9]+:/ {
+			count = 0
+			n = split($2, options, ",")
+			for (i = 1; i <= n; i++) {
+				if (options[i] ~ /^rombar=/) {
+					if (options[i] != "rombar=0") exit 1
+					count++
+				}
+			}
+			if (count != 1) exit 1
+		}
+	' <<<"$config"
+}
+
 production_start() {
 	local label="$1"
 	local expected_gpus="$2"
@@ -961,6 +984,9 @@ production_start() {
 	local status
 	local started_epoch
 	local success_message
+
+	verify_gpu_rom_policy ||
+		die "refusing to start VM ${VMID}: every GPU hostpci entry must explicitly set rombar=0; update GPU_TOOL/configuration first"
 
 	production_start_count=$((production_start_count + 1))
 	((production_start_count <= MAX_PRODUCTION_STARTS)) ||

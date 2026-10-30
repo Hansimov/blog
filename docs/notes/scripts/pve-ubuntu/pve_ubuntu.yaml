@@ -75,9 +75,11 @@ guest_setup:
 gpu_passthrough:
   enabled: true
   auto_detect_nvidia: true
+  # Compute GPUs: the script enforces rombar=0, including on newly added cards.
+  # This affects guest ROM exposure, NOT the host firmware's POST process.
   pci_addresses:
-    - "<GPU_PCI_ADDRESS_1>"
-    - "<GPU_PCI_ADDRESS_2>"
+    - "<GPU_PCI_ADDRESS_1>,rombar=0"
+    - "<GPU_PCI_ADDRESS_2>,rombar=0"
     - "<BOOT_VGA_GPU_PCI_ADDRESS>,rombar=0"
   excluded_pci_addresses:
     - "<GPU_PCI_ADDRESS_TO_EXCLUDE> # optional; keep problematic GPUs out of the VM"

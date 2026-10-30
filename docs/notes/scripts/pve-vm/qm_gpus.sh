@@ -82,6 +82,10 @@ Use start_vm101.sh --revalidate-quarantined for verified recovery and promotion.
 Apply mode uses a small 256 MiB QEMU/VFIO realization probe by default. It
 validates the whole candidate set without booting the large production VM and
 uses the same lightweight probe for binary isolation if realization fails.
+
+Compute-GPU policy: every selected GPU and every VFIO probe function uses
+rombar=0. Existing rombar values are replaced, including after reinsertion or
+quarantine recovery. This controls guest ROM exposure, not host BIOS POST.
 EOF
 }
 
@@ -504,7 +508,7 @@ vfio_probe_subset() {
 		for function_path in "${function_paths[@]}"; do
 			function_bdf="${function_path##*/}"
 			function_number="${function_bdf##*.}"
-			device_arg="vfio-pci,host=${function_bdf},id=gpu${index}f${function_number},bus=${root_port},addr=0x0.${function_number}"
+			device_arg="vfio-pci,host=${function_bdf},id=gpu${index}f${function_number},bus=${root_port},addr=0x0.${function_number},rombar=0"
 			if [[ "$function_number" == "0" && ${#function_paths[@]} -gt 1 ]]; then
 				device_arg+=",multifunction=on"
 			fi
@@ -675,17 +679,23 @@ load_current_hostpci() {
 
 value_for_gpu() {
 	local bdf="$1"
-	local value="${current_by_bdf[$bdf]:-}"
-
-	if [[ -z "$value" ]]; then
-		printf '%s,pcie=1\n' "$bdf"
-		return 0
-	fi
+	local value="${current_by_bdf[$bdf]:-$bdf}"
+	local option
+	local -a options=()
+	local -a kept=()
 
 	if [[ "$value" != *",pcie="* ]]; then
 		value="${value},pcie=1"
 	fi
-	printf '%s\n' "$value"
+	# Policy, not a per-slot default: a moved/recovered card must not silently
+	# regain the default ROM BAR. Keep unrelated options such as romfile/x-vga.
+	IFS=',' read -r -a options <<<"$value"
+	for option in "${options[@]}"; do
+		[[ "$option" == rombar=* ]] || kept+=("$option")
+	done
+	kept+=("rombar=0")
+	join_csv "${kept[@]}"
+	printf '\n'
 }
 
 restore_original_config() {
@@ -745,6 +755,9 @@ verify_contiguous_config() {
 	local value
 	local actual_bdf
 	local expected_bdf
+	local option
+	local rombar_count
+	local -a options=()
 	local -A actual=()
 
 	VERIFY_REASON=""
@@ -774,6 +787,20 @@ verify_contiguous_config() {
 		fi
 		if [[ "${actual[$key]}" != *",pcie=1"* ]]; then
 			VERIFY_REASON="${key} is missing pcie=1: ${actual[$key]}"
+			return 1
+		fi
+		rombar_count=0
+		IFS=',' read -r -a options <<<"${actual[$key]}"
+		for option in "${options[@]}"; do
+			[[ "$option" == rombar=* ]] || continue
+			if [[ "$option" != rombar=0 ]]; then
+				VERIFY_REASON="${key} violates the compute-GPU rombar=0 policy"
+				return 1
+			fi
+			rombar_count=$((rombar_count + 1))
+		done
+		if [[ "$rombar_count" -ne 1 ]]; then
+			VERIFY_REASON="${key} must contain exactly one explicit rombar=0"
 			return 1
 		fi
 	done

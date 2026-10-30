@@ -690,6 +690,28 @@ Extremely slow VM startup when IOMMU/Passthrough is enabled
 
 ## 五b、智能启动脚本
 
+### 计算卡统一使用 `rombar=0`
+
+`qm_gpus.sh` 对所有选中的 GPU 强制生成一个显式的 `rombar=0`，而不是按型号或固定
+PCI 地址维护例外。新增显卡、换槽后重新枚举、隔离后重新纳入，以及读取旧的成功卡列表时，
+都会应用该策略；旧的 `rombar=1` 会被替换，其他已有设备选项保留。
+
+256 MiB VFIO 探测也显式使用 `rombar=0`。配置校验不会把“卡数和顺序正确、但缺少
+`rombar=0`”当成已完成；`start_vm101.sh` 在每次生产启动前再次检查，缺少该项或存在
+冲突值时拒绝启动。`pve-ubuntu/pve_ubuntu.sh` 的配置和启动入口采用同样的计算卡策略。
+
+此设置只控制 **VM 内的 PCI ROM 暴露**，不能关闭宿主机 BIOS/UEFI 的 Option ROM 初始化，
+也不能保证修复宿主机 POST 卡住、供电、线缆或显卡固件故障。
+参见 [Proxmox 的 ROM BAR 说明](https://github.com/proxmox/pve-docs/blob/master/qm-pci-passthrough.adoc)。
+更新脚本及停止状态 VM 的 `hostpci` 选项本身不要求启动 VM；不要为了应用 ROM 策略运行完整安装器，
+它还包含内核、磁盘和 VM 生命周期操作。重新安装显卡后仍需按下一节重新检查实际拓扑。
+
+离线回归测试（不会调用真实 QEMU、直通设备或启动 VM）：
+
+```sh
+python3 -m unittest discover -s docs/notes/scripts/pve-vm/tests -p 'test_gpu_rombar.py'
+```
+
 ### 拔卡或调整插槽后重新建立直通配置
 
 硬件位置改变后，应重新读取 PCI 清单。旧 `hostpci*` 可能指向空槽，历史隔离的
@@ -1323,7 +1345,8 @@ chmod +x v2ray-install-release.sh
 cat /sys/bus/pci/devices/<GPU_PCI_ADDRESS>.0/boot_vga
 ```
 
-值为 `1` 表示它是宿主机启动显卡。纯计算用途下，可以在 `gpu_passthrough.pci_addresses` 中给这张卡加 `rombar=0`，并把 `vm.vga` 设为 `none`：
+值为 `1` 表示它是宿主机启动显卡。当前计算 VM 脚本对所有 GPU 统一强制 `rombar=0`，
+不只针对 boot VGA。模板显式列出该选项；`vm.vga: none` 则是独立的虚拟显示设备设置：
 
 ```yaml
 vm:
@@ -1331,8 +1354,8 @@ vm:
 
 gpu_passthrough:
   pci_addresses:
-    - "0000:02:00"
-    - "0000:03:00"
+    - "0000:02:00,rombar=0"
+    - "0000:03:00,rombar=0"
     - "0000:04:00,rombar=0"
 ```
 

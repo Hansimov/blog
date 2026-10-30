@@ -289,6 +289,20 @@ create_vm() {
   log "VM ${vmid}/${name} created"
 }
 
+gpu_pci_spec() {
+  local value="$1" option
+  local -a options=() kept=()
+  [[ ",$value," == *,pcie=* ]] || value="${value},pcie=1"
+  IFS=',' read -r -a options <<<"$value"
+  for option in "${options[@]}"; do
+    [[ "$option" == rombar=* ]] || kept+=("$option")
+  done
+  # Compute-only policy, including new cards and explicit legacy rombar=1.
+  kept+=("rombar=0")
+  local IFS=','
+  printf '%s\n' "${kept[*]}"
+}
+
 configure_gpu_passthrough() {
   if [[ "$(yaml_get gpu_passthrough.enabled false)" != "true" ]]; then
     log "gpu_passthrough.enabled=false; skip host VFIO changes"
@@ -355,12 +369,7 @@ EOF
   idx=0
   while read -r pci; do
     [[ -z "$pci" ]] && continue
-    if [[ "$pci" == *,* ]]; then
-      spec="$pci"
-      [[ "$spec" != *pcie=* ]] && spec="${spec},pcie=1"
-    else
-      spec="${pci},pcie=1"
-    fi
+    spec="$(gpu_pci_spec "$pci")"
     qm set "$vmid" "--hostpci${idx}" "$spec"
     idx=$((idx + 1))
   done < <(yaml_get gpu_passthrough.pci_addresses "")
@@ -452,6 +461,25 @@ start_vm() {
   if qm status "$vmid" | grep -q 'status: running'; then
     log "VM ${vmid} already running"
     return
+  fi
+  # Also guard a start-only run that skipped the GPU configuration stage.
+  local config
+  config="$(qm config "$vmid")"
+  if ! awk '
+    /^hostpci[0-9]+:/ {
+      count = 0
+      n = split($2, options, ",")
+      for (i = 1; i <= n; i++) {
+        if (options[i] ~ /^rombar=/) {
+          if (options[i] != "rombar=0") exit 1
+          count++
+        }
+      }
+      if (count != 1) exit 1
+    }
+  ' <<<"$config"; then
+    log "Refusing to start VM ${vmid}: every GPU hostpci entry must explicitly set rombar=0"
+    return 1
   fi
   qm start "$vmid"
   log "VM ${vmid} started"
