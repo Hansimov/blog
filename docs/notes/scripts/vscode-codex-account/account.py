@@ -4,6 +4,7 @@ import base64
 from contextlib import contextmanager
 import ctypes
 from ctypes import wintypes
+import hashlib
 import json
 import msvcrt
 import os
@@ -108,18 +109,8 @@ def configure(launcher):
         atomic_write(SETTINGS, source.encode(encoding))
 
 
-def alias(value):
-    if (not re.fullmatch(r"[a-z][a-z0-9_-]{0,31}", value)
-            or re.fullmatch(r"original|con|aux|prn|nul|com[0-9]|lpt[0-9]", value)):
-        raise argparse.ArgumentTypeError("Choose a short lowercase account alias, e.g. primary.")
-    return value
-
-
 def binding(home):
-    try:
-        return (home / "email").read_text(encoding="utf-8").strip()
-    except FileNotFoundError:
-        raise ValueError(f"Register this account first: vscodex add {home.name} EMAIL") from None
+    return (home / "email").read_text(encoding="utf-8").strip()
 
 
 def identity(auth):
@@ -143,7 +134,7 @@ def check_login(home):
     expected = binding(home)
     auth = home / "auth.json"
     if not auth.is_file():
-        raise ValueError(f"Device authorization needed. Run: vscodex login {home.name}")
+        raise ValueError(f"Device authorization needed. Run: vscodex login {expected}")
     if identity(auth).casefold() != expected.casefold():
         raise ValueError("Cached account differs from the registered email. Run login with --again.")
 
@@ -156,22 +147,12 @@ def account_lock(home):
         try:
             msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
         except OSError:
-            raise ValueError("Another command is registering or logging into this account.") from None
+            raise ValueError("A login for this account is already in progress.") from None
         try:
             yield
         finally:
             lock.seek(0)
             msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
-
-
-def register(home, email):
-    if not re.fullmatch(r"[^\s@]+@[^\s@]+", email):
-        raise ValueError("Enter the ChatGPT account email.")
-    with account_lock(home):
-        if (home / "email").exists() and binding(home).casefold() != email.casefold():
-            raise ValueError("This alias already belongs to another email. Choose a different alias.")
-        atomic_write(home / "email", email.encode("utf-8"))
-    print(f"Registered {home.name}.")
 
 
 @contextmanager
@@ -198,12 +179,17 @@ def device_login_console():
             kernel.SetConsoleMode(handle, previous)
 
 
-def login(home, again):
+def login(selector, again):
+    home, expected = resolve_account(selector, enroll=True)
     with account_lock(home):
-        expected = binding(home)
+        marker = home / "email"
+        if not marker.exists():
+            atomic_write(marker, expected.encode("utf-8"))
+        elif binding(home).casefold() != expected.casefold():
+            raise ValueError("This storage directory already belongs to a different email.")
         if (home / "auth.json").exists() and not again:
             check_login(home)
-            print(f"{home.name} already has cached credentials.")
+            print(f"{expected} already has cached credentials.")
             return
         launcher = Path(read_settings()[3].get(EXECUTABLE) or "")
         if not our_launcher(launcher) or not launcher.is_file():
@@ -213,7 +199,7 @@ def login(home, again):
         # A cancelled or wrong-account login must leave the previous token intact.
         with tempfile.TemporaryDirectory(dir=ROOT, prefix="enroll-") as scratch:
             env = dict(os.environ, CODEX_HOME=scratch)
-            print(f"Authorize {home.name} as {expected} in the browser.", flush=True)
+            print(f"Authorize {expected} in the browser.", flush=True)
             with device_login_console():
                 result = subprocess.run([binary, "-c", 'cli_auth_credentials_store="file"',
                                          "login", "--device-auth"], env=env)
@@ -229,33 +215,68 @@ def login(home, again):
                 if source.is_file() and not target.exists():
                     shutil.copyfile(source, target)
             os.replace(auth, home / "auth.json")
-    print(f"Saved {home.name}. Select it with: vscodex use {home.name}")
+    print(f"Saved {expected}. Select it with: vscodex use {expected}")
 
 
-def registered_accounts():
+def accounts_by_email():
+    # Existing directories stay in place: running backends refresh tokens there.
+    accounts = {}
     if ACCOUNTS.is_dir():
         for home in sorted(ACCOUNTS.iterdir()):
             if home.is_dir() and (home / "email").is_file():
-                yield home, binding(home)
+                accounts.setdefault(binding(home).casefold(), []).append(home)
+    return accounts
 
 
-def resolve_account(selector):
-    query = selector.strip().casefold()
-    accounts = list(registered_accounts())
-    matches = [(home, email) for home, email in accounts
-               if query in (home.name.casefold(), email.casefold())]
+def selected_slot():
+    try:
+        return SELECTED.read_text(encoding="ascii").strip()
+    except FileNotFoundError:
+        return None
+
+
+def preferred_home(homes):
+    if len(homes) == 1:
+        return homes[0]
+    # Older installations could register one email several times. Reuse a valid
+    # credential and prefer the selected directory when multiple are available.
+    current = selected_slot()
+
+    def priority(home):
+        try:
+            check_login(home)
+            cached = True
+        except (ValueError, OSError):
+            cached = False
+        return cached, home.name == current
+
+    return max(homes, key=priority)
+
+
+def resolve_account(selector, *, enroll=False):
+    email = selector.strip()
+    query = email.casefold()
+    accounts = accounts_by_email()
+    if query in accounts:
+        home = preferred_home(accounts[query])
+        return home, binding(home)
+    if re.fullmatch(r"[^\s@<>]+@[\w-]+(?:\.[\w-]+)+", email):
+        if not enroll:
+            raise ValueError(f"This email has no login. Run: vscodex login {email}")
+        # A stable, filename-safe ID fits the launcher's 32-character limit.
+        key = "acct-" + hashlib.sha256(query.encode("utf-8")).hexdigest()[:27]
+        return ACCOUNTS / key, email
+    fragment = query.removesuffix("...").removesuffix("…")
+    if not fragment:
+        raise ValueError("Enter a full email or a unique part of a known email.")
+    matches = [key for key in accounts if fragment in key]
     if not matches:
-        prefix = query.removesuffix("...").removesuffix("…")
-        if not prefix:
-            raise ValueError("Enter an account alias, email or unique prefix.")
-        matches = [(home, email) for home, email in accounts
-                   if home.name.casefold().startswith(prefix) or email.casefold().startswith(prefix)]
-    if not matches:
-        raise ValueError("No matching account. Run vscodex status to see registered accounts.")
+        raise ValueError("No matching account. For a new account, run vscodex login with its full email.")
     if len(matches) > 1:
-        choices = ", ".join(f"{home.name} ({email})" for home, email in matches)
-        raise ValueError(f"Ambiguous account prefix. Choose a listed alias or a unique email: {choices}")
-    return matches[0]
+        raise ValueError("Several emails match. Enter a longer fragment or a full email: "
+                         + ", ".join(sorted(matches)))
+    home = preferred_home(accounts[matches[0]])
+    return home, binding(home)
 
 
 def select(selector):
@@ -266,43 +287,42 @@ def select(selector):
         home, email = resolve_account(selector)
         check_login(home)
         atomic_write(SELECTED, home.name.encode("ascii"))
-        label = f"{email} ({home.name})"
+        label = email
     print(f"Selected {label} for the next VS Code Codex backend startup. {RELOAD}")
 
 
 def status():
-    current = SELECTED.read_text(encoding="ascii").strip() if SELECTED.exists() else "original"
-    print(f"Selected for next window load: {current}")
-    for home, email in registered_accounts():
+    accounts = accounts_by_email()
+    current = selected_slot()
+    emails_by_slot = {home.name: email for email, homes in accounts.items() for home in homes}
+    selected = emails_by_slot.get(current, "unavailable") if current else "original"
+    print(f"Selected for next window load: {selected}")
+    for email, homes in sorted(accounts.items()):
+        home = preferred_home(homes)
         try:
             check_login(home)
             state = "cached"
         except ValueError as exc:
             state = str(exc)
-        print(f"  {home.name:<12} {email}  [{state}]")
+        print(f"  {email}  [{state}]")
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(prog="vscodex", description=__doc__)
     commands = parser.add_subparsers(dest="action", required=True)
-    add = commands.add_parser("add", help="register an alias and its expected ChatGPT email")
-    add.add_argument("alias", type=alias)
-    add.add_argument("email")
-    enroll = commands.add_parser("login", help="authorize an account with a device code")
-    enroll.add_argument("alias", type=alias)
+    enroll = commands.add_parser("login", help="authorize a new email or reuse an existing login")
+    enroll.add_argument("account", help="full email for first login, or unique part of a known email")
     enroll.add_argument("--again", action="store_true", help="replace a revoked or invalid login")
-    use = commands.add_parser("use", help="select an enrolled account by alias, email or unique prefix")
-    use.add_argument("account", help="alias, full email, unique prefix, or original")
+    use = commands.add_parser("use", help="select an authorized account by email or unique fragment")
+    use.add_argument("account", help="full email, unique part of an email, or original")
     commands.add_parser("status", help="show selection and locally cached identities")
     setup = commands.add_parser("configure", help="configure the installed extension launcher")
     setup.add_argument("launcher")
     args = parser.parse_args()
     if not (ROOT / "run.ps1").is_file():
         raise ValueError("Run install.ps1 before using vscodex.")
-    if args.action == "add":
-        register(ACCOUNTS / args.alias, args.email)
-    elif args.action == "login":
-        login(ACCOUNTS / args.alias, args.again)
+    if args.action == "login":
+        login(args.account, args.again)
     elif args.action == "use":
         select(args.account)
     elif args.action == "configure":
