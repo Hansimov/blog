@@ -2,6 +2,8 @@
 import argparse
 import base64
 from contextlib import contextmanager
+import ctypes
+from ctypes import wintypes
 import json
 import msvcrt
 import os
@@ -172,6 +174,30 @@ def register(home, email):
     print(f"Registered {home.name}.")
 
 
+@contextmanager
+def device_login_console():
+    # Codex prints ANSI colors in its device prompt. Classic Windows consoles can
+    # start with VT processing disabled even when stdout and stderr are terminals.
+    kernel = ctypes.windll.kernel32
+    ansi_flags = 0x0001 | 0x0004  # ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING
+    changed = []
+    try:
+        for fd in (1, 2):
+            try:
+                handle = wintypes.HANDLE(msvcrt.get_osfhandle(fd))
+            except OSError:
+                continue
+            mode = wintypes.DWORD()
+            if kernel.GetConsoleMode(handle, ctypes.byref(mode)):
+                enabled = mode.value | ansi_flags
+                if enabled != mode.value and kernel.SetConsoleMode(handle, enabled):
+                    changed.append((handle, mode.value))
+        yield
+    finally:
+        for handle, previous in reversed(changed):
+            kernel.SetConsoleMode(handle, previous)
+
+
 def login(home, again):
     with account_lock(home):
         expected = binding(home)
@@ -188,8 +214,9 @@ def login(home, again):
         with tempfile.TemporaryDirectory(dir=ROOT, prefix="enroll-") as scratch:
             env = dict(os.environ, CODEX_HOME=scratch)
             print(f"Authorize {home.name} as {expected} in the browser.", flush=True)
-            result = subprocess.run([binary, "-c", 'cli_auth_credentials_store="file"',
-                                     "login", "--device-auth"], env=env)
+            with device_login_console():
+                result = subprocess.run([binary, "-c", 'cli_auth_credentials_store="file"',
+                                         "login", "--device-auth"], env=env)
             if result.returncode:
                 raise ValueError("Device authorization did not complete. Rerun login to retry.")
             auth = Path(scratch) / "auth.json"
@@ -205,28 +232,54 @@ def login(home, again):
     print(f"Saved {home.name}. Select it with: vscodex use {home.name}")
 
 
-def select(name):
-    if name == "original":
+def registered_accounts():
+    if ACCOUNTS.is_dir():
+        for home in sorted(ACCOUNTS.iterdir()):
+            if home.is_dir() and (home / "email").is_file():
+                yield home, binding(home)
+
+
+def resolve_account(selector):
+    query = selector.strip().casefold()
+    accounts = list(registered_accounts())
+    matches = [(home, email) for home, email in accounts
+               if query in (home.name.casefold(), email.casefold())]
+    if not matches:
+        prefix = query.removesuffix("...").removesuffix("…")
+        if not prefix:
+            raise ValueError("Enter an account alias, email or unique prefix.")
+        matches = [(home, email) for home, email in accounts
+                   if home.name.casefold().startswith(prefix) or email.casefold().startswith(prefix)]
+    if not matches:
+        raise ValueError("No matching account. Run vscodex status to see registered accounts.")
+    if len(matches) > 1:
+        choices = ", ".join(f"{home.name} ({email})" for home, email in matches)
+        raise ValueError(f"Ambiguous account prefix. Choose a listed alias or a unique email: {choices}")
+    return matches[0]
+
+
+def select(selector):
+    if selector.strip().casefold() == "original":
         SELECTED.unlink(missing_ok=True)
+        label = "original"
     else:
-        home = ACCOUNTS / name
+        home, email = resolve_account(selector)
         check_login(home)
-        atomic_write(SELECTED, name.encode("ascii"))
-    print(f"Selected {name} for the next VS Code Codex backend startup. {RELOAD}")
+        atomic_write(SELECTED, home.name.encode("ascii"))
+        label = f"{email} ({home.name})"
+    print(f"Selected {label} for the next VS Code Codex backend startup. {RELOAD}")
 
 
 def status():
     current = SELECTED.read_text(encoding="ascii").strip() if SELECTED.exists() else "original"
     print(f"Selected for next window load: {current}")
-    if ACCOUNTS.is_dir():
-        for home in sorted(ACCOUNTS.iterdir()):
-            if home.is_dir() and (home / "email").is_file():
-                try:
-                    check_login(home)
-                    state = "cached"
-                except ValueError as exc:
-                    state = str(exc)
-                print(f"  {home.name:<12} {binding(home)}  [{state}]")
+    for home, email in registered_accounts():
+        try:
+            check_login(home)
+            state = "cached"
+        except ValueError as exc:
+            state = str(exc)
+        print(f"  {home.name:<12} {email}  [{state}]")
 
 
 def main():
@@ -238,8 +291,8 @@ def main():
     enroll = commands.add_parser("login", help="authorize an account with a device code")
     enroll.add_argument("alias", type=alias)
     enroll.add_argument("--again", action="store_true", help="replace a revoked or invalid login")
-    use = commands.add_parser("use", help="select an enrolled alias, or original")
-    use.add_argument("alias", type=lambda s: s if s == "original" else alias(s))
+    use = commands.add_parser("use", help="select an enrolled account by alias, email or unique prefix")
+    use.add_argument("account", help="alias, full email, unique prefix, or original")
     commands.add_parser("status", help="show selection and locally cached identities")
     setup = commands.add_parser("configure", help="configure the installed extension launcher")
     setup.add_argument("launcher")
@@ -251,7 +304,7 @@ def main():
     elif args.action == "login":
         login(ACCOUNTS / args.alias, args.again)
     elif args.action == "use":
-        select(args.alias)
+        select(args.account)
     elif args.action == "configure":
         configure(args.launcher)
     else:

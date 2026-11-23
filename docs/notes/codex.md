@@ -54,7 +54,7 @@ Linux 的在：`~/.codex/auth.json`
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\docs\notes\scripts\vscode-codex-account\install.ps1
 ```
 
-首次使用时，登记别名和实际邮箱，再按终端提示逐个完成设备码授权。工具会核对浏览器实际授权的邮箱。以下两个地址是示例。
+首次使用时，在 PowerShell 或 cmd 中登记别名和实际邮箱，再按终端提示逐个完成设备码授权。工具会核对浏览器实际授权的邮箱。以下两个地址是示例。
 
 ```powershell
 vscodex add primary first@example.com
@@ -63,12 +63,14 @@ vscodex login primary
 vscodex login secondary
 ```
 
-日常切换只需选择账号，然后在需要切换的 VS Code 窗口按 `Ctrl+Shift+P`，执行 **Developer: Reload Window**。其他已打开的窗口继续使用启动时的账号。重载后可在 Codex 账号菜单查看邮箱和额度。
+日常切换可以输入别名、完整邮箱或唯一前缀，大小写均可。以上面的两个邮箱为例，`fi` 选中第一个，`se` 选中第二个。命令会显示选中的完整邮箱。若前缀对应多个账号，会列出候选项并保留当前选择。
+
+选择后，在需要切换的 VS Code 窗口按 `Ctrl+Shift+P`，执行 **Developer: Reload Window**。其他已打开的窗口继续使用启动时的账号。重载后可在 Codex 账号菜单查看邮箱和额度。
 
 ```powershell
-vscodex use secondary
+vscodex use se
 vscodex status
-vscodex use primary
+vscodex use first@example.com
 ```
 
 `status` 显示本机缓存和下次窗口加载时的选择。首次授权成功后，扩展可直接刷新该账号的令牌。如果服务端撤销了授权，可运行 `vscodex login secondary --again`。设备码登录如被禁用，请在 ChatGPT 的安全设置中启用，或联系工作区管理员。[设备码授权说明](https://developers.openai.com/codex/auth)
