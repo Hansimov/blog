@@ -73,7 +73,9 @@ vscodex status
 vscodex use team.alpha@example.com
 ```
 
-`status` 显示本机缓存和下次窗口加载时的选择。首次授权成功后，扩展可直接刷新该账号的令牌。如果服务端撤销了授权，可运行 `vscodex login beta --again`。设备码登录如被禁用，请在 ChatGPT 的安全设置中启用，或联系工作区管理员。[设备码授权说明](https://developers.openai.com/codex/auth)
+`status` 顶部显示下次重载时选用的账号。账号列表中，蓝色表示邮箱，天蓝色 `[cached]` 表示已有登录凭证，红色提示待授权或凭证异常。绿色 `[in use]` 表示当前至少有一个 VS Code 窗口的 Codex 后端正在使用该账号。升级前已打开的窗口重载一次即可显示此标记。
+
+`login` 和 `use` 用绿色提示成功、红色提示失败。`use` 还会用蓝色显示目标账号，用天蓝色突出窗口重载命令。首次授权成功后，扩展可直接刷新该账号的令牌。如果服务端撤销了授权，可运行 `vscodex login beta --again`。设备码登录如被禁用，请在 ChatGPT 的安全设置中启用，或联系工作区管理员。[设备码授权说明](https://developers.openai.com/codex/auth)
 
 账号资料保存在当前 Windows 用户的 `%LOCALAPPDATA%\vscode-codex-account\accounts`。每个账号第一次登录时会复制原 Codex 目录中的 `config.toml` 和 `AGENTS.md`（如果存在），然后独立保存凭证、会话和后端配置。原来的聊天记录可通过 `vscodex use original` 并重载窗口重新访问。换机器时重新安装并授权即可。
 

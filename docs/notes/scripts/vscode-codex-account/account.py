@@ -22,9 +22,12 @@ SELECTED = ROOT / "selected"
 SETTINGS = Path(os.environ["APPDATA"]) / "Code" / "User" / "settings.json"
 EXECUTABLE = "chatgpt.cliExecutable"
 IGNORED = "settingsSync.ignoredSettings"
-RELOAD = "In each VS Code window to switch, run Developer: Reload Window."
 STRING = r'"(?:\\.|[^"\\])*"'
 LAUNCHER = re.compile(r"extension-launcher(?:-[a-fA-F0-9]+)?\.exe", re.I)
+BLUE = "94"
+SKY_BLUE = "38;2;135;206;235"
+GREEN = "92"
+RED = "91"
 
 
 def atomic_write(path, data):
@@ -156,12 +159,18 @@ def account_lock(home):
 
 
 @contextmanager
-def device_login_console():
-    # Codex prints ANSI colors in its device prompt. Classic Windows consoles can
-    # start with VT processing disabled even when stdout and stderr are terminals.
+def console_colors():
+    # The native device prompt also uses ANSI. Enable it on console handles only.
     kernel = ctypes.windll.kernel32
     ansi_flags = 0x0001 | 0x0004  # ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING
     changed = []
+    terminals = set()
+
+    def paint(text, foreground, fd=1):
+        if fd in terminals:
+            return f"\x1b[{foreground}m{text}\x1b[39m"
+        return text
+
     try:
         for fd in (1, 2):
             try:
@@ -171,15 +180,18 @@ def device_login_console():
             mode = wintypes.DWORD()
             if kernel.GetConsoleMode(handle, ctypes.byref(mode)):
                 enabled = mode.value | ansi_flags
-                if enabled != mode.value and kernel.SetConsoleMode(handle, enabled):
+                if enabled != mode.value:
+                    if not kernel.SetConsoleMode(handle, enabled):
+                        continue
                     changed.append((handle, mode.value))
-        yield
+                terminals.add(fd)
+        yield paint
     finally:
         for handle, previous in reversed(changed):
             kernel.SetConsoleMode(handle, previous)
 
 
-def login(selector, again):
+def login(selector, again, paint):
     home, expected = resolve_account(selector, enroll=True)
     with account_lock(home):
         marker = home / "email"
@@ -189,7 +201,7 @@ def login(selector, again):
             raise ValueError("This storage directory already belongs to a different email.")
         if (home / "auth.json").exists() and not again:
             check_login(home)
-            print(f"{expected} already has cached credentials.")
+            print(paint(f"{expected} already has cached credentials.", GREEN))
             return
         settings = read_settings()[3]
         launcher = Path(settings.get(EXECUTABLE) or "")
@@ -205,9 +217,8 @@ def login(selector, again):
             if isinstance(proxy, str) and proxy.strip():
                 env.update(HTTP_PROXY=proxy.strip(), HTTPS_PROXY=proxy.strip())
             print(f"Authorize {expected} in the browser.", flush=True)
-            with device_login_console():
-                result = subprocess.run([binary, "-c", 'cli_auth_credentials_store="file"',
-                                         "login", "--device-auth"], env=env)
+            result = subprocess.run([binary, "-c", 'cli_auth_credentials_store="file"',
+                                     "login", "--device-auth"], env=env)
             if result.returncode:
                 raise ValueError("Device authorization did not complete. Rerun login to retry.")
             auth = Path(scratch) / "auth.json"
@@ -220,7 +231,7 @@ def login(selector, again):
                 if source.is_file() and not target.exists():
                     shutil.copyfile(source, target)
             os.replace(auth, home / "auth.json")
-    print(f"Saved {expected}. Select it with: vscodex use {expected}")
+    print(paint(f"Saved {expected}. Select it with: vscodex use {expected}", GREEN))
 
 
 def accounts_by_email():
@@ -284,7 +295,7 @@ def resolve_account(selector, *, enroll=False):
     return home, binding(home)
 
 
-def select(selector):
+def select(selector, paint):
     if selector.strip().casefold() == "original":
         SELECTED.unlink(missing_ok=True)
         label = "original"
@@ -293,26 +304,44 @@ def select(selector):
         check_login(home)
         atomic_write(SELECTED, home.name.encode("ascii"))
         label = email
-    print(f"Selected {label} for the next VS Code Codex backend startup. {RELOAD}")
+    print(paint("Selected for next window load:", GREEN), paint(label, BLUE))
+    print("In each VS Code window to switch, run " + paint("Developer: Reload Window", SKY_BLUE) + ".")
 
 
-def status():
+def in_use(slot):
+    # The launcher keeps this event alive while any window runs this account.
+    kernel = ctypes.windll.kernel32
+    open_event = kernel.OpenEventW
+    open_event.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.LPCWSTR]
+    open_event.restype = wintypes.HANDLE
+    handle = open_event(0x00100000, False, f"Local\\vscodex.active.{slot}")  # SYNCHRONIZE
+    if not handle:
+        return False
+    kernel.CloseHandle(wintypes.HANDLE(handle))
+    return True
+
+
+def status(paint):
     accounts = accounts_by_email()
     current = selected_slot()
     emails_by_slot = {home.name: email for email, homes in accounts.items() for home in homes}
     selected = emails_by_slot.get(current, "unavailable") if current else "original"
-    print(f"Selected for next window load: {selected}")
+    print("Selected for next window load:", paint(selected, RED if selected == "unavailable" else BLUE))
+    if in_use("original"):
+        print(f"  {paint('original', BLUE)}  {paint('[in use]', GREEN)}")
     for email, homes in sorted(accounts.items()):
         home = preferred_home(homes)
         try:
             check_login(home)
-            state = "cached"
+            state = paint("[cached]", SKY_BLUE)
         except ValueError as exc:
-            state = str(exc)
-        print(f"  {email}  [{state}]")
+            state = paint(f"[{exc}]", RED)
+        if any(in_use(slot.name) for slot in homes):
+            state += "  " + paint("[in use]", GREEN)
+        print(f"  {paint(email, BLUE)}  {state}")
 
 
-def main():
+def main(paint):
     parser = argparse.ArgumentParser(prog="vscodex", description=__doc__)
     commands = parser.add_subparsers(dest="action", required=True)
     enroll = commands.add_parser("login", help="authorize a new email or reuse an existing login")
@@ -327,19 +356,22 @@ def main():
     if not (ROOT / "run.ps1").is_file():
         raise ValueError("Run install.ps1 before using vscodex.")
     if args.action == "login":
-        login(args.account, args.again)
+        login(args.account, args.again, paint)
     elif args.action == "use":
-        select(args.account)
+        select(args.account, paint)
     elif args.action == "configure":
         configure(args.launcher)
     else:
-        status()
+        status(paint)
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except (OSError, ValueError, subprocess.SubprocessError) as error:
-        sys.exit(f"vscodex: {error}")
-    except KeyboardInterrupt:
-        sys.exit("Login cancelled.")
+    with console_colors() as color:
+        try:
+            main(color)
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            print(color(f"vscodex: {error}", RED, fd=2), file=sys.stderr, flush=True)
+            sys.exit(1)
+        except KeyboardInterrupt:
+            print(color("Login cancelled.", RED, fd=2), file=sys.stderr, flush=True)
+            sys.exit(1)

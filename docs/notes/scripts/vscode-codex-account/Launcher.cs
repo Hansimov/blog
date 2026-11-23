@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Web.Script.Serialization;
 using Microsoft.Win32.SafeHandles;
 
@@ -116,13 +117,39 @@ internal static class Launcher
                 arguments.Add("cli_auth_credentials_store=\"file\"");
             }
             arguments.AddRange(args);
-            return RunChild(exe, String.Join(" ", arguments.ConvertAll(Quote).ToArray()));
+            string slot = home == null ? "original" : Path.GetFileName(home);
+            return RunChild(exe, String.Join(" ", arguments.ConvertAll(Quote).ToArray()),
+                            IsAppServer(args) ? slot : null);
         }
         catch (Exception error)
         {
             Console.Error.WriteLine("vscodex launcher: " + error.Message);
             return 1;
         }
+    }
+
+    private static bool IsAppServer(string[] args)
+    {
+        // The extension can put global config overrides before the subcommand.
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (args[i] == "-c" || args[i] == "--config") { i++; continue; }
+            if (!args[i].StartsWith("-", StringComparison.Ordinal)) return args[i] == "app-server";
+        }
+        return false;
+    }
+
+    private static EventWaitHandle MarkActive(string slot)
+    {
+        if (slot == null) return null;
+        // Each VS Code window holds a handle. Windows removes the event when the
+        // last one closes, including when the extension host kills the launcher.
+        try { return new EventWaitHandle(true, EventResetMode.ManualReset, @"Local\vscodex.active." + slot); }
+        catch (UnauthorizedAccessException) { }
+        catch (System.Security.SecurityException) { }
+        catch (WaitHandleCannotBeOpenedException) { }
+        catch (IOException) { }
+        return null;
     }
 
     // Microsoft C runtime argv rules: double trailing backslashes and those before quotes.
@@ -143,7 +170,7 @@ internal static class Launcher
     // Create the child inside the job atomically. Even an abrupt extension-host shutdown
     // closes our job handle and terminates the bundled process. The child reads the
     // extension's original pipes directly, so JSON-RPC and EOF need no relay threads.
-    private static int RunChild(string exe, string commandLine)
+    private static int RunChild(string exe, string commandLine, string activeSlot)
     {
         using (var job = CreateJobObject(IntPtr.Zero, null))
         using (var stdin = InheritableStdHandle(-10))
@@ -179,6 +206,7 @@ internal static class Launcher
                                     true, 0x80000, IntPtr.Zero, null, ref start, out child));
                 using (var thread = new SafeFileHandle(child.thread, true))
                 using (var process = new SafeFileHandle(child.process, true))
+                using (var active = MarkActive(activeSlot))
                 {
                     if (WaitForSingleObject(process, UInt32.MaxValue) != 0)
                         throw new Win32Exception();
