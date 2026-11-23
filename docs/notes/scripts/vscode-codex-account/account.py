@@ -191,7 +191,8 @@ def login(selector, again):
             check_login(home)
             print(f"{expected} already has cached credentials.")
             return
-        launcher = Path(read_settings()[3].get(EXECUTABLE) or "")
+        settings = read_settings()[3]
+        launcher = Path(settings.get(EXECUTABLE) or "")
         if not our_launcher(launcher) or not launcher.is_file():
             raise ValueError("Run install.ps1 to configure the local extension launcher.")
         binary = subprocess.check_output([str(launcher), "--vscodex-bundled-path"],
@@ -199,6 +200,10 @@ def login(selector, again):
         # A cancelled or wrong-account login must leave the previous token intact.
         with tempfile.TemporaryDirectory(dir=ROOT, prefix="enroll-") as scratch:
             env = dict(os.environ, CODEX_HOME=scratch)
+            # Match the extension's network environment even in a standalone cmd.
+            proxy = settings.get("http.proxy")
+            if isinstance(proxy, str) and proxy.strip():
+                env.update(HTTP_PROXY=proxy.strip(), HTTPS_PROXY=proxy.strip())
             print(f"Authorize {expected} in the browser.", flush=True)
             with device_login_console():
                 result = subprocess.run([binary, "-c", 'cli_auth_credentials_store="file"',

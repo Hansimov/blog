@@ -56,6 +56,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\docs\notes\scripts\vsc
 
 首次登录新账号时，在 PowerShell 或 cmd 中输入完整邮箱，再按终端提示完成设备码授权。工具会核对浏览器实际授权的邮箱并保存凭证。
 
+如果 VS Code 用户设置中配置了 `http.proxy`，设备码登录会使用该代理，与扩展后端一致。未配置时，登录进程沿用当前终端的代理环境变量。
+
 ```powershell
 vscodex login team.alpha@example.com
 vscodex login team.beta@example.com
