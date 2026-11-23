@@ -44,6 +44,37 @@ Linux 的在：`~/.codex/auth.json`
 
 在 CLI 登录后，默认就是登录状态了。
 
+#### Windows 本机切换两个 ChatGPT 账号
+
+本仓库的 `vscodex` 命令适用于 Windows 本机的 VS Code 稳定版和 `openai.chatgpt` 扩展。它通过用户设置 `chatgpt.cliExecutable` 启动扩展自带的后端，为每个账号指定独立的 `CODEX_HOME`。普通终端中的 `codex` 仍使用原来的登录环境。该设置属于扩展的开发选项，扩展更新后可用下列命令重新验证。[Codex 登录说明](https://developers.openai.com/codex/auth) · [扩展设置](https://developers.openai.com/codex/ide/settings)
+
+在仓库根目录用 PowerShell 安装。需要 Python 3.9+ 和 Windows 自带的 .NET Framework 4.x 编译器。
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\docs\notes\scripts\vscode-codex-account\install.ps1
+```
+
+首次使用时，登记别名和实际邮箱，再按终端提示逐个完成设备码授权。工具会核对浏览器实际授权的邮箱。以下两个地址是示例。
+
+```powershell
+vscodex add primary first@example.com
+vscodex add secondary second@example.com
+vscodex login primary
+vscodex login secondary
+```
+
+日常切换只需选择账号，然后在需要切换的 VS Code 窗口按 `Ctrl+Shift+P`，执行 **Developer: Reload Window**。其他已打开的窗口继续使用启动时的账号。重载后可在 Codex 账号菜单查看邮箱和额度。
+
+```powershell
+vscodex use secondary
+vscodex status
+vscodex use primary
+```
+
+`status` 显示本机缓存和下次窗口加载时的选择。首次授权成功后，扩展可直接刷新该账号的令牌。如果服务端撤销了授权，可运行 `vscodex login secondary --again`。设备码登录如被禁用，请在 ChatGPT 的安全设置中启用，或联系工作区管理员。[设备码授权说明](https://developers.openai.com/codex/auth)
+
+账号资料保存在当前 Windows 用户的 `%LOCALAPPDATA%\vscode-codex-account\accounts`。每个账号第一次登录时会复制原 Codex 目录中的 `config.toml` 和 `AGENTS.md`（如果存在），然后独立保存凭证、会话和后端配置。原来的聊天记录可通过 `vscodex use original` 并重载窗口重新访问。换机器时重新安装并授权即可。
+
 ### Linux 登录
 
 可以考虑在 VSCode 插件中登录。或者复制 `auth.json` 到 Linux 的 `~/.codex/auth.json` 中。
