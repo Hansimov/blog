@@ -130,7 +130,7 @@ $lockPath = Join-Path $store 'install.lock'
 $lock = [IO.File]::Open($lockPath, 'OpenOrCreate', 'ReadWrite', 'None')
 try {
     $launcher = Get-Launcher $compiler
-    foreach ($scriptName in 'backend.py', 'history.py', 'account.py') {
+    foreach ($scriptName in 'release_channel.py', 'thread_control.py', 'thread_lookup.py', 'backend.py', 'history.py', 'account.py') {
         Write-InstalledFile (Join-Path $store $scriptName) ([IO.File]::ReadAllBytes((Join-Path $PSScriptRoot $scriptName)))
     }
     Write-InstalledFile (Join-Path $store 'python-path') ($utf8.GetBytes($python))

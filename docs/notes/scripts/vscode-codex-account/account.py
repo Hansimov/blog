@@ -10,9 +10,11 @@ import msvcrt
 import os
 from pathlib import Path
 import re
+import sqlite3
 import subprocess
 import sys
 import tempfile
+import time
 import winreg
 
 
@@ -357,6 +359,53 @@ def status(paint):
         print(f"  {paint(email, BLUE)}  {state}")
 
 
+def release_thread(selector, paint):
+    # The installed shim starts Python with -I. Use only our installed siblings.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from backend import local_request
+    from release_channel import request_release
+    from thread_lookup import canonical_id, resolve_thread, writer_pids
+
+    shared = Path((ROOT / "shared-home").read_text(encoding="utf-8").strip())
+    thread_id = canonical_id(selector.strip())
+    if not thread_id:
+        launcher = Path(read_settings()[3].get(EXECUTABLE) or "")
+        if not our_launcher(launcher) or not launcher.is_file():
+            raise ValueError("Run install.ps1 to configure the local extension launcher.")
+        exe = subprocess.check_output([str(launcher), "--vscodex-bundled-path"],
+                                      encoding="utf-8", timeout=10).strip()
+        config = local_request(exe, shared, "config/read", {}, timeout=10)["config"]
+        thread_id = resolve_thread(shared, selector, config.get("sqlite_home"))
+    owners = writer_pids(shared, thread_id)
+    if not owners:
+        print(paint("This thread has no active writer. You can open it in the destination window.", GREEN))
+        return
+    if len(owners) != 1:
+        raise ValueError("Cannot identify a single writer. No release was requested.")
+    owner = owners.pop()
+    outcome = request_release(ROOT, owner, thread_id)
+    if outcome == "unmanaged":
+        raise ValueError("This writer has no vscodex release channel. If it is an older VS Code window, "
+                         "wait for its tasks to finish, then reload it once. A separate app must release its own thread.")
+    if outcome == "busy":
+        raise ValueError("The thread is active or has an outstanding request. Let it finish, then retry.")
+    if outcome == "timeout":
+        raise ValueError("The owning window did not confirm in time. Check the destination window before retrying.")
+    if outcome not in ("released", "not_loaded"):
+        raise ValueError("The owning backend could not confirm the handoff. Its window is still open.")
+
+    # A native unsubscribe acknowledgement precedes the actual release by up to
+    # a minute with the default server settings. Check the OS before reporting success.
+    deadline = time.monotonic() + 75
+    print("Waiting for Codex to release the writer (usually up to one minute)...", flush=True)
+    while owner in writer_pids(shared, thread_id):
+        if time.monotonic() >= deadline:
+            raise ValueError("The owner still holds this thread. Switch away from the thread there and retry.")
+        time.sleep(1)
+    print(paint("The previous writer released this thread.", GREEN),
+          "Click " + paint("Retry", SKY_BLUE) + " in the destination window.")
+
+
 def main(paint):
     parser = argparse.ArgumentParser(prog="vscodex", description=__doc__)
     commands = parser.add_subparsers(dest="action", required=True)
@@ -365,6 +414,8 @@ def main(paint):
     enroll.add_argument("--again", action="store_true", help="replace a revoked or invalid login")
     use = commands.add_parser("use", help="select an authorized account by email or unique fragment")
     use.add_argument("account", help="full email, unique part of an email, or original")
+    release = commands.add_parser("release", help="release one idle thread for use in another window")
+    release.add_argument("thread", help="exact thread title or full thread UUID")
     commands.add_parser("status", help="show selection and locally cached identities")
     setup = commands.add_parser("configure", help="configure the installed extension launcher")
     setup.add_argument("launcher")
@@ -375,6 +426,8 @@ def main(paint):
         login(args.account, args.again, paint)
     elif args.action == "use":
         select(args.account, paint)
+    elif args.action == "release":
+        release_thread(args.thread, paint)
     elif args.action == "configure":
         configure(args.launcher)
     else:
@@ -385,9 +438,9 @@ if __name__ == "__main__":
     with console_colors() as color:
         try:
             main(color)
-        except (OSError, ValueError, subprocess.SubprocessError) as error:
+        except (OSError, ValueError, sqlite3.Error, subprocess.SubprocessError) as error:
             print(color(f"vscodex: {error}", RED, fd=2), file=sys.stderr, flush=True)
             sys.exit(1)
         except KeyboardInterrupt:
-            print(color("Login cancelled.", RED, fd=2), file=sys.stderr, flush=True)
+            print(color("Command cancelled.", RED, fd=2), file=sys.stderr, flush=True)
             sys.exit(1)

@@ -15,6 +15,8 @@ import uuid
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import account
 import history
+from release_channel import serve_releases
+from thread_control import ThreadControl
 
 
 def encode(message):
@@ -51,14 +53,21 @@ def response(proc, request, forward=None):
     raise ValueError("Codex exited during " + request["method"])
 
 
-def local_request(exe, home, method, params):
+def local_request(exe, home, method, params, timeout=None):
     with server(exe, ["-c", 'cli_auth_credentials_store="file"', "app-server"], home) as proc:
-        initialize = {"clientInfo": {"name": "vscodex", "version": "1"}}
-        for i, (name, arguments) in enumerate([("initialize", initialize), (method, params)]):
-            reply = response(proc, {"id": i, "method": name, "params": arguments})
-            if "error" in reply:
-                raise ValueError("Bundled Codex could not complete " + name)
-        return reply["result"]
+        timer = threading.Timer(timeout, proc.kill) if timeout is not None else None
+        if timer:
+            timer.start()
+        try:
+            initialize = {"clientInfo": {"name": "vscodex", "version": "1"}}
+            for i, (name, arguments) in enumerate([("initialize", initialize), (method, params)]):
+                reply = response(proc, {"id": i, "method": name, "params": arguments})
+                if "error" in reply:
+                    raise ValueError("Bundled Codex could not complete " + name)
+            return reply["result"]
+        finally:
+            if timer:
+                timer.cancel()
 
 
 def claims(jwt):
@@ -99,7 +108,9 @@ def forward(line):
 
 
 def serve(exe, args, shared, slot):
-    with server(exe, [*args, "-c", 'cli_auth_credentials_store="ephemeral"'], shared) as proc:
+    if slot is not None:
+        args = [*args, "-c", 'cli_auth_credentials_store="ephemeral"']
+    with server(exe, args, shared) as proc:
         # Complete login before releasing initialize, so the extension's first
         # account/read and thread/list already see the selected identity.
         first = sys.stdin.buffer.readline()
@@ -108,26 +119,28 @@ def serve(exe, args, shared, slot):
         initialize = json.loads(first)
         if initialize.get("method") != "initialize":
             raise ValueError("Expected the VS Code stdio initialize handshake.")
-        capabilities = initialize["params"].get("capabilities") or {}
-        initialize["params"]["capabilities"] = dict(capabilities, experimentalApi=True)
+        if slot is not None:
+            capabilities = initialize["params"].get("capabilities") or {}
+            initialize["params"]["capabilities"] = dict(capabilities, experimentalApi=True)
         initialized = response(proc, initialize, forward)
         if "error" in initialized:
             forward(encode(initialized))
             return 1
-        tokens = login_tokens(exe, slot)
-        login = {"id": str(uuid.uuid4()), "method": "account/login/start",
-                 "params": dict(type="chatgptAuthTokens", **tokens)}
-        result = response(proc, login, forward)
-        if "error" in result:
-            raise ValueError("The bundled Codex app-server rejected the selected account login.")
+        if slot is not None:
+            tokens = login_tokens(exe, slot)
+            login = {"id": str(uuid.uuid4()), "method": "account/login/start",
+                     "params": dict(type="chatgptAuthTokens", **tokens)}
+            result = response(proc, login, forward)
+            if "error" in result:
+                raise ValueError("The bundled Codex app-server rejected the selected account login.")
         forward(encode(initialized))
 
-        write_lock = threading.Lock()
+        control = ThreadControl(proc.stdin)
         output_lock = threading.Lock()
         def client_input():
             try:
                 for line in sys.stdin.buffer:
-                    if b'"account/logout"' in line:
+                    if slot is not None and b'"account/logout"' in line:
                         request = json.loads(line)
                         if request.get("method") == "account/logout":
                             try:
@@ -137,36 +150,38 @@ def serve(exe, args, shared, slot):
                                     forward(encode({"id": request["id"], "error": {"code": -32000,
                                                     "message": "Could not sign out the selected account."}}))
                                 continue
-                    with write_lock:
-                        proc.stdin.write(line)
-                        proc.stdin.flush()
+                    error = control.from_editor(line)
+                    if error:
+                        with output_lock:
+                            forward(encode(error))
             except (BrokenPipeError, ValueError):
                 pass
             finally:
-                with write_lock:
-                    proc.stdin.close()
+                control.close_input()
 
-        threading.Thread(target=client_input, daemon=True).start()
-        for line in proc.stdout:
-            if b'"account/chatgptAuthTokens/refresh"' in line:
-                message = json.loads(line)
-                if message.get("method") == "account/chatgptAuthTokens/refresh" and "id" in message:
-                    try:
-                        fresh = login_tokens(exe, slot, tokens["accessToken"])
-                        workspace = message.get("params", {}).get("previousAccountId")
-                        if workspace and fresh["chatgptAccountId"] != workspace:
-                            raise ValueError("Selected workspace changed. Reload the window.")
-                        tokens = fresh
-                        reply = {"id": message["id"], "result": tokens}
-                    except (OSError, ValueError, subprocess.SubprocessError):
-                        reply = {"id": message["id"], "error": {"code": -32000,
-                                 "message": "Refresh failed. Run vscodex login with --again."}}
-                    with write_lock:
-                        if not proc.stdin.closed:
-                            send(proc.stdin, reply)
+        with serve_releases(account.ROOT, proc.pid, control.release):
+            threading.Thread(target=client_input, daemon=True).start()
+            for line in proc.stdout:
+                if control.from_native(line):
                     continue
-            with output_lock:
-                forward(line)
+                if slot is not None and b'"account/chatgptAuthTokens/refresh"' in line:
+                    message = json.loads(line)
+                    if message.get("method") == "account/chatgptAuthTokens/refresh" and "id" in message:
+                        try:
+                            fresh = login_tokens(exe, slot, tokens["accessToken"])
+                            workspace = message.get("params", {}).get("previousAccountId")
+                            if workspace and fresh["chatgptAccountId"] != workspace:
+                                raise ValueError("Selected workspace changed. Reload the window.")
+                            tokens = fresh
+                            reply = {"id": message["id"], "result": tokens}
+                        except (OSError, ValueError, subprocess.SubprocessError):
+                            reply = {"id": message["id"], "error": {"code": -32000,
+                                     "message": "Refresh failed. Run vscodex login with --again."}}
+                        if not proc.stdin.closed:
+                            control.write(encode(reply))
+                        continue
+                with output_lock:
+                    forward(line)
         return proc.wait()
 
 
@@ -198,9 +213,7 @@ def main():
     # History import may wait on a live writer or another window's migration.
     # Start serving the extension immediately, including in the original home.
     threading.Thread(target=run_history_import, args=(shared, config), daemon=True).start()
-    if slot == "original":
-        return subprocess.call([exe, *args], env=dict(os.environ, CODEX_HOME=str(shared)))
-    return serve(exe, args, shared, account.ACCOUNTS / slot)
+    return serve(exe, args, shared, None if slot == "original" else account.ACCOUNTS / slot)
 
 
 if __name__ == "__main__":
