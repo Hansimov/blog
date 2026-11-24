@@ -42,6 +42,8 @@ mv vscode-server-linux-x64 8b3775030ed1a69b13e4f4c628c612102e30a681
 * https://www.cnblogs.com/c-rex/p/16265570.html
 :::
 
+如果 Windows 本机的 Codex 正常，但 Remote-SSH 窗口提示无法加载账号，可先核对远端扩展启动的后端路径。[Codex 远程账号加载排查](./codex.md#远程窗口提示无法加载账号)
+
 ## Remote SSH - Chrome DevTools MCP 仍然使用本地 Node.js
 
 现象：

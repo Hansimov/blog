@@ -95,6 +95,47 @@ vscodex release "项目开发"
 
 标题重复时，命令会列出匹配的会话 UUID，可用 `vscodex release 完整UUID` 精确选择。正在运行或等待批准的会话会提示稍后重试。**安装新版前已经启动的持锁窗口**需要在其现有任务结束后重载一次，才能接收这个命令。之后逐条释放会话不需要再重载窗口。
 
+#### 远程窗口提示无法加载账号
+
+Windows 本机窗口能用 Codex，Linux Remote-SSH 窗口却提示 **ChatGPT hit a snag / We couldn't load your account** 时，先在 SSH 窗口的**输出**面板查看 Codex 日志。远端 VS Code Server 默认也会将日志写入 `~/.vscode-server/data/logs/<日志会话>/exthost*/openai.chatgpt/Codex.log`。
+
+如果第一条启动错误是 `Failed to spawn codex mcp process at C:\...`，说明远端扩展宿主尝试在 Linux 上启动 Windows 程序，后续的账号读取因此失败。`chatgpt.cliExecutable` 是应用级设置，SSH 窗口也会收到 Windows 用户设置中的值。即使已在远端设置里填写 Linux 可执行文件的绝对路径，也可能出现这个错误。
+
+可以让两端通过同一个命令名 `vscodex-app-server` 启动各自的后端。在 Windows 终端运行以下命令即可用新窗口打开远程项目。`devbox` 填本机 SSH 配置中的主机别名，`/home/dev/repos/example/` 填远端项目的绝对路径。
+
+```powershell
+code --new-window --folder-uri "vscode-remote://ssh-remote+devbox/home/dev/repos/example/"
+```
+
+如果相同的远端文件夹已经打开，`--new-window` 可能会聚焦已有窗口，沿用原来启动的扩展宿主。修复后若点击 **Retry** 仍在日志中看到 `Codex process is not available`，请在该 SSH 窗口执行 **Developer: Reload Window**。要保留当前窗口并另开一份，可在该窗口的命令面板执行 **Workspaces: Duplicate As Workspace in New Window**。
+
+在 SSH 窗口安装 Codex 扩展，然后在**远端 Linux** 的本仓库根目录，以运行 VS Code Server 的用户执行以下命令。远端需要 Bash 和 Python 3。
+
+```bash
+bash docs/notes/scripts/vscode-codex-account/install-linux.sh install
+bash docs/notes/scripts/vscode-codex-account/install-linux.sh check
+```
+
+默认安装目录是 `~/.local/bin`。`check` 检查当前终端能否找到启动器，**VS Code Server 扩展宿主的 PATH** 也需要包含该目录。若扩展宿主使用其他用户 bin 目录，把该目录的绝对路径分别作为第二个参数传给 `install` 和 `check`。每台需要使用 Codex 的 Linux Remote-SSH 主机都要安装一次。
+
+然后在 **Windows 本机**的本仓库根目录，用 PowerShell 启用 Remote-SSH 兼容模式。
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\docs\notes\scripts\vscode-codex-account\install.ps1 -RemoteSsh
+```
+
+在目标 SSH 窗口按 `Ctrl+Shift+P`，执行 **Developer: Reload Window**，打开 Codex 查看账号菜单。Windows 本机窗口继续使用 `vscodex use` 选定的账号。SSH 窗口运行远端扩展自带的 Linux 后端，使用远端的 `CODEX_HOME` 和已有凭证。SSH 窗口若使用回环代理，`127.0.0.1` 指的是远端主机，要确认该主机的相应端口有代理服务。
+
+#### 观察 Thinking 到首段文字的耗时
+
+在运行 Codex 后端的机器上，从本仓库根目录执行监测脚本。把示例路径替换为该会话的工作区路径。Remote-SSH 会话使用远端路径，可通过 `python3` 执行同一脚本。
+
+```powershell
+python docs/notes/scripts/codex_turn_latency.py --workspace "D:\projects\example" --watch
+```
+
+同一目录有多条会话时，可用 `--thread UUID` 代替 `--workspace 路径`。脚本根据本地记录估算从用户消息到第一条助手文字的时间，并报告首次采样的输入缓存、后续已完成的采样数和已完成的上下文压缩。按 `Ctrl+C` 即可结束监测，模型回合继续运行。
+
 ### Linux 登录
 
 可以考虑在 VSCode 插件中登录。或者复制 `auth.json` 到 Linux 的 `~/.codex/auth.json` 中。

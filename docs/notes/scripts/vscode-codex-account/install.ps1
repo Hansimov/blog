@@ -1,7 +1,7 @@
 # Install for the current Windows user. Run from any directory with Windows PowerShell 5.1.
 #requires -Version 5.1
 [CmdletBinding()]
-param()
+param([switch]$RemoteSsh)
 
 $ErrorActionPreference = 'Stop'
 $store = Join-Path $env:LOCALAPPDATA 'vscode-codex-account'
@@ -75,6 +75,40 @@ function Get-Launcher([string]$compiler) {
     }
 }
 
+function Install-PathLauncher([string]$compiler, [string]$binDir) {
+    $source = Join-Path $PSScriptRoot 'PathLauncher.cs'
+    $digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $source).Hash.ToLowerInvariant()
+    $compiled = Join-Path $store "path-command-$digest.exe"
+    $destination = Join-Path $binDir 'vscodex-app-server.exe'
+    foreach ($command in @(Get-Command vscodex-app-server -All -ErrorAction SilentlyContinue)) {
+        if ($command.CommandType -ne 'Application' -or $command.Source -ne $destination) {
+            throw 'Another vscodex-app-server command is on PATH. Resolve the conflict before installing.'
+        }
+    }
+    if (![IO.File]::Exists($compiled)) {
+        $temporary = Join-Path $store ("build-" + [Guid]::NewGuid().ToString('N') + '.exe')
+        try {
+            $messages = & $compiler '/nologo' '/target:exe' '/optimize+' "/out:$temporary" $source
+            if ($LASTEXITCODE -ne 0) { throw ("PATH launcher compilation failed. " + ($messages -join [Environment]::NewLine)) }
+            [IO.File]::Move($temporary, $compiled)
+        } finally {
+            [IO.File]::Delete($temporary)
+        }
+    }
+    [void][IO.Directory]::CreateDirectory($binDir)
+    if (![IO.File]::Exists($destination)) {
+        [IO.File]::Copy($compiled, $destination, $false)
+        return
+    }
+    $installedHash = (Get-FileHash -LiteralPath $destination).Hash
+    if ($installedHash -eq (Get-FileHash -LiteralPath $compiled).Hash) { return }
+    $known = Get-ChildItem -LiteralPath $store -Filter 'path-command-*.exe' -File |
+        Where-Object { $_.Name -match '^path-command-[a-f0-9]{64}\.exe$' -and (Get-FileHash -LiteralPath $_.FullName).Hash -eq $installedHash } |
+        Select-Object -First 1
+    if (!$known) { throw 'The existing vscodex-app-server executable is not managed by this installer.' }
+    Write-InstalledFile $destination ([IO.File]::ReadAllBytes($compiled))
+}
+
 if (!(Test-Path -LiteralPath $sourceManager -PathType Leaf) -or !(Test-Path -LiteralPath $sourceLauncher -PathType Leaf)) {
     throw 'Keep install.ps1, account.py and Launcher.cs in the same source directory.'
 }
@@ -137,7 +171,12 @@ try {
     $runScript = "& '" + $python.Replace("'", "''") + "' -I (Join-Path `$PSScriptRoot 'account.py') @args`r`nexit `$LASTEXITCODE`r`n"
     $bom = [Text.UTF8Encoding]::new($true).GetPreamble()
     Write-InstalledFile (Join-Path $store 'run.ps1') ([byte[]]($bom + $utf8.GetBytes($runScript)))
-    & $python -I $manager configure $launcher
+    $configureArgs = @('configure', $launcher)
+    if ($RemoteSsh -or [IO.File]::Exists((Join-Path $store 'path-launcher-target'))) {
+        Install-PathLauncher $compiler $shimDir
+        $configureArgs += '--remote-ssh'
+    }
+    & $python -I $manager @configureArgs
     if ($LASTEXITCODE -ne 0) { throw 'VS Code configuration failed. Correct the reported problem and rerun the installer.' }
 
     [void][IO.Directory]::CreateDirectory($shimDir)

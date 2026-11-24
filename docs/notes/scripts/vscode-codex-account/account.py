@@ -23,6 +23,7 @@ ACCOUNTS = ROOT / "accounts"
 SELECTED = ROOT / "selected"
 SETTINGS = Path(os.environ["APPDATA"]) / "Code" / "User" / "settings.json"
 EXECUTABLE = "chatgpt.cliExecutable"
+PATH_COMMAND = "vscodex-app-server"
 IGNORED = "settingsSync.ignoredSettings"
 STRING = r'"(?:\\.|[^"\\])*"'
 LAUNCHER = re.compile(r"extension-launcher(?:-[a-fA-F0-9]+)?\.exe", re.I)
@@ -76,7 +77,21 @@ def our_launcher(path):
     return path.parent == ROOT and LAUNCHER.fullmatch(path.name)
 
 
-def configure(launcher):
+def installed_launcher(settings):
+    value = settings.get(EXECUTABLE)
+    if value == PATH_COMMAND:
+        target = (ROOT / "path-launcher-target").read_text(encoding="utf-8").rstrip("\r\n")
+        if not LAUNCHER.fullmatch(target):
+            raise ValueError("Invalid installed launcher target. Run install.ps1 -RemoteSsh.")
+        path = ROOT / target
+    else:
+        path = Path(value or "")
+    if not our_launcher(path) or not path.is_file():
+        raise ValueError("Run install.ps1 to configure the local extension launcher.")
+    return path
+
+
+def configure(launcher, remote_ssh=False):
     path = Path(launcher).resolve()
     if not our_launcher(path) or not path.is_file():
         raise ValueError("Expected the installed extension launcher.")
@@ -103,15 +118,20 @@ def configure(launcher):
         atomic_write(shared, str(original).encode("utf-8"))
     data, source, opening, values, spans = read_settings()
     old = values.get(EXECUTABLE)
-    if old and (not isinstance(old, str) or not our_launcher(Path(old))):
+    if old and old != PATH_COMMAND and (not isinstance(old, str) or not our_launcher(Path(old))):
         raise ValueError(f"A custom {EXECUTABLE} already exists. Review it before installing.")
+    target = ROOT / "path-launcher-target"
+    short_name = remote_ssh or target.is_file()
+    if old == PATH_COMMAND and not short_name:
+        raise ValueError("Run install.ps1 -RemoteSsh to install the PATH launcher.")
+    setting = PATH_COMMAND if short_name else str(path)
     edits = []
     new_keys = {}
-    if old != str(path):
+    if old != setting:
         if EXECUTABLE in spans:
-            edits.append((*spans[EXECUTABLE], json.dumps(str(path))))
+            edits.append((*spans[EXECUTABLE], json.dumps(setting)))
         else:
-            new_keys[EXECUTABLE] = str(path)
+            new_keys[EXECUTABLE] = setting
     ignored = values.get(IGNORED, [])
     if not isinstance(ignored, list) or "-" + EXECUTABLE in ignored:
         raise ValueError(f"Review {IGNORED} before installing a machine-local launcher.")
@@ -127,11 +147,13 @@ def configure(launcher):
             json.dumps(k) + ": " + json.dumps(v) for k, v in new_keys.items())
         edits.append((opening, opening, newline + "    " + entries + ("," if values else newline)))
     subprocess.run([sys.executable, "-I", str(ROOT / "backend.py"), str(path), "--import-history"], check=True)
+    if SETTINGS.exists() and SETTINGS.read_bytes() != data:
+        raise ValueError("VS Code settings changed during installation. Rerun the installer.")
+    if short_name:
+        atomic_write(target, path.name.encode("utf-8"))
     if edits:
         for start, end, replacement in sorted(edits, reverse=True):
             source = source[:start] + replacement + source[end:]
-        if SETTINGS.exists() and SETTINGS.read_bytes() != data:
-            raise ValueError("VS Code settings changed during installation. Rerun the installer.")
         encoding = "utf-8-sig" if data.startswith(b"\xef\xbb\xbf") else "utf-8"
         atomic_write(SETTINGS, source.encode(encoding))
 
@@ -228,9 +250,7 @@ def login(selector, again, paint):
             print(paint(f"{expected} already has cached credentials.", GREEN))
             return
         settings = read_settings()[3]
-        launcher = Path(settings.get(EXECUTABLE) or "")
-        if not our_launcher(launcher) or not launcher.is_file():
-            raise ValueError("Run install.ps1 to configure the local extension launcher.")
+        launcher = installed_launcher(settings)
         binary = subprocess.check_output([str(launcher), "--vscodex-bundled-path"],
                                          encoding="utf-8").strip()
         # A cancelled or wrong-account login must leave the previous token intact.
@@ -369,9 +389,7 @@ def release_thread(selector, paint):
     shared = Path((ROOT / "shared-home").read_text(encoding="utf-8").strip())
     thread_id = canonical_id(selector.strip())
     if not thread_id:
-        launcher = Path(read_settings()[3].get(EXECUTABLE) or "")
-        if not our_launcher(launcher) or not launcher.is_file():
-            raise ValueError("Run install.ps1 to configure the local extension launcher.")
+        launcher = installed_launcher(read_settings()[3])
         exe = subprocess.check_output([str(launcher), "--vscodex-bundled-path"],
                                       encoding="utf-8", timeout=10).strip()
         config = local_request(exe, shared, "config/read", {}, timeout=10)["config"]
@@ -419,6 +437,7 @@ def main(paint):
     commands.add_parser("status", help="show selection and locally cached identities")
     setup = commands.add_parser("configure", help="configure the installed extension launcher")
     setup.add_argument("launcher")
+    setup.add_argument("--remote-ssh", action="store_true")
     args = parser.parse_args()
     if not (ROOT / "run.ps1").is_file():
         raise ValueError("Run install.ps1 before using vscodex.")
@@ -429,7 +448,7 @@ def main(paint):
     elif args.action == "release":
         release_thread(args.thread, paint)
     elif args.action == "configure":
-        configure(args.launcher)
+        configure(args.launcher, args.remote_ssh)
     else:
         status(paint)
 
