@@ -30,8 +30,9 @@ def send(stream, message):
 
 @contextmanager
 def server(exe, args, home):
+    # Read large history replies in larger chunks. Individual RPC writes still flush immediately.
     proc = subprocess.Popen([exe, *args], env=dict(os.environ, CODEX_HOME=str(home)),
-                            stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                            stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=64 * 1024)
     try:
         yield proc
     finally:

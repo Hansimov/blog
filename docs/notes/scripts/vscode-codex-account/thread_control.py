@@ -45,6 +45,21 @@ class ThreadControl:
 
     def from_native(self, line):
         """Consume private replies; leave native notifications on the editor stream."""
+        # Native success replies put the ID before the result. A resume can carry
+        # megabytes of history that the bridge only needs to forward, byte for byte.
+        if (self.pending and self.target is None and len(line) >= 65536
+                and line.startswith(b'{"id":') and line.endswith((b"}\n", b"}\r\n"))):
+            end = line.find(b',"result":', 6, 512)
+            if end >= 0:
+                try:
+                    rid = json.loads(line[6:end])  # Decode escaped/UTF-8 string IDs exactly as in the request.
+                except ValueError:
+                    rid = None
+                if type(rid) in (int, str) and not (isinstance(rid, str) and rid.startswith(self.id_prefix)):
+                    with self.lock:
+                        if self.target is None and rid in self.pending:
+                            del self.pending[rid]
+                            return False
         if not self.pending and self.target is None and self.id_prefix.encode() not in line:
             return False
         try:

@@ -5,6 +5,7 @@ import sys
 import threading
 import time
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from thread_control import ThreadControl
@@ -48,6 +49,33 @@ class ThreadReleaseTest(unittest.TestCase):
     def read_reply(self, request, status):
         result = {"thread": {"id": "target", "status": status}}
         self.assertTrue(self.control.from_native(line({"id": request["id"], "result": result})))
+
+    def test_large_native_reply_only_decodes_its_pending_editor_id(self):
+        history = {"turns": ["x" * 70000]}
+        for rid in (42, -7, 'resume,"quoted"\\\u96ea', "ending,"):
+            with self.subTest(rid=rid):
+                self.control.pending[rid] = "target"
+                reply = json.dumps({"id": rid, "result": history}, ensure_ascii=False,
+                                   separators=(",", ":")).encode() + b"\n"
+                with patch("thread_control.json.loads", wraps=json.loads) as decode:
+                    self.assertFalse(self.control.from_native(reply))
+                self.assertNotIn(rid, self.control.pending)
+                self.assertTrue(all(len(call.args[0]) < 128 for call in decode.call_args_list))
+
+    def test_large_nonstandard_and_private_envelopes_keep_rpc_routing(self):
+        text = "x" * 70000
+        self.control.pending[12] = "target"
+        # A server request can have the same ID as an outstanding editor request.
+        request = json.dumps({"id": 12, "method": "test/request", "params": text},
+                             separators=(",", ":")).encode() + b"\n"
+        self.assertFalse(self.control.from_native(request))
+        self.assertFalse(self.control.from_native(b'{"id":12,"result":"' + text.encode()))
+        private = self.control.id_prefix + "old"
+        late = json.dumps({"id": private, "result": text}, separators=(",", ":")).encode() + b"\n"
+        self.assertTrue(self.control.from_native(late))
+        self.assertIn(12, self.control.pending)
+        self.assertFalse(self.control.from_native(line({"error": {"message": text}, "id": 12})))
+        self.assertNotIn(12, self.control.pending)
 
     def test_malformed_or_busy_status_never_unsubscribes(self):
         for status in (None, "invalid", {}, {"type": "unknown"}, {"type": "active", "activeFlags": []},
