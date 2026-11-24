@@ -46,7 +46,7 @@ Linux 的在：`~/.codex/auth.json`
 
 #### Windows 本机切换两个 ChatGPT 账号
 
-本仓库的 `vscodex` 命令适用于 Windows 本机的 VS Code 稳定版和 `openai.chatgpt` 扩展。它通过用户设置 `chatgpt.cliExecutable` 启动扩展自带的后端，为每个账号指定独立的 `CODEX_HOME`。普通终端中的 `codex` 仍使用原来的登录环境。该设置属于扩展的开发选项，扩展更新后可用下列命令重新验证。[Codex 登录说明](https://developers.openai.com/codex/auth) · [扩展设置](https://developers.openai.com/codex/ide/settings)
+本仓库的 `vscodex` 命令适用于 Windows 本机的 VS Code 稳定版和 `openai.chatgpt` 扩展。同一 Windows 用户的所有账号共用原来的 Codex 目录，包括活动会话、归档、索引和同一份 `config.toml`。普通终端中的 `codex` 继续使用原来的登录身份。启动器通过扩展的开发选项 `chatgpt.cliExecutable` 启动自带的后端，在窗口启动时通过 app-server 协议载入所选账号。[Codex 登录说明](https://developers.openai.com/codex/auth) · [扩展设置](https://developers.openai.com/codex/ide/settings)
 
 在仓库根目录用 PowerShell 安装。需要 Python 3.9+ 和 Windows 自带的 .NET Framework 4.x 编译器。
 
@@ -77,7 +77,11 @@ vscodex use team.alpha@example.com
 
 `login` 和 `use` 用绿色提示成功、红色提示失败。`use` 还会用蓝色显示目标账号，用天蓝色突出窗口重载命令。首次授权成功后，扩展可直接刷新该账号的令牌。如果服务端撤销了授权，可运行 `vscodex login beta --again`。设备码登录如被禁用，请在 ChatGPT 的安全设置中启用，或联系工作区管理员。[设备码授权说明](https://developers.openai.com/codex/auth)
 
-账号资料保存在当前 Windows 用户的 `%LOCALAPPDATA%\vscode-codex-account\accounts`。每个账号第一次登录时会复制原 Codex 目录中的 `config.toml` 和 `AGENTS.md`（如果存在），然后独立保存凭证、会话和后端配置。原来的聊天记录可通过 `vscodex use original` 并重载窗口重新访问。换机器时重新安装并授权即可。
+各账号的 `auth.json` 位于 `%LOCALAPPDATA%\vscode-codex-account\accounts` 下各自的子目录。原来的 Codex 目录默认为 `%USERPROFILE%\.codex`。如果安装前使用了自定义 `CODEX_HOME`，安装器会记录该目录。修改其中的 `config.toml` 后，所有账号在下次加载配置时都会读到修改。`vscodex use original` 可让窗口恢复使用原目录的登录身份。
+
+从旧版升级时，重新运行上面的安装命令，再重载各个 VS Code 窗口。安装器会将旧账号目录中的会话、归档、标题索引和分页历史合入共享目录，并保留旧文件。新窗口会在后台检查尚未导入的历史，打开 Codex 时可以直接加载账号。
+
+如果同一条会话在两个目录中已有不同内容，窗口使用共享目录中的版本，旧版本保留在原账号目录，其余会话继续导入。如果曾在某个账号目录单独调整过 `config.toml`，可从保留的副本中挑选需要的设置合入共享配置。
 
 ### Linux 登录
 

@@ -108,18 +108,29 @@ internal static class Launcher
                 Console.WriteLine(exe);
                 return 0;
             }
-            var arguments = new List<string> { exe };
             string home = SelectedHome();
-            if (home != null)
+            string slot = home == null ? "original" : Path.GetFileName(home);
+            string root = AppDomain.CurrentDomain.BaseDirectory;
+            bool server = IsStdioServer(args);
+            string program = exe;
+            var arguments = new List<string>();
+            if (server)
+            {
+                program = File.ReadAllText(Path.Combine(root, "python-path")).Trim();
+                Environment.SetEnvironmentVariable("CODEX_HOME", File.ReadAllText(Path.Combine(root, "shared-home")).Trim());
+                arguments.AddRange(new[] { program, "-I", Path.Combine(root, "backend.py"), exe, slot });
+            }
+            else
+                arguments.Add(exe);
+            if (!server && home != null)
             {
                 Environment.SetEnvironmentVariable("CODEX_HOME", home);
                 arguments.Add("-c");
                 arguments.Add("cli_auth_credentials_store=\"file\"");
             }
             arguments.AddRange(args);
-            string slot = home == null ? "original" : Path.GetFileName(home);
-            return RunChild(exe, String.Join(" ", arguments.ConvertAll(Quote).ToArray()),
-                            IsAppServer(args) ? slot : null);
+            return RunChild(program, String.Join(" ", arguments.ConvertAll(Quote).ToArray()),
+                            server ? "shared." + slot : null);
         }
         catch (Exception error)
         {
@@ -128,13 +139,24 @@ internal static class Launcher
         }
     }
 
-    private static bool IsAppServer(string[] args)
+    private static bool IsStdioServer(string[] args)
     {
         // The extension can put global config overrides before the subcommand.
         for (int i = 0; i < args.Length; i++)
         {
             if (args[i] == "-c" || args[i] == "--config") { i++; continue; }
-            if (!args[i].StartsWith("-", StringComparison.Ordinal)) return args[i] == "app-server";
+            if (args[i].StartsWith("-", StringComparison.Ordinal)) continue;
+            if (args[i] != "app-server") return false;
+            for (int j = i + 1; j < args.Length; j++)
+            {
+                string arg = args[j];
+                if (arg == "-h" || arg == "--help" || arg == "--print-startup-config" ||
+                    arg == "help" || arg == "daemon" || arg == "proxy" ||
+                    arg == "generate-ts" || arg == "generate-json-schema") return false;
+                if (arg == "--listen" && j + 1 < args.Length && args[j + 1] != "stdio://") return false;
+                if (arg.StartsWith("--listen=") && arg != "--listen=stdio://") return false;
+            }
+            return true;
         }
         return false;
     }

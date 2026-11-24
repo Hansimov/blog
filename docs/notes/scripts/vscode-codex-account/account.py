@@ -10,10 +10,10 @@ import msvcrt
 import os
 from pathlib import Path
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
+import winreg
 
 
 ROOT = Path(os.environ["LOCALAPPDATA"]) / "vscode-codex-account"
@@ -78,6 +78,27 @@ def configure(launcher):
     path = Path(launcher).resolve()
     if not our_launcher(path) or not path.is_file():
         raise ValueError("Expected the installed extension launcher.")
+    shared = ROOT / "shared-home"
+    if not shared.is_file():
+        # An installer run inside an old Codex window inherits its private slot.
+        original = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex").resolve()
+        if original.is_relative_to(ROOT):
+            original = Path.home() / ".codex"
+            for hive, subkey in ((winreg.HKEY_CURRENT_USER, "Environment"),
+                                 (winreg.HKEY_LOCAL_MACHINE,
+                                  r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment")):
+                try:
+                    with winreg.OpenKey(hive, subkey) as key:
+                        value = winreg.QueryValueEx(key, "CODEX_HOME")[0]
+                except FileNotFoundError:
+                    continue
+                if value:
+                    original = Path(os.path.expandvars(value)).resolve()
+                    break
+        if original.resolve().is_relative_to(ROOT):
+            raise ValueError("Set CODEX_HOME to the original Codex directory before installing.")
+        original.mkdir(parents=True, exist_ok=True)
+        atomic_write(shared, str(original).encode("utf-8"))
     data, source, opening, values, spans = read_settings()
     old = values.get(EXECUTABLE)
     if old and (not isinstance(old, str) or not our_launcher(Path(old))):
@@ -103,6 +124,7 @@ def configure(launcher):
         entries = ("," + newline + "    ").join(
             json.dumps(k) + ": " + json.dumps(v) for k, v in new_keys.items())
         edits.append((opening, opening, newline + "    " + entries + ("," if values else newline)))
+    subprocess.run([sys.executable, "-I", str(ROOT / "backend.py"), str(path), "--import-history"], check=True)
     if edits:
         for start, end, replacement in sorted(edits, reverse=True):
             source = source[:start] + replacement + source[end:]
@@ -224,12 +246,6 @@ def login(selector, again, paint):
             auth = Path(scratch) / "auth.json"
             if identity(auth).casefold() != expected.casefold():
                 raise ValueError("The browser authorized a different email. Rerun login with the registered account.")
-            # Seed existing user preferences once. OAuth state and history stay independent.
-            original = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
-            for filename in ("config.toml", "AGENTS.md"):
-                source, target = original / filename, home / filename
-                if source.is_file() and not target.exists():
-                    shutil.copyfile(source, target)
             os.replace(auth, home / "auth.json")
     print(paint(f"Saved {expected}. Select it with: vscodex use {expected}", GREEN))
 
@@ -327,7 +343,7 @@ def status(paint):
     emails_by_slot = {home.name: email for email, homes in accounts.items() for home in homes}
     selected = emails_by_slot.get(current, "unavailable") if current else "original"
     print("Selected for next window load:", paint(selected, RED if selected == "unavailable" else BLUE))
-    if in_use("original"):
+    if in_use("original") or in_use("shared.original"):
         print(f"  {paint('original', BLUE)}  {paint('[in use]', GREEN)}")
     for email, homes in sorted(accounts.items()):
         home = preferred_home(homes)
@@ -336,7 +352,7 @@ def status(paint):
             state = paint("[cached]", SKY_BLUE)
         except ValueError as exc:
             state = paint(f"[{exc}]", RED)
-        if any(in_use(slot.name) for slot in homes):
+        if any(in_use(slot.name) or in_use("shared." + slot.name) for slot in homes):
             state += "  " + paint("[in use]", GREEN)
         print(f"  {paint(email, BLUE)}  {state}")
 
