@@ -144,6 +144,94 @@ python docs/notes/scripts/codex_turn_latency.py --workspace "D:\projects\example
 
 同一目录有多条会话时，可用 `--thread UUID` 代替 `--workspace 路径`。脚本根据本地记录估算从用户消息到第一条助手文字的时间，并报告首次采样的输入缓存、后续已完成的采样数和已完成的上下文压缩。按 `Ctrl+C` 即可结束监测，模型回合继续运行。
 
+#### 旧会话反复断流，新会话很快 {#old-thread-stream-retries}
+
+在发生故障的机器上，用会话和回合的 UUID 查看连接时间线。省略 `--turn` 会选择传输日志中最近有记录的回合。日志保留期有限，复测时应记录原回合的 UUID。
+
+```powershell
+python docs/notes/scripts/codex_turn_latency.py --thread "会话UUID" --turn "回合UUID" --transport
+```
+
+2026-11-25，Windows 上两个 VS Code 项目的旧会话都完成了 WebSocket 升级（HTTP 101）。连接断开后，客户端重建连接、全量发送上下文，约 80 秒后再次断开。两个项目各有一组连续五次重试，这几分钟里没有记录到首个输出项。同机新开的会话使用同一代理，三个新连接从 101 到首个工具或推理输出项仅需 1.91–3.20 秒。
+
+| 同晚的回合 | 当时本地历史项的 JSON 大小（近似） | 影响重发体积的内容 | HTTP 回退请求，zstd 压缩前 → 后 |
+| --- | ---: | --- | ---: |
+| 旧会话 A | 4.01 MB | 加密推理等字段共约 259 万字符，无内联图片 | 4,003,194 → 2,388,506 字节 |
+| 旧会话 B | 2.22 MB | 6 个内联图片数据 URL，共约 158 万字符 | 2,121,654 → 1,371,513 字节 |
+| 新会话 | 0.09 MB | 采样时无上述加密字段和内联图片 | 当时未观察到回退 |
+
+这些字节数来自两个不同的观测点。历史项的大小根据当时的有效历史估算，最后一列取自客户端的 HTTP 压缩日志。WebSocket 的线上字节数以及服务端收到请求的时刻在该日志里均不可见。两个旧会话的 HTTP 压缩各花了 25 ms 和 7 ms。旧会话 B 当晚也曾在直连上得到 HTTP 200，较大的请求有时能成功，但等待可达数十秒。
+
+#### Windows 和 Remote-SSH 上的 Codex 代理路径 {#windows-codex-upload}
+
+这里把 `11111` 配置对应的远端 VMess 节点称为 **A（前置）**，把 `11119` 配置对应的远端节点称为 **B（原出口）**。`127.0.0.1:11111` 和 `127.0.0.1:11119` 都是 Codex 后端所在机器的 HTTP 代理监听地址。远端 VMess 服务有自己的地址、端口和认证。
+
+| 场景 | Codex 首先连接 | 跨机器的路径 | Codex 服务看到的出口 |
+| --- | --- | --- | --- |
+| Windows 修复前 | Windows 的 `11119` | Windows → B → Codex 服务 | B 的出口 |
+| Windows 修复后 | Windows 的 `11119` | Windows → A → B → Codex 服务 | B 的出口 |
+| VS Code Remote-SSH 打开的 ai122 项目 | ai122 的 `11119` | ai122 → A → B → Codex 服务 | B 的出口 |
+| Windows 应用直接选用 `11111` | Windows 的 `11111` | Windows → A → Codex 服务 | A 的出口 |
+
+以访问 `chatgpt.com:443` 为例，修复后的 Windows 上发生了两次目标不同的 HTTP CONNECT。
+
+1. Codex 向本机 `11119` 请求连接 **`chatgpt.com:443`**。`11119` 仍选择原来的 B 出站，使用 B 的 VMess 认证。
+2. 为了抵达 B，这个出站的 `proxySettings.tag` 指向本机 `11111` 的 HTTP 出站。于是 `11119` 向 `11111` 请求连接 **B 的 VMess 服务地址和端口**。这一步发生在 Windows 回环接口上。
+3. `11111` 通过自己的 VMess 连接，请 A 打开到 B 的 TCP 连接。`11119` 沿这条通道与 B 通信，B 再打开到 `chatgpt.com:443` 的连接。Codex 的 HTTPS/WebSocket 流量和响应都沿已建立的通道传输。[V2Fly 出站代理配置](https://www.v2fly.org/config/outbounds.html#proxysettingsobject)
+
+ai122 上用 systemd 启动参数核实了 `v2ray@new` 加载的配置，远端 Codex 后端进程的代理环境和活动连接也都指向 **ai122 自己的** `11119`。Windows 和 ai122 各自完成整条链路。两台机器配置的 B 地址相同，服务端口和认证有差异，实测对目标站呈现相同的出口 IP。
+
+#### 大请求为何受益于中转
+
+在同一台 Windows 上固定 B、认证和目标站，仅更换抵达 B 的方式。小请求每条路径各 4 次，大上传使用同一份 2,400,000 字节的合成数据，按直连、中转、中转、直连的顺序测试。
+
+| 当晚实测 | Windows 直接连 B | Windows 经 A 抵达 B |
+| --- | --- | --- |
+| 无认证 GET 到 Codex Responses 路径 | 4/4 收到预期的 405，0.38–2.54 秒 | 4/4 收到预期的 405，0.37–1.70 秒 |
+| 向 Cloudflare 上传 2.4 MB | 两次均已完成 TLS，48 秒仍未收到 HTTP 响应 | 两次均收到 HTTP 200，1.93 和 2.14 秒 |
+| 已登录的 Codex，输入同一张 2.41 MB 合成图片并要求简短回复 | 110 秒内未完成 | 19.49 秒完成 |
+
+另一次 34 秒的直连上传，在 **Windows → B** 的物理 TCP 套接字上测得 65,495 字节重传、25 个重传超时事件，拥塞窗口多次降至一个报文段（1,440 字节）。应用能迅速把数据交给本机代理，外层 TCP 仍可能反复重传。这些计数能定位到这段连接，区分正向数据丢失与回程 ACK 丢失还需要对端观测。[Windows TCP_INFO_v0 字段定义](https://learn.microsoft.com/en-us/windows/win32/api/mstcpip/ns-mstcpip-tcp_info_v0)
+
+切换后，Windows 的生产端口四次上传全部成功，耗时 1.97–18.88 秒，其中一次共 17.81 秒，到完成 TLS 时已过去 16.33 秒。ai122 的生产端口两次上传均成功，耗时 2.25 和 2.65 秒。最终用两个旧会话各自的原登录和历史创建临时副本，分别在 12.34 和 13.85 秒完成回合。这两项验收均从测试进程启动计至回合结束。
+
+#### 直接使用前置节点，或者合并本机转发，能快多少？ {#codex-proxy-alternatives}
+
+**目前保留 `11119` 经 A 抵达 B 作为默认路径。** 直接让 Codex 使用 `11111` 会省掉公网节点 B，目标站也会看到 A 的出口。为了衡量这个取舍，在同一台 Windows 上交错测试了两种入口。
+
+| 11 月 25 日晚的对照 | 当前 `11119`，经 A 从 B 出口 | 直接使用 `11111`，从 A 出口 |
+| --- | --- | --- |
+| 2.4 MB 合成上传，各 3 次的中位数 | 2.18 秒 | 1.50 秒 |
+| Codex models 的无认证 GET，各 2 次，均返回预期的 401 | 0.50、0.55 秒 | 0.85、0.79 秒 |
+| 同一账号、模型、2.41 MB 合成图片和指令，各 2 个临时 Codex 回合 | 12.55、15.16 秒 | 22.57、12.26 秒 |
+
+四个回合都完成并返回了要求的 `OK`。回合耗时包含 CLI 启动、请求传输和服务端处理，测试顺序为 A 出口、B 出口、B 出口、A 出口。A 的测速站上传较快，也有一次最快的真实回合，但这组样本不足以证明换出口会稳定缩短 Codex 的等待时间。
+
+若必须保留 B 的出口，另一个选择是让同一个 V2Ray 进程承载 A、B 两个 VMess 出站，用标签在进程内把到 B 的连接交给 A。这样省去本机的回环 HTTP CONNECT，公网仍经过 A 和 B。用临时实例验证了出口 IP 相同，交错上传各 3 次，单进程为 1.79–2.61 秒（中位数 1.98 秒），现有双进程为 1.85–2.32 秒（中位数 2.16 秒）。两组范围重叠，暂时没有为性能迁移生产配置的依据。
+
+若要进一步减少偶发的长等待，可固定 B、请求大小和目标站，在出现卡顿的时段比较几个可用前置节点。记录大请求成功率和最慢样本，同时区分耗时集中在 TLS 握手还是握手之后。若 Windows 到 B 的直连日后恢复，也可以先用隔离探针验证，在多个时段都能稳定传完大请求后再省去 A。
+
+#### 复测 Windows 的 Codex 代理
+
+在仓库根目录用 Windows PowerShell 5.1 运行。诊断工具会在临时回环端口测试原上游的直连和中转，生产服务可继续工作。每轮每路上传 2.4 MB 合成数据，输出包括 HTTP 状态、耗时和直连套接字的重传统计。任一路上传失败时，命令返回非零状态。
+
+```powershell
+$ownerId = (Get-NetTCPConnection -State Listen -LocalAddress 127.0.0.1 -LocalPort 11119).OwningProcess
+$v2rayDir = Split-Path -Parent (Get-Process -Id $ownerId).Path
+python docs/notes/scripts/v2ray_windows_diagnose.py --dir "$v2rayDir" --rounds 2 --timeout 48
+```
+
+切换工具适配本例的 V2Ray 5、`config_vmiss.json` 和 `launch_vmiss.bat`。它从监听进程识别安装目录。以下命令依次查看当前模式、验证候选中转、应用中转。
+
+```powershell
+$tool = '.\docs\notes\scripts\v2ray_11119_route_windows.ps1'
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File $tool status
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File $tool test-relay
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File $tool relay
+```
+
+`relay` 会在隔离端口预检，保存当前用户专用的原配置备份，再短暂重启负责 `11118/11119` 的实例。开机快捷方式仍加载同一配置文件。切换后会在生产 `11119` 上验证 Codex 路径和 2.4 MB 上传，失败时尝试恢复原配置与监听器。要评估恢复直连，可先运行 `test-direct`，确认实际表现后再运行 `direct`。
+
 ### Linux 登录
 
 可以考虑在 VSCode 插件中登录。或者复制 `auth.json` 到 Linux 的 `~/.codex/auth.json` 中。
