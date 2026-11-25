@@ -126,6 +126,14 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\docs\notes\scripts\vsc
 
 在目标 SSH 窗口按 `Ctrl+Shift+P`，执行 **Developer: Reload Window**，打开 Codex 查看账号菜单。Windows 本机窗口继续使用 `vscodex use` 选定的账号。SSH 窗口运行远端扩展自带的 Linux 后端，使用远端的 `CODEX_HOME` 和已有凭证。SSH 窗口若使用回环代理，`127.0.0.1` 指的是远端主机，要确认该主机的相应端口有代理服务。
 
+#### 会话显示 Ultra，滑块最高却只有 Extra High
+
+Codex 的 `config.toml` 中，`model_reasoning_effort` 控制默认推理强度。滑块还会筛选当前模型支持的档位和 ChatGPT 账号允许显示的档位。因此，已有会话可以显示 Ultra，同一窗口的滑块却只到 Extra High。在选择器里选定其他档位时，扩展还可能将所选值写回配置文件。[Codex 配置参考](https://developers.openai.com/codex/config-reference/) · [ChatGPT 与 Codex 的模型可用性](https://help.openai.com/en/articles/20001275-chatgpt-work-and-codex)
+
+在提供 **Settings → General → Available reasoning levels** 的客户端，用相同的 ChatGPT 账号勾选 **Max** 和 **Ultra**，保留原有勾选项。这是账号级显示偏好。Remote-SSH 若使用另一个账号，需要单独检查。随后在实际运行后端的主机上核对 `config.toml`；如果该模型支持 Ultra，且希望继续以它为默认值，确认 `model_reasoning_effort = "ultra"`。
+
+在空白对话里打开当前模型的滑块验收，无需发送消息。若旧窗口仍显示先前的范围，等当前任务结束后，在该窗口执行 **Developer: Reload Window**。后端的 `model/list` 返回模型支持的档位，`config/read` 返回生效的默认值；滑块实际出现 Max 和 Ultra，才说明账号偏好也已生效。
+
 #### 观察 Thinking 到首段文字的耗时
 
 在运行 Codex 后端的机器上，从本仓库根目录执行监测脚本。把示例路径替换为该会话的工作区路径。Remote-SSH 会话使用远端路径，可通过 `python3` 执行同一脚本。
