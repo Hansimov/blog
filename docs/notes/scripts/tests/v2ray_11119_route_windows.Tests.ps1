@@ -85,4 +85,132 @@ Describe 'Windows 11119 production rollback' {
         $script:starts | Should Be 0
         Assert-MockCalled Stop-Instance -Times 0 -Scope It
     }
+    It 'restarts the managed service and rolls back through SCM after a failed upload' {
+        $path = 'fixture-wrapper'
+        $old | Add-Member NoteProperty RouteServicePath $path
+        Mock Restart-ManagedRoute { $script:starts++ }
+        Mock Test-RouteHealth { $script:checks++; if ($script:checks -eq 1) { Stop-RouteAction 'Upload failed.' } }
+        { Switch-LiveRoute $previous $changed $TestDrive 123 $path } | Should Throw 'Previous config and route restored'
+        [Convert]::ToBase64String([IO.File]::ReadAllBytes($ConfigPath)) | Should Be ([Convert]::ToBase64String($previous))
+        Assert-MockCalled Restart-ManagedRoute -Times 2 -Exactly -Scope It
+        Assert-MockCalled Stop-Instance -Times 0 -Exactly -Scope It
+        Assert-MockCalled Start-LiveInstance -Times 0 -Exactly -Scope It
+    }
+    It 'refuses a change of management during preflight' {
+        { Switch-LiveRoute $previous $changed $TestDrive 123 'fixture-wrapper' } | Should Throw 'config or listener changed'
+        Assert-MockCalled New-PrivateDirectory -Times 0 -Scope It
+    }
+}
+
+Describe 'Windows service listener ownership' {
+    BeforeEach {
+        $install = Join-Path $TestDrive 'service fixture'
+        $binary = Join-Path $install 'v2ray.exe'
+        $config = Join-Path $install 'config_vmiss.json'
+        $wrapperPath = Join-Path $install 'V2Ray11119.exe'
+        $created = [datetime]'2020-01-01T00:00:00'
+        $child = [pscustomobject]@{ExecutablePath=$binary; CommandLine=('"'+$binary+'" run --config="'+$config+'"')
+            ParentProcessId=200; CreationDate=$created.AddSeconds(1)}
+        $wrapper = [pscustomobject]@{Name='V2Ray11119.exe'; ExecutablePath=$wrapperPath; CreationDate=$created}
+        $service = [pscustomobject]@{Name='V2Ray11119'; State='Running'; ProcessId=200; PathName=('"'+$wrapperPath+'"')}
+        $front = [pscustomobject]@{Name='V2Ray11111'; State='Stopped'; ProcessId=0; PathName=''}
+        Mock Get-CimInstance {
+            if ($ClassName -eq 'Win32_Service') { return @($service,$front) }
+            $wrapper
+        }
+        Mock Get-ListenerOwner { 0 }
+    }
+    It 'checks service PID, wrapper image, and absolute V2Ray config' {
+        (Get-ServiceBinding $child $install) | Should Be $service.PathName
+        $child.CommandLine = ('"'+$binary+'" run "--config='+$config+'"')
+        (Get-ServiceBinding $child $install) | Should Be $service.PathName
+        $child.CommandLine = ('"'+$binary+'" run --config=some-other.json')
+        { Get-ServiceBinding $child $install } | Should Throw 'do not match'
+    }
+    It 'detects mixed mode, a second owner on a stopped front service, and a reused wrapper PID' {
+        $child.ParentProcessId = 666
+        { Get-ServiceBinding $child $install } | Should Throw 'do not match'
+        $child.ParentProcessId = 200
+        $wrapper.CreationDate = $child.CreationDate.AddSeconds(2)
+        { Get-ServiceBinding $child $install } | Should Throw 'verify the WinSW wrapper'
+        $wrapper.CreationDate = $created
+        Mock Get-ListenerOwner { 777 }
+        { Get-ServiceBinding $child $install } | Should Throw 'mixed management'
+    }
+    It 'checks the paired front listener belongs to its own registered wrapper' {
+        $front.State='Running'
+        $front.ProcessId=333
+        Mock Get-ListenerOwner { 811 }
+        { Get-ServiceBinding $child $install } | Should Throw 'do not match'
+        $frontExe = Join-Path $install 'V2Ray11111.exe'
+        $front.PathName = '"'+$frontExe+'"'
+        $frontWrapper = [pscustomobject]@{Name='V2Ray11111.exe'; ExecutablePath=$frontExe; CreationDate=$created}
+        $frontChild = [pscustomobject]@{ParentProcessId=333; CreationDate=$created.AddSeconds(1); ExecutablePath=$binary
+            CommandLine=('"'+$binary+'" run --config="'+(Join-Path $install 'config.json')+'"')}
+        Mock Get-CimInstance { $frontChild } -ParameterFilter { $ClassName -eq 'Win32_Process' -and $Filter -eq 'ProcessId=811' }
+        Mock Get-CimInstance { $frontWrapper } -ParameterFilter { $ClassName -eq 'Win32_Process' -and $Filter -eq 'ProcessId=333' }
+        (Get-ServiceBinding $child $install) | Should Be $service.PathName
+    }
+    It 'rejects an unrelated service owner even when there are no named V2Ray services' {
+        Mock Get-CimInstance { [pscustomobject]@{Name='OtherService';ProcessId=200} }
+        { Get-ServiceBinding $child $install } | Should Throw 'different Windows service'
+    }
+    It 'recognizes an original batch and hidden WMI after both services were disabled and stopped' {
+        $windows = [Environment]::GetFolderPath('Windows')
+        $batch = Join-Path $install 'launch_vmiss.bat'
+        [IO.Directory]::CreateDirectory($install) | Out-Null
+        [IO.File]::WriteAllText($batch,'v2ray.exe run --config=config_vmiss.json')
+        foreach ($entry in $service,$front) {
+            $entry.State='Stopped'
+            $entry.ProcessId=0
+            $entry | Add-Member NoteProperty StartMode 'Disabled'
+        }
+        $child | Add-Member NoteProperty ProcessId 901
+        $child.CommandLine='v2ray.exe run --config=config_vmiss.json'
+        $batchParent = [pscustomobject]@{Name='cmd.exe'; ExecutablePath=(Join-Path $windows 'System32\cmd.exe')
+            CreationDate=$created; CommandLine=('cmd.exe /c ""'+$batch+'" "')}
+        $wmi = [pscustomobject]@{Name='WmiPrvSE.exe'; ExecutablePath=(Join-Path $windows 'System32\wbem\WmiPrvSE.exe')
+            CreationDate=$created}
+        $frontChild = [pscustomobject]@{ParentProcessId=333; ProcessId=811; CreationDate=$created.AddSeconds(1)
+            ExecutablePath=$binary; CommandLine=('"'+$binary+'" run --config="'+(Join-Path $install 'config.json')+'"')}
+        Mock Get-ListenerOwner { 811 }
+        Mock Get-CimInstance { $batchParent } -ParameterFilter { $ClassName -eq 'Win32_Process' -and $Filter -eq 'ProcessId=200' }
+        Mock Get-CimInstance { $wmi } -ParameterFilter { $ClassName -eq 'Win32_Process' -and $Filter -eq 'ProcessId=333' }
+        Mock Get-CimInstance { $frontChild } -ParameterFilter { $ClassName -eq 'Win32_Process' -and $Filter -eq 'ProcessId=811' }
+        Mock Get-CimInstance {} -ParameterFilter { $ClassName -eq 'Win32_Service' -and $Filter -like 'ProcessId=*' }
+        (Get-ServiceBinding $child $install) | Should BeNullOrEmpty
+        $wmi.ExecutablePath = Join-Path $install 'WmiPrvSE.exe'
+        { Get-ServiceBinding $child $install } | Should Throw 'unverified standalone'
+        $wmi.ExecutablePath = Join-Path $windows 'System32\wbem\WmiPrvSE.exe'
+        $batchParent.CreationDate = $child.CreationDate.AddSeconds(3)
+        { Get-ServiceBinding $child $install } | Should Throw 'unverified standalone'
+        $batchParent.CreationDate = $created
+        Mock Get-CimInstance { [pscustomobject]@{Name='OtherService'} } -ParameterFilter {
+            $ClassName -eq 'Win32_Service' -and $Filter -eq 'ProcessId=901 OR ProcessId=200'
+        }
+        { Get-ServiceBinding $child $install } | Should Throw 'another Windows service'
+        $front.StartMode='Manual'
+        { Get-ServiceBinding $child $install } | Should Throw 'do not match'
+        $front.StartMode='Disabled'; $front.ProcessId=333
+        { Get-ServiceBinding $child $install } | Should Throw 'do not match'
+    }
+    It 'controls only the main SCM service and verifies the new listener' {
+        Mock Get-CimInstance { $service }
+        Mock Get-ListenerOwner { 500 }
+        $live = New-FakeProcess 500
+        $live | Add-Member NoteProperty RouteServicePath $service.PathName
+        Mock Get-LiveInstance { $live }
+        Mock Stop-Service {}
+        Mock Start-Service {}
+        Restart-ManagedRoute $service.PathName
+        Assert-MockCalled Stop-Service -ParameterFilter { $Name -eq 'V2Ray11119' } -Times 1 -Exactly -Scope It
+        Assert-MockCalled Start-Service -ParameterFilter { $Name -eq 'V2Ray11119' } -Times 1 -Exactly -Scope It
+        Assert-MockCalled Get-LiveInstance -Times 1 -Exactly -Scope It
+        $service.State='Stopped'
+        Restart-ManagedRoute $service.PathName
+        Assert-MockCalled Stop-Service -Times 1 -Exactly -Scope It
+        Assert-MockCalled Start-Service -Times 2 -Exactly -Scope It
+        { Restart-ManagedRoute 'changed-wrapper' } | Should Throw 'registration changed'
+        Assert-MockCalled Start-Service -Times 2 -Exactly -Scope It
+    }
 }

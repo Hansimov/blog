@@ -213,7 +213,7 @@ ai122 上用 systemd 启动参数核实了 `v2ray@new` 加载的配置，远端 
 
 #### 复测 Windows 的 Codex 代理
 
-在仓库根目录用 Windows PowerShell 5.1 运行。诊断工具会在临时回环端口测试原上游的直连和中转，生产服务可继续工作。每轮每路上传 2.4 MB 合成数据，输出包括 HTTP 状态、耗时和直连套接字的重传统计。任一路上传失败时，命令返回非零状态。
+在仓库根目录用 Windows PowerShell 5.1 运行。采用下文的服务安装时，以管理员身份打开 PowerShell，以便读取服务进程和受保护的配置。诊断工具会在临时回环端口测试原上游的直连和中转，生产服务可继续工作。每轮每路上传 2.4 MB 合成数据，输出包括 HTTP 状态、耗时和直连套接字的重传统计。任一路上传失败时，命令返回非零状态。
 
 ```powershell
 $ownerId = (Get-NetTCPConnection -State Listen -LocalAddress 127.0.0.1 -LocalPort 11119).OwningProcess
@@ -221,7 +221,7 @@ $v2rayDir = Split-Path -Parent (Get-Process -Id $ownerId).Path
 python docs/notes/scripts/v2ray_windows_diagnose.py --dir "$v2rayDir" --rounds 2 --timeout 48
 ```
 
-切换工具适配本例的 V2Ray 5、`config_vmiss.json` 和 `launch_vmiss.bat`。它从监听进程识别安装目录。以下命令依次查看当前模式、验证候选中转、应用中转。
+切换工具适配本例的 V2Ray 5 配置，可识别由服务管理的 `11119` 实例，也支持原有的 `launch_vmiss.bat` 安装。服务模式下，在管理员 PowerShell 中运行以下命令。`status` 查看路由模式，`test-relay` 在临时端口验证中转，`relay` 应用中转配置。
 
 ```powershell
 $tool = '.\docs\notes\scripts\v2ray_11119_route_windows.ps1'
@@ -230,7 +230,28 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File $tool test-relay
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File $tool relay
 ```
 
-`relay` 会在隔离端口预检，保存当前用户专用的原配置备份，再短暂重启负责 `11118/11119` 的实例。开机快捷方式仍加载同一配置文件。切换后会在生产 `11119` 上验证 Codex 路径和 2.4 MB 上传，失败时尝试恢复原配置与监听器。要评估恢复直连，可先运行 `test-direct`，确认实际表现后再运行 `direct`。
+`relay` 在隔离端口预检。需要切换时，工具备份原配置，再短暂重启负责 `11118/11119` 的实例。切换后会在生产 `11119` 上验证 Codex 路径和 2.4 MB 上传，失败时尝试恢复原配置与监听器。要评估恢复直连，可先运行 `test-direct`，确认实际表现后再运行 `direct`。
+
+#### 管理 Windows 代理服务
+
+本例用 WinSW 2.14.0 将两个 V2Ray 实例注册为自动启动的 Windows 服务，均使用 `LocalService` 账号。`V2Ray11119` 依赖前置服务 `V2Ray11111`。开机时由 Windows 服务管理器启动，无需登录桌面或保留 cmd 窗口。服务使用的程序和两份代理配置放在 `%ProgramFiles%\CodexV2Ray`，日志放在 `%ProgramData%\CodexV2Ray\logs`。[WinSW 发布包](https://github.com/winsw/winsw/releases/tag/v2.14.0)
+
+| 服务 | 生效的配置文件 | 本机监听端口 |
+| --- | --- | --- |
+| `V2Ray11111`（前置） | `config.json` | HTTP `11111`，SOCKS `11110` |
+| `V2Ray11119`（Codex 入口） | `config_vmiss.json` | HTTP `11119`，SOCKS `11118` |
+
+在管理员 PowerShell 中查看服务状态和实际监听端口。
+
+```powershell
+Get-Service -Name V2Ray11111,V2Ray11119 | Select-Object Name,Status,StartType
+Get-NetTCPConnection -State Listen -LocalAddress 127.0.0.1 -LocalPort 11111,11119 |
+    Select-Object LocalPort,OwningProcess
+```
+
+仅需重启 Codex 入口时，运行 `Restart-Service -Name V2Ray11119`。要同时维护两项服务，先运行 `Stop-Service V2Ray11119`，再运行 `Stop-Service V2Ray11111`。维护完成后执行 `Start-Service V2Ray11119` 就会按依赖关系启动两者。也可以在 `services.msc` 中管理。服务运行期间再次双击旧批处理会让第二个进程争用同一端口。
+
+**手动恢复原登录启动方式。** 原安装目录仍可用于恢复。先按上述顺序停止两个服务，再分别执行 `Set-Service -Name V2Ray11119 -StartupType Disabled` 和 `Set-Service -Name V2Ray11111 -StartupType Disabled`。确认两个端口都已释放，然后将 `%ProgramData%\CodexV2Ray\migration\startup` 下原先指向 `launch.bat` 与 `launch_vmiss.bat` 的两条快捷方式按原名复制回公共启动文件夹（运行 `shell:common startup` 可打开）。要立即启用，依次打开前置、出口的快捷方式。下次登录 Windows 时由启动文件夹接管。恢复后实例读取原安装目录中的配置，若迁移后改过路由，应核对原目录的 `config_vmiss.json`。
 
 ### Linux 登录
 

@@ -3,7 +3,9 @@
 .SYNOPSIS
 Switch the Windows config_vmiss.json VMess outbound between direct and HTTP 11111.
 .DESCRIPTION
-Run with Windows PowerShell 5.1. The existing V2Ray 5 batch launcher must contain
+Run with Windows PowerShell 5.1. Supports the paired V2Ray11111/V2Ray11119
+WinSW services and the original batch launchers. Run elevated for service mode.
+The original V2Ray 5 batch launcher must contain
 only "v2ray.exe run --config=config_vmiss.json", with its working directory set to
 the installation directory. Its Startup shortcut continues to load the same file.
 The script discovers the directory from the running listener. Use -Directory to
@@ -75,6 +77,108 @@ function Get-ListenerOwner([int[]]$Ports) {
     return 0
 }
 
+function Test-AbsoluteLauncher($Info, [string]$Binary, [string]$ConfigPath) {
+    $exe = [regex]::Escape($Binary)
+    $cfg = [regex]::Escape($ConfigPath)
+    # WinSW/.NET can quote the entire argument or just the value after '='.
+    $exeForms = @(('"{0}"' -f $exe), 'v2ray\.exe')
+    $argForms = @(('--config="{0}"' -f $cfg), ('"--config={0}"' -f $cfg))
+    if ($Binary -notmatch '\s') { $exeForms += $exe }
+    if ($ConfigPath -notmatch '\s') { $argForms += '--config='+$cfg }
+    $pattern = '^\s*(?:{0})\s+run\s+(?:{1})\s*$' -f ($exeForms -join '|'),($argForms -join '|')
+    $Info.ExecutablePath -ieq $Binary -and $Info.CommandLine -match $pattern
+}
+
+function Test-LegacyLauncher($Child, [string]$Install, [string]$ConfigName) {
+    $binary = Join-Path $Install 'v2ray.exe'
+    if (!$Child -or $Child.ExecutablePath -ine $binary -or !$Child.ParentProcessId) { return $false }
+    $parent = Get-CimInstance Win32_Process -Filter "ProcessId=$($Child.ParentProcessId)" -ErrorAction Stop
+    if (!$parent.ExecutablePath -or !$parent.CreationDate -or !$Child.CreationDate -or
+        $parent.CreationDate -gt $Child.CreationDate) { return $false }
+    $windows = [Environment]::GetFolderPath('Windows')
+    $systemDirs = @((Join-Path $windows 'System32'), (Join-Path $windows 'SysWOW64'))
+    if ($parent.Name -ieq 'WmiPrvSE.exe') {
+        $providers = @($systemDirs | ForEach-Object { Join-Path $_ 'wbem\WmiPrvSE.exe' })
+        return ($providers -contains $parent.ExecutablePath -and
+            (Test-AbsoluteLauncher $Child $binary (Join-Path $Install $ConfigName)))
+    }
+    $cmdPaths = @($systemDirs | ForEach-Object { Join-Path $_ 'cmd.exe' })
+    if ($parent.Name -ine 'cmd.exe' -or $cmdPaths -notcontains $parent.ExecutablePath) { return $false }
+    if ($ConfigName -eq 'config_vmiss.json') {
+        $batch = Join-Path $Install 'launch_vmiss.bat'
+        $arg = '--config=config_vmiss.json'
+    } else {
+        $batch = Join-Path $Install 'launch.bat'
+        $arg = 'config.json'
+    }
+    $cmdPattern = '^\s*(?:"'+[regex]::Escape($binary)+'"|v2ray\.exe)\s+run\s+'+[regex]::Escape($arg)+'\s*$'
+    return ($Child.CommandLine -match $cmdPattern -and
+        $parent.CommandLine -match ('\s/c\s+""'+[regex]::Escape($batch)+'"\s*"\s*$') -and
+        [IO.File]::ReadAllText($batch).Trim() -ceq ('v2ray.exe run '+$arg))
+}
+
+function Assert-RestoredLauncher($Child, [string]$Install, [string]$ConfigName) {
+    if (!(Test-LegacyLauncher $Child $Install $ConfigName)) {
+        Stop-RouteAction 'The disabled services have an unverified standalone listener. Check its original launcher.'
+    }
+    $owners = @(Get-CimInstance Win32_Service -ErrorAction Stop -Filter (
+        "ProcessId=$($Child.ProcessId) OR ProcessId=$($Child.ParentProcessId)"))
+    if ($owners.Count) { Stop-RouteAction 'The restored listener or its parent belongs to another Windows service.' }
+}
+
+function Assert-ServiceListener($Service, $Child, [string]$Binary, [string]$ConfigPath) {
+    if (!$Service -or $Service.State -ne 'Running' -or !$Service.ProcessId -or !$Child -or
+        $Child.ParentProcessId -ne $Service.ProcessId -or !(Test-AbsoluteLauncher $Child $Binary $ConfigPath)) {
+        Stop-RouteAction 'The service and its V2Ray listener do not match. Check the services in an elevated PowerShell.'
+    }
+    $wrapper = Get-CimInstance Win32_Process -Filter "ProcessId=$($Service.ProcessId)" -ErrorAction Stop
+    if (!$wrapper.ExecutablePath -or $wrapper.Name -ine ($Service.Name+'.exe') -or
+        $wrapper.CreationDate -gt $Child.CreationDate) {
+        Stop-RouteAction 'Could not verify the WinSW wrapper that owns the V2Ray process. Run elevated.'
+    }
+    $exe = [regex]::Escape($wrapper.ExecutablePath)
+    if ($Service.PathName -notmatch ('^\s*(?:"'+$exe+'"|'+$exe+')\s*$')) {
+        Stop-RouteAction 'The wrapper executable differs from the registered service image.'
+    }
+}
+
+function Get-ServiceBinding($Child, [string]$Install) {
+    $services = @(Get-CimInstance Win32_Service -ErrorAction Stop -Filter (
+        "Name='V2Ray11119' OR Name='V2Ray11111' OR ProcessId=$($Child.ParentProcessId)"))
+    $main = $services | Where-Object Name -eq 'V2Ray11119'
+    $front = $services | Where-Object Name -eq 'V2Ray11111'
+    if (!$main -and !$front) {
+        if ($services.Count) { Stop-RouteAction 'This listener is owned by a different Windows service.' }
+        return
+    }
+    if (!$main -or !$front) { Stop-RouteAction 'Only one of the paired V2Ray services is registered.' }
+    $exe = Join-Path $Install 'v2ray.exe'
+    $active = @($main,$front | Where-Object {
+        $_.State -ne 'Stopped' -or $_.StartMode -ne 'Disabled' -or $_.ProcessId -ne 0
+    })
+    if (!$active.Count) {
+        Assert-RestoredLauncher $Child $Install 'config_vmiss.json'
+        $frontPid = Get-ListenerOwner @(11110,11111)
+        if ($frontPid) {
+            $frontChild = Get-CimInstance Win32_Process -Filter "ProcessId=$frontPid" -ErrorAction Stop
+            Assert-RestoredLauncher $frontChild $Install 'config.json'
+        } elseif ((Get-ListenerOwner @(11110)) -or (Get-ListenerOwner @(11111))) {
+            Stop-RouteAction 'The front listeners do not have the same standalone owner.'
+        }
+        return
+    }
+    Assert-ServiceListener $main $Child $exe (Join-Path $Install 'config_vmiss.json')
+    if ($front.State -eq 'Running') {
+        $frontPid = Get-ListenerOwner @(11110,11111)
+        if (!$frontPid) { Stop-RouteAction 'The front service does not own both expected listeners.' }
+        $frontChild = Get-CimInstance Win32_Process -Filter "ProcessId=$frontPid" -ErrorAction Stop
+        Assert-ServiceListener $front $frontChild $exe (Join-Path $Install 'config.json')
+    } elseif ($front.State -ne 'Stopped' -or (Get-ListenerOwner @(11111)) -or (Get-ListenerOwner @(11110))) {
+        Stop-RouteAction 'The front service and its listeners disagree. Refusing mixed management.'
+    }
+    $main.PathName
+}
+
 function Get-LiveInstance([string]$ExpectedDirectory) {
     $owner = Get-ListenerOwner @(11118,11119)
     if (!$owner) { Stop-RouteAction 'Expected both production loopback listeners on the same process.' }
@@ -82,6 +186,7 @@ function Get-LiveInstance([string]$ExpectedDirectory) {
     try {
         $null = $proc.Handle  # Pin the process across discovery, CIM checks and termination.
         $binary = $proc.MainModule.FileName
+        if (!$binary) { Stop-RouteAction 'Could not read the listener executable. For a service, run PowerShell as administrator.' }
         $install = [IO.Path]::GetDirectoryName($binary)
         $info = Get-CimInstance Win32_Process -Filter "ProcessId=$owner"
         if ([IO.Path]::GetFileName($binary) -ine 'v2ray.exe' -or $info.ExecutablePath -ine $binary -or
@@ -89,24 +194,41 @@ function Get-LiveInstance([string]$ExpectedDirectory) {
             Stop-RouteAction 'Expected the loopback listeners to belong to the selected V2Ray installation.'
         }
         $configPath = Join-Path $install 'config_vmiss.json'
-        $argsPattern = '^\s*(?:"' + [regex]::Escape($binary) + '"|v2ray\.exe)\s+run\s+'
-        $relative = $info.CommandLine -match ($argsPattern + '--config=config_vmiss\.json\s*$')
-        $absolute = $info.CommandLine -match ($argsPattern + '--config="' + [regex]::Escape($configPath) + '"\s*$')
-        if ($relative) {
-            $parent = Get-CimInstance Win32_Process -Filter "ProcessId=$($info.ParentProcessId)"
-            $batch = Join-Path $install 'launch_vmiss.bat'
-            $relative = ($parent.Name -ieq 'cmd.exe' -and
-                $parent.CommandLine -match ('(?i)\s/c\s+""' + [regex]::Escape($batch) + '"\s*"\s*$') -and
-                [IO.File]::ReadAllText($batch).Trim() -ceq 'v2ray.exe run --config=config_vmiss.json')
-        }
-        if ($proc.HasExited -or !($relative -or $absolute)) {
+        if ($proc.HasExited -or (!(Test-AbsoluteLauncher $info $binary $configPath) -and
+            !(Test-LegacyLauncher $info $install 'config_vmiss.json'))) {
             Stop-RouteAction 'Listener owner is outside the supported config_vmiss.json launcher.'
         }
+        $binding = Get-ServiceBinding $info $install
+        $proc | Add-Member -NotePropertyName RouteServicePath -NotePropertyValue $binding
         $proc
     } catch {
         $proc.Dispose()
         throw
     }
+}
+
+function Restart-ManagedRoute([string]$ServicePath) {
+    $service = Get-CimInstance Win32_Service -Filter "Name='V2Ray11119'" -ErrorAction Stop
+    if (!$service -or $service.PathName -ine $ServicePath) {
+        Stop-RouteAction 'The V2Ray11119 service registration changed. Check its configuration.'
+    }
+    if ($service.StartMode -eq 'Disabled') { Stop-RouteAction 'The V2Ray11119 service is disabled. Check its management mode.' }
+    if ($service.State -ne 'Stopped') {
+        Stop-Service -Name V2Ray11119 -ErrorAction Stop -WarningAction SilentlyContinue
+    }
+    Start-Service -Name V2Ray11119 -ErrorAction Stop
+    $wait = [Diagnostics.Stopwatch]::StartNew()
+    while ($wait.Elapsed.TotalSeconds -lt 15) {
+        if (Get-ListenerOwner @(11118,11119)) {
+            $live = Get-LiveInstance $Directory
+            try {
+                if ($live.RouteServicePath -ine $ServicePath) { Stop-RouteAction 'SCM did not acquire both listeners.' }
+            } finally { $live.Dispose() }
+            return
+        }
+        Start-Sleep -Milliseconds 150
+    }
+    Stop-RouteAction 'The restarted V2Ray11119 service did not acquire its listeners.'
 }
 
 function Start-LiveInstance {
@@ -194,9 +316,11 @@ function Install-Bytes([byte[]]$Bytes, [string]$Scratch) {
     [IO.File]::Replace($stage,$ConfigPath,[System.Management.Automation.Language.NullString]::Value)
 }
 
-function Switch-LiveRoute([byte[]]$Original, [byte[]]$Changed, [string]$Scratch, [int]$ExpectedOwner) {
+function Switch-LiveRoute([byte[]]$Original, [byte[]]$Changed, [string]$Scratch, [int]$ExpectedOwner,
+        [string]$ExpectedServicePath) {
     $proc = Get-LiveInstance $Directory
-    if ($proc.Id -ne $ExpectedOwner -or ![Collections.StructuralComparisons]::StructuralEqualityComparer.Equals(
+    if ($proc.Id -ne $ExpectedOwner -or [string]$proc.RouteServicePath -ine $ExpectedServicePath -or
+        ![Collections.StructuralComparisons]::StructuralEqualityComparer.Equals(
         [IO.File]::ReadAllBytes($ConfigPath), $Original)) {
         $proc.Dispose()
         Stop-RouteAction 'The config or listener changed during preflight. Run the command again.'
@@ -209,23 +333,29 @@ function Switch-LiveRoute([byte[]]$Original, [byte[]]$Changed, [string]$Scratch,
     try {
         Install-Bytes $Changed $Scratch
         try {
-            Stop-Instance $proc
-            $replacement = Start-LiveInstance
-            Wait-Instance $replacement @(11118,11119)
+            if ($ExpectedServicePath) {
+                Restart-ManagedRoute $ExpectedServicePath
+            } else {
+                Stop-Instance $proc
+                $replacement = Start-LiveInstance
+                Wait-Instance $replacement @(11118,11119)
+            }
             Test-RouteHealth 11119 $Scratch
         } catch {
             $cause = $_.Exception.Message
             Install-Bytes $Original $Scratch
-            if ($replacement) { Stop-Instance $replacement }
-            if ($proc.HasExited) {
-                $restored = Start-LiveInstance
-            } else { $restored = $proc }
-            try {
-                Wait-Instance $restored @(11118,11119)
-                try { Test-RouteHealth 11119 $Scratch } catch {
-                    Stop-RouteAction 'Previous config and listeners restored. The previous route failed its network check.'
+            if ($ExpectedServicePath) {
+                Restart-ManagedRoute $ExpectedServicePath
+            } else {
+                if ($replacement) { Stop-Instance $replacement }
+                if ($proc.HasExited) { $restored = Start-LiveInstance } else { $restored = $proc }
+                try { Wait-Instance $restored @(11118,11119) } finally {
+                    if ($restored -ne $proc) { $restored.Dispose() }
                 }
-            } finally { if ($restored -ne $proc) { $restored.Dispose() } }
+            }
+            try { Test-RouteHealth 11119 $Scratch } catch {
+                Stop-RouteAction 'Previous config and listeners restored. The previous route failed its network check.'
+            }
             if (!$cause.StartsWith('Route error:')) { $cause = 'Production restart or check failed.' }
             Stop-RouteAction "Previous config and route restored. $cause"
         }
@@ -246,6 +376,7 @@ function Invoke-WindowsRoute {
         $proc = Get-LiveInstance $Directory
         try {
             $owner = $proc.Id
+            $servicePath = $proc.RouteServicePath
             $Binary = $proc.MainModule.FileName
             $Directory = [IO.Path]::GetDirectoryName($Binary)
             $ConfigPath = Join-Path $Directory 'config_vmiss.json'
@@ -260,7 +391,8 @@ function Invoke-WindowsRoute {
         $originalMode = if ($config.outbounds[0].proxySettings) { 'relay' } else { 'direct' }
         $route = if ($Mode -eq 'status') { $originalMode } else { $Mode.Replace('test-','') }
         $changed = Get-RequestedConfig $config $route
-        Write-Host "Configured route: $originalMode. Listener PID: $owner."
+        $manager = if ($servicePath) { 'SCM V2Ray11119' } else { 'standalone' }
+        Write-Host "Configured route: $originalMode. Listener PID: $owner. Manager: $manager."
         if ($Mode -eq 'status') { return }
         $version = & $Binary version | Select-Object -First 1
         if ($version -notmatch '^V2Ray 5\.') { Stop-RouteAction 'This helper requires V2Ray 5.' }
@@ -273,7 +405,7 @@ function Invoke-WindowsRoute {
             Write-Host 'Already configured; no restart required.'
             return
         }
-        Switch-LiveRoute $raw ($Utf8.GetBytes($json)) $scratch $owner
+        Switch-LiveRoute $raw ($Utf8.GetBytes($json)) $scratch $owner $servicePath
         Write-Host "Active route: $route."
     } finally {
         if ($scratch) {
@@ -291,7 +423,13 @@ if ($MyInvocation.InvocationName -ne '.') {
     $ErrorActionPreference = 'Stop'
     try { Invoke-WindowsRoute } catch {
         $message = $_.Exception.Message
-        if (!$message.StartsWith('Route error:')) { $message = 'Route action failed (' + $_.Exception.GetType().Name + ').' }
+        if (!$message.StartsWith('Route error:')) {
+            $cause = $_.Exception.GetBaseException()
+            if ($cause -is [UnauthorizedAccessException] -or
+                ($cause -is [ComponentModel.Win32Exception] -and $cause.NativeErrorCode -eq 5)) {
+                $message = 'Access denied. For the V2Ray services, run Windows PowerShell as administrator.'
+            } else { $message = 'Route action failed (' + $_.Exception.GetType().Name + ').' }
+        }
         [Console]::Error.WriteLine($message)
         exit 1
     }
